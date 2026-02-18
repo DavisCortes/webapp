@@ -1,1331 +1,657 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Smilskiy Courses — P2P Арбітраж</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+  <title>Smilskiy Course — P2P Арбітраж</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://secure.wayforpay.com/server/pay-widget.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#09090f;--surface:#111118;--card:rgba(255,255,255,.035);
+      --card-hover:rgba(255,255,255,.07);--border:rgba(255,255,255,.07);
+      --text:#e4e4e7;--text-dim:#9ca3af;--text-muted:#6b7280;
+      --accent:#6366f1;--accent-light:#a5b4fc;--accent-glow:rgba(99,102,241,.4);
+      --purple:#8b5cf6;--purple-glow:rgba(139,92,246,.35);
+      --gold:#fbbf24;--gold-glow:rgba(251,191,36,.35);
+      --green:#34d399;--green-glow:rgba(52,211,153,.3);
+      --red:#f87171;
+      --radius:18px;--radius-sm:12px;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+    .heading{font-family:'Space Grotesk','Inter',sans-serif}
 
-    <!-- Telegram WebApp SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    /* ───── GLOW ORBS ───── */
+    .orb{position:fixed;border-radius:50%;filter:blur(140px);opacity:.2;pointer-events:none;z-index:0}
+    .orb-1{width:600px;height:600px;background:var(--accent);top:-200px;left:-150px}
+    .orb-2{width:500px;height:500px;background:var(--purple);bottom:20%;right:-120px}
+    .orb-3{width:400px;height:400px;background:var(--gold);bottom:-100px;left:25%;opacity:.12}
 
-    <!-- Font Awesome 6 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    /* ───── GRID BG ───── */
+    .grid-bg{position:fixed;inset:0;z-index:0;opacity:.03;
+      background-image:linear-gradient(rgba(255,255,255,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.1) 1px,transparent 1px);
+      background-size:60px 60px;}
 
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    /* ───── CONTAINER ───── */
+    .wrap{max-width:460px;margin:0 auto;padding:0 18px;position:relative;z-index:1}
 
-    <!-- Animate.css -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    /* ═══════ FLOATING TICKER ═══════ */
+    .ticker-wrap{overflow:hidden;white-space:nowrap;margin:0 -18px;padding:14px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(99,102,241,.04)}
+    .ticker{display:inline-block;animation:scroll-left 20s linear infinite}
+    .ticker span{display:inline-block;padding:0 24px;font-size:13px;font-weight:600;color:var(--accent-light);letter-spacing:.5px;text-transform:uppercase}
+    .ticker span::before{content:'✦ ';color:var(--gold)}
+    @keyframes scroll-left{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    /* ═══════ HERO ═══════ */
+    .hero{text-align:center;padding:52px 0 24px;position:relative}
+    .hero-tag{display:inline-flex;align-items:center;gap:7px;
+      background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.12));
+      border:1px solid rgba(99,102,241,.2);border-radius:100px;padding:7px 18px;
+      font-size:11px;font-weight:700;color:var(--accent-light);letter-spacing:.8px;text-transform:uppercase;
+      margin-bottom:22px;animation:fadeDown .5s ease both}
+    .hero-tag .dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    .hero h1{font-size:13vw;font-weight:900;line-height:.95;letter-spacing:-.04em;
+      background:linear-gradient(160deg,#fff 20%,var(--accent-light) 50%,var(--purple) 80%);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      margin-bottom:4px;animation:fadeUp .6s ease .1s both}
+    @media(min-width:460px){.hero h1{font-size:56px}}
 
-    <style>
-        :root {
-            --bg: #0f0f1a;
-            --bg-secondary: #161625;
-            --surface: #1c1c2e;
-            --surface-hover: #252540;
-            --card: rgba(255,255,255,0.04);
-            --card-hover: rgba(255,255,255,0.08);
-            --border: rgba(255,255,255,0.08);
-            --border-active: rgba(108,92,231,0.5);
-            --text: #e8e8f0;
-            --text-secondary: #a0a0b8;
-            --text-muted: #6b6b80;
-            --primary: #6C5CE7;
-            --primary-light: #a29bfe;
-            --primary-glow: rgba(108,92,231,0.35);
-            --primary-dark: #5a4bd6;
-            --accent: #00CECE;
-            --accent-glow: rgba(0,206,206,0.3);
-            --success: #00d68f;
-            --success-glow: rgba(0,214,143,0.3);
-            --warning: #ffaa00;
-            --warning-glow: rgba(255,170,0,0.3);
-            --danger: #ff6b6b;
-            --danger-glow: rgba(255,107,107,0.3);
-            --gold: #ffd700;
-            --silver: #c0c0c0;
-            --bronze: #cd7f32;
-            --radius: 16px;
-            --radius-sm: 10px;
-            --radius-xs: 6px;
-            --shadow: 0 4px 24px rgba(0,0,0,0.3);
-            --shadow-lg: 0 8px 40px rgba(0,0,0,0.4);
-            --nav-height: 70px;
-            --safe-bottom: env(safe-area-inset-bottom, 0px);
-        }
-        .light-theme {
-            --bg: #f0f2f5; --bg-secondary: #e8eaed; --surface: #ffffff;
-            --surface-hover: #f5f5f8; --card: rgba(0,0,0,0.03); --card-hover: rgba(0,0,0,0.06);
-            --border: rgba(0,0,0,0.08); --border-active: rgba(108,92,231,0.4);
-            --text: #1a1a2e; --text-secondary: #555570; --text-muted: #8888a0;
-            --shadow: 0 4px 24px rgba(0,0,0,0.08); --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
-        }
-        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-        html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
-        body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;padding-bottom:calc(var(--nav-height) + var(--safe-bottom) + 10px)}
-        .bg-effects{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-        .bg-orb{position:absolute;border-radius:50%;filter:blur(120px);opacity:0.15}
-        .bg-orb-1{width:400px;height:400px;background:var(--primary);top:-100px;left:-100px}
-        .bg-orb-2{width:300px;height:300px;background:var(--accent);bottom:-50px;right:-50px}
-        .app-container{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:16px 16px 20px}
-        .page{display:none;animation:fadeIn .3s ease}.page.active{display:block}
-        @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-        /* Cards */
-        .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;transition:all .2s}
-        .card:hover{border-color:var(--border-active)}
-        .card-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-        .card-header .icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}
-        .card-header h3{font-size:16px;font-weight:700;color:var(--text)}
-        .card-header .subtitle{font-size:13px;color:var(--text-secondary)}
-        /* Progress bar */
-        .progress-bar{width:100%;height:8px;background:var(--card);border-radius:4px;overflow:hidden;margin:8px 0}
-        .progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .5s ease}
-        /* Buttons */
-        .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border-radius:var(--radius-sm);font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;border:none;transition:all .2s;text-decoration:none}
-        .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 4px 15px var(--primary-glow)}
-        .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px var(--primary-glow)}
-        .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
-        .btn-outline:hover{border-color:var(--primary);color:var(--primary)}
-        .btn-sm{padding:8px 16px;font-size:13px}
-        .btn-block{width:100%;justify-content:center}
-        .btn-success{background:linear-gradient(135deg,var(--success),#00b876);color:#fff}
-        .btn-danger{background:linear-gradient(135deg,var(--danger),#e05555);color:#fff}
-        .btn-accent{background:linear-gradient(135deg,var(--accent),#00a8a8);color:#fff}
-        /* Grid */
-        .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-        .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-        /* Hero */
-        .hero{text-align:center;padding:24px 0 16px}
-        .hero h1{font-size:26px;font-weight:900;background:linear-gradient(135deg,var(--primary-light),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
-        .hero p{color:var(--text-secondary);font-size:14px}
-        /* User card */
-        .user-card{display:flex;align-items:center;gap:14px;padding:16px}
-        .user-card .avatar{width:56px;height:56px;border-radius:50%;border:3px solid var(--primary)}
-        .user-card .info{flex:1}
-        .user-card .name{font-weight:700;font-size:16px}
-        .user-card .rank-badge{font-size:12px;color:var(--primary-light)}
-        .user-card .xp-text{font-size:12px;color:var(--text-secondary)}
-        /* Lesson grid */
-        .lesson-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
-        .lesson-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
-        .lesson-item:hover{background:var(--card-hover);border-color:var(--primary)}
-        .lesson-item.viewed{border-color:var(--success)}
-        .lesson-item.viewed::after{content:'\2713';position:absolute;top:6px;right:8px;color:var(--success);font-weight:700;font-size:14px}
-        .lesson-item .num{font-size:24px;font-weight:800;color:var(--primary);margin-bottom:4px}
-        .lesson-item .title{font-size:11px;color:var(--text-secondary);line-height:1.3}
-        /* Nav */
-        .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-height);background:var(--bg-secondary);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:center;z-index:100;padding-bottom:var(--safe-bottom)}
-        .nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;cursor:pointer;color:var(--text-muted);transition:all .2s;position:relative;font-size:10px;min-width:50px}
-        .nav-item i{font-size:20px}
-        .nav-item.active{color:var(--primary)}
-        .nav-item.active::before{content:'';position:absolute;top:0;left:20%;right:20%;height:3px;background:var(--primary);border-radius:0 0 3px 3px}
-        /* Back button */
-        .back-btn{display:inline-flex;align-items:center;gap:6px;color:var(--text-secondary);cursor:pointer;font-size:14px;margin-bottom:12px;padding:6px 0}
-        .back-btn:hover{color:var(--primary)}
-        /* Lesson view */
-        .lesson-content{line-height:1.8;font-size:14px;color:var(--text-secondary);white-space:pre-line}
-        .video-frame{width:100%;aspect-ratio:16/9;border-radius:var(--radius);margin-bottom:16px;background:var(--card);border:1px solid var(--border)}
-        .lesson-nav{display:flex;justify-content:space-between;margin-top:16px}
-        /* Quiz */
-        .quiz-dots{display:flex;gap:6px;justify-content:center;margin-bottom:16px}
-        .quiz-dot{width:10px;height:10px;border-radius:50%;background:var(--card);border:1px solid var(--border)}
-        .quiz-dot.active{background:var(--primary);border-color:var(--primary)}
-        .quiz-dot.correct{background:var(--success);border-color:var(--success)}
-        .quiz-dot.wrong{background:var(--danger);border-color:var(--danger)}
-        .quiz-q{font-size:17px;font-weight:700;margin-bottom:16px;line-height:1.4}
-        .quiz-option{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:10px;cursor:pointer;font-size:14px;transition:all .2s}
-        .quiz-option:hover{border-color:var(--primary);background:var(--card-hover)}
-        .quiz-option.selected-correct{border-color:var(--success);background:rgba(0,214,143,0.1);color:var(--success)}
-        .quiz-option.selected-wrong{border-color:var(--danger);background:rgba(255,107,107,0.1);color:var(--danger)}
-        .quiz-explanation{background:rgba(108,92,231,0.08);border:1px solid var(--primary);border-radius:var(--radius-sm);padding:14px;margin-top:12px;font-size:13px;color:var(--text-secondary);display:none}
-        /* Profile */
-        .profile-header{text-align:center;padding:20px 0}
-        .profile-avatar{width:80px;height:80px;border-radius:50%;border:4px solid var(--primary);margin:0 auto 12px}
-        .profile-name{font-size:20px;font-weight:800}
-        .profile-rank{color:var(--primary-light);font-size:14px;margin-top:4px}
-        .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
-        .stat-item{text-align:center;padding:12px 8px;background:var(--card);border-radius:var(--radius-sm);border:1px solid var(--border)}
-        .stat-value{font-size:20px;font-weight:800;color:var(--primary)}
-        .stat-label{font-size:11px;color:var(--text-muted);margin-top:2px}
-        /* Leaderboard */
-        .podium{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin:20px 0}
-        .podium-item{text-align:center;border-radius:var(--radius) var(--radius) 0 0;padding:12px 8px}
-        .podium-item img{width:40px;height:40px;border-radius:50%;margin-bottom:6px}
-        .podium-item .name{font-size:11px;font-weight:600;margin-bottom:4px}
-        .podium-item .xp{font-size:10px;color:var(--text-secondary)}
-        .podium-1{background:linear-gradient(180deg,rgba(255,215,0,0.15),transparent);min-height:120px;width:90px}
-        .podium-2{background:linear-gradient(180deg,rgba(192,192,192,0.15),transparent);min-height:96px;width:80px}
-        .podium-3{background:linear-gradient(180deg,rgba(205,127,50,0.15),transparent);min-height:76px;width:80px}
-        .lb-list .lb-item{display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid var(--border)}
-        .lb-item .pos{width:28px;font-weight:800;color:var(--text-muted);font-size:14px}
-        .lb-item img{width:36px;height:36px;border-radius:50%}
-        .lb-item .info{flex:1}
-        .lb-item .lb-name{font-weight:600;font-size:14px}
-        .lb-item .lb-rank{font-size:11px;color:var(--text-secondary)}
-        .lb-item .lb-xp{font-weight:700;font-size:14px;color:var(--primary)}
-        /* Achievements */
-        .ach-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-        .ach-item{text-align:center;padding:16px 8px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all .2s}
-        .ach-item:hover{border-color:var(--primary)}
-        .ach-item.earned{border-color:var(--success);box-shadow:0 0 12px var(--success-glow)}
-        .ach-item .ach-icon{font-size:28px;margin-bottom:6px}
-        .ach-item .ach-title{font-size:10px;color:var(--text-secondary);line-height:1.3}
-        .ach-item.locked{opacity:0.4;filter:grayscale(1)}
-        /* FAQ */
-        .faq-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px;overflow:hidden}
-        .faq-q{padding:14px 16px;font-weight:600;font-size:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
-        .faq-q::after{content:'\25BC';font-size:10px;color:var(--text-muted);transition:transform .2s}
-        .faq-item.open .faq-q::after{transform:rotate(180deg)}
-        .faq-a{padding:0 16px 14px;font-size:13px;color:var(--text-secondary);line-height:1.6;display:none}
-        .faq-item.open .faq-a{display:block}
-        /* Toast */
-        .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 20px;font-size:14px;font-weight:600;z-index:999;box-shadow:var(--shadow-lg);animation:slideDown .3s ease;max-width:90%}
-        .toast.success{border-color:var(--success);color:var(--success)}
-        .toast.warning{border-color:var(--warning);color:var(--warning)}
-        .toast.error{border-color:var(--danger);color:var(--danger)}
-        @keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-        /* AI Chat */
-        .ai-chat-container{display:flex;flex-direction:column;height:calc(100vh - var(--nav-height) - 50px)}
-        .ai-messages{flex:1;overflow-y:auto;padding:8px 0;display:flex;flex-direction:column;gap:12px}
-        .ai-msg{max-width:88%;padding:12px 16px;border-radius:var(--radius-sm);font-size:14px;line-height:1.6;animation:fadeIn .3s ease}
-        .ai-msg.user{align-self:flex-end;background:var(--primary);color:#fff;border-bottom-right-radius:4px}
-        .ai-msg.bot{align-self:flex-start;background:var(--surface);border:1px solid var(--border);border-bottom-left-radius:4px}
-        .ai-msg.bot .sources{font-size:11px;color:var(--text-muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
-        .ai-msg .rate-btns{display:flex;gap:8px;margin-top:8px}
-        .ai-msg .rate-btn{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-xs);padding:4px 10px;cursor:pointer;font-size:12px;transition:all .2s}
-        .ai-msg .rate-btn:hover{border-color:var(--primary)}
-        .ai-msg .rate-btn.rated{border-color:var(--success);background:rgba(0,214,143,0.1)}
-        .ai-msg .action-btns{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
-        .ai-msg .action-btn{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-xs);padding:4px 10px;cursor:pointer;font-size:11px;color:var(--text-secondary);transition:all .2s}
-        .ai-msg .action-btn:hover{border-color:var(--accent);color:var(--accent)}
-        .ai-input-area{display:flex;gap:8px;padding:12px 0 4px;border-top:1px solid var(--border)}
-        .ai-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;color:var(--text);font-family:inherit;font-size:14px;resize:none;outline:none}
-        .ai-input:focus{border-color:var(--primary)}
-        .ai-send-btn{width:44px;height:44px;border-radius:var(--radius-sm);background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s}
-        .ai-send-btn:hover{background:var(--primary-dark)}
-        .ai-send-btn:disabled{opacity:0.5;cursor:not-allowed}
-        .ai-typing{align-self:flex-start;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);display:none}
-        .typing-dots{display:flex;gap:4px}
-        .typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--text-muted);animation:typingBounce .6s infinite alternate}
-        .typing-dots span:nth-child(2){animation-delay:.15s}
-        .typing-dots span:nth-child(3){animation-delay:.3s}
-        @keyframes typingBounce{to{opacity:0.3;transform:translateY(-4px)}}
-        .quick-questions{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-        .quick-q{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:8px 14px;font-size:12px;color:var(--text-secondary);cursor:pointer;transition:all .2s}
-        .quick-q:hover{border-color:var(--primary);color:var(--primary)}
-        /* Demo Trading */
-        .demo-balance-card{background:linear-gradient(135deg,var(--primary),#4834d4);border-radius:var(--radius);padding:24px;text-align:center;margin-bottom:16px}
-        .demo-balance-card .label{font-size:13px;color:rgba(255,255,255,0.7)}
-        .demo-balance-card .amount{font-size:32px;font-weight:900;color:#fff;margin:4px 0}
-        .demo-balance-card .currency{font-size:14px;color:rgba(255,255,255,0.6)}
-        .trade-form{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
-        .trade-input-group{margin-bottom:14px}
-        .trade-input-group label{font-size:13px;color:var(--text-secondary);margin-bottom:6px;display:block}
-        .trade-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;color:var(--text);font-family:inherit;font-size:15px;outline:none}
-        .trade-input:focus{border-color:var(--primary)}
-        .trade-pair{display:flex;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-        .trade-pair-btn{padding:8px 16px;border-radius:var(--radius-xs);background:var(--card);border:1px solid var(--border);color:var(--text-secondary);cursor:pointer;font-size:12px;font-weight:600;transition:all .2s}
-        .trade-pair-btn.active{border-color:var(--primary);color:var(--primary);background:rgba(108,92,231,0.1)}
-        .trade-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-        .trade-history-item{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--border)}
-        .trade-history-item .trade-type{font-weight:700;font-size:13px}
-        .trade-history-item .trade-type.buy{color:var(--success)}
-        .trade-history-item .trade-type.sell{color:var(--danger)}
-        .trade-history-item .trade-profit{font-weight:700;font-size:14px}
-        .trade-history-item .trade-profit.positive{color:var(--success)}
-        .trade-history-item .trade-profit.negative{color:var(--danger)}
-        .trade-history-item .trade-details{font-size:11px;color:var(--text-muted)}
-        /* Settings */
-        .settings-item{display:flex;align-items:center;justify-content:space-between;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px}
-        .settings-item .label{font-size:14px;font-weight:600}
-        .settings-item .desc{font-size:12px;color:var(--text-secondary)}
-        .toggle{width:48px;height:28px;border-radius:14px;background:var(--card);border:1px solid var(--border);position:relative;cursor:pointer;transition:all .2s}
-        .toggle.on{background:var(--primary);border-color:var(--primary)}
-        .toggle::after{content:'';width:22px;height:22px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:all .2s}
-        .toggle.on::after{left:22px}
-        /* Referral */
-        .referral-card{background:linear-gradient(135deg,var(--accent),#009e9e);border-radius:var(--radius);padding:20px;text-align:center;margin-bottom:16px;color:#fff}
-        .referral-card .ref-count{font-size:36px;font-weight:900}
-        .referral-link{display:flex;gap:8px;align-items:center;margin-top:12px}
-        .ref-link-input{flex:1;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:var(--radius-sm);padding:10px;color:#fff;font-size:12px;font-family:monospace}
-        .ref-copy-btn{padding:10px 16px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:var(--radius-sm);color:#fff;cursor:pointer;font-weight:600;font-size:13px}
-        /* Section header */
-        .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-        .section-header h3{font-size:16px;font-weight:700}
-        .section-header .see-all{font-size:13px;color:var(--primary);cursor:pointer}
-        /* Challenge */
-        .challenge-card{background:linear-gradient(135deg,rgba(108,92,231,0.1),rgba(0,206,206,0.05));border:1px solid var(--border)}
-        .challenge-progress{display:flex;align-items:center;gap:10px;margin-top:10px}
-        .challenge-progress .cp-text{font-size:13px;color:var(--text-secondary);white-space:nowrap}
-        /* Tips */
-        .tip-card,.fact-card{padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;font-size:13px;color:var(--text-secondary);line-height:1.5}
-        .tip-card .tip-icon,.fact-card .fact-icon{margin-right:6px}
-        /* Loading */
-        .loading-spinner{display:flex;justify-content:center;align-items:center;padding:40px}
-        .spinner{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        /* Scrollbar */
-        ::-webkit-scrollbar{width:4px}
-        ::-webkit-scrollbar-track{background:transparent}
-        ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-    </style>
+    .hero .sub{font-size:17px;font-weight:500;color:var(--text-dim);max-width:340px;margin:14px auto 0;
+      animation:fadeUp .6s ease .2s both}
+    .hero .sub b{color:#fff;font-weight:700}
+
+    .hero-cta{margin-top:28px;animation:fadeUp .6s ease .35s both}
+    .hero-cta .btn-main{display:inline-flex;align-items:center;gap:8px;
+      padding:16px 36px;border:none;border-radius:100px;
+      background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;
+      font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;
+      box-shadow:0 0 40px var(--accent-glow);transition:all .35s ease;position:relative;overflow:hidden}
+    .hero-cta .btn-main:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 0 60px var(--accent-glow)}
+    .hero-cta .btn-main:active{transform:scale(.97)}
+    .hero-cta .btn-main .shimmer{position:absolute;top:0;left:-100%;width:100%;height:100%;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent);animation:shimmer 2.5s infinite}
+    @keyframes shimmer{0%{left:-100%}100%{left:200%}}
+
+    /* ═══════ COUNTER ROW ═══════ */
+    .counters{display:flex;gap:6px;justify-content:center;margin:32px 0 8px}
+    .counter-box{flex:1;text-align:center;padding:16px 8px;
+      background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);
+      position:relative;overflow:hidden}
+    .counter-box::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(99,102,241,.06),transparent);pointer-events:none}
+    .counter-box .num{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:#fff}
+    .counter-box .lbl{font-size:10px;color:var(--text-dim);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+
+    /* ═══════ SECTION TITLES ═══════ */
+    .sec-title{text-align:center;margin:56px 0 24px}
+    .sec-title .eyebrow{font-size:11px;font-weight:700;color:var(--accent-light);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+    .sec-title h2{font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:700;color:#fff;line-height:1.15;letter-spacing:-.02em}
+    .sec-title p{font-size:14px;color:var(--text-dim);margin-top:8px;max-width:360px;margin-left:auto;margin-right:auto}
+
+    /* ═══════ FOR WHOM — PAIN POINTS ═══════ */
+    .pains{display:flex;flex-direction:column;gap:10px}
+    .pain{display:flex;align-items:flex-start;gap:14px;
+      padding:18px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+      transition:all .3s ease}
+    .pain:hover{background:var(--card-hover);transform:translateX(4px)}
+    .pain .icon{font-size:26px;flex-shrink:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+      background:rgba(99,102,241,.1);border-radius:12px}
+    .pain h4{font-size:14px;font-weight:700;color:#fff;margin-bottom:2px}
+    .pain p{font-size:12px;color:var(--text-dim);line-height:1.5}
+
+    /* ═══════ WHAT YOU GET ═══════ */
+    .modules{display:flex;flex-direction:column;gap:0;counter-reset:mod}
+    .mod{position:relative;padding:22px 22px 22px 70px;border-left:2px solid var(--border);margin-left:20px}
+    .mod::before{counter-increment:mod;content:counter(mod);position:absolute;left:-18px;top:20px;
+      width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#fff;
+      background:linear-gradient(135deg,var(--accent),var(--purple));box-shadow:0 0 24px var(--accent-glow)}
+    .mod:last-child{border-left-color:transparent}
+    .mod h4{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px}
+    .mod p{font-size:12px;color:var(--text-dim);line-height:1.6}
+    .mod .tag{display:inline-block;margin-top:6px;padding:3px 10px;border-radius:100px;
+      font-size:10px;font-weight:600;background:rgba(251,191,36,.1);color:var(--gold);border:1px solid rgba(251,191,36,.15)}
+
+    /* ═══════ RESULTS / BEFORE-AFTER ═══════ */
+    .results-scroll{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 0 20px;
+      -webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .results-scroll::-webkit-scrollbar{display:none}
+    .result-card{min-width:260px;scroll-snap-align:start;border-radius:var(--radius);overflow:hidden;
+      border:1px solid var(--border);background:var(--surface);flex-shrink:0}
+    .result-top{padding:18px 18px 14px;background:linear-gradient(135deg,rgba(239,68,68,.06),rgba(239,68,68,.02))}
+    .result-bottom{padding:14px 18px 18px;background:linear-gradient(135deg,rgba(52,211,153,.06),rgba(52,211,153,.02))}
+    .result-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+    .result-label.before{color:var(--red)}
+    .result-label.after{color:var(--green)}
+    .result-amount{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700}
+    .result-amount.neg{color:var(--red)}
+    .result-amount.pos{color:var(--green)}
+    .result-desc{font-size:12px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+    .result-arrow{text-align:center;padding:6px;font-size:18px;color:var(--accent-light);background:rgba(99,102,241,.05)}
+    .result-name{font-size:11px;color:var(--text-muted);padding:10px 18px 0;font-weight:500}
+
+    /* ═══════ PRICING ═══════ */
+    .pricing{display:flex;flex-direction:column;gap:16px}
+
+    .plan{position:relative;border-radius:var(--radius);overflow:hidden;
+      border:1px solid var(--border);background:var(--surface);padding:0;transition:transform .3s ease}
+    .plan:hover{transform:translateY(-4px)}
+
+    .plan-header{padding:24px 22px 16px;position:relative}
+    .plan-header .spots{display:inline-flex;align-items:center;gap:5px;
+      padding:5px 12px;border-radius:100px;font-size:10px;font-weight:700;
+      background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.15);margin-bottom:12px}
+    .plan-header .spots .blink-dot{width:5px;height:5px;border-radius:50%;background:var(--red);animation:blink 1.5s infinite}
+    .plan-header .tier{font-size:11px;font-weight:700;color:var(--accent-light);text-transform:uppercase;letter-spacing:1.5px}
+    .plan-header h3{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:#fff;margin-top:4px}
+    .plan-header .desc{font-size:12px;color:var(--text-dim);margin-top:4px}
+
+    .plan-price{padding:0 22px 18px;display:flex;align-items:baseline;gap:4px}
+    .plan-price .old{font-size:16px;color:var(--text-muted);text-decoration:line-through}
+    .plan-price .new{font-family:'Space Grotesk',sans-serif;font-size:42px;font-weight:700;color:#fff}
+    .plan-price .cur{font-size:14px;font-weight:600;color:var(--text-dim);margin-left:2px}
+
+    .plan-features{padding:0 22px 20px;list-style:none}
+    .plan-features li{font-size:12px;color:var(--text);padding:5px 0;display:flex;align-items:center;gap:8px}
+    .plan-features li .ck{width:18px;height:18px;border-radius:50%;
+      background:rgba(52,211,153,.12);display:flex;align-items:center;justify-content:center;
+      font-size:9px;color:var(--green);flex-shrink:0}
+
+    .plan-btn{display:block;margin:0 22px 22px;padding:15px;border:none;border-radius:var(--radius-sm);
+      font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;text-align:center;
+      transition:all .3s;position:relative;overflow:hidden}
+    .plan-btn.primary{background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;box-shadow:0 4px 24px var(--accent-glow)}
+    .plan-btn.primary:hover{box-shadow:0 8px 40px var(--accent-glow);transform:translateY(-2px)}
+    .plan-btn.gold{background:linear-gradient(135deg,var(--gold),#f97316);color:#000;box-shadow:0 4px 24px var(--gold-glow)}
+    .plan-btn.gold:hover{box-shadow:0 8px 40px var(--gold-glow);transform:translateY(-2px)}
+    .plan-btn:active{transform:scale(.97)!important}
+    .plan-btn .shimmer{position:absolute;top:0;left:-100%;width:100%;height:100%;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);animation:shimmer 2.5s infinite}
+
+    .plan.featured{border-color:var(--gold);background:linear-gradient(180deg,rgba(251,191,36,.04),var(--surface))}
+    .plan.featured .plan-header::before{content:'🔥 ТОП ВИБІР';position:absolute;top:14px;right:14px;
+      background:linear-gradient(135deg,var(--gold),#f97316);color:#000;font-size:9px;font-weight:800;
+      padding:5px 12px;border-radius:100px;letter-spacing:.5px}
+    .plan.featured .tier{color:var(--gold)}
+
+    .plan-footer{text-align:center;padding:0 22px 20px;font-size:11px;color:var(--text-dim);line-height:1.5}
+
+    /* ═══════ GUARANTEE ═══════ */
+    .guarantee{text-align:center;padding:28px 20px;border-radius:var(--radius);
+      background:linear-gradient(145deg,rgba(52,211,153,.06),rgba(52,211,153,.01));
+      border:1px solid rgba(52,211,153,.12);margin:36px 0}
+    .guarantee .icon{font-size:40px;margin-bottom:10px}
+    .guarantee h3{font-size:16px;font-weight:700;color:var(--green);margin-bottom:6px}
+    .guarantee p{font-size:13px;color:var(--text-dim);line-height:1.7}
+
+    /* ═══════ TESTIMONIALS ═══════ */
+    .testimonials{display:flex;flex-direction:column;gap:10px}
+    .testi{border-radius:var(--radius);padding:20px;border:1px solid var(--border);background:var(--card)}
+    .testi-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    .testi-ava{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font-size:16px;font-weight:800;color:#fff}
+    .testi-ava.c1{background:linear-gradient(135deg,var(--accent),var(--purple))}
+    .testi-ava.c2{background:linear-gradient(135deg,var(--gold),#f97316)}
+    .testi-ava.c3{background:linear-gradient(135deg,var(--green),#06b6d4)}
+    .testi-info .name{font-size:13px;font-weight:700;color:#fff}
+    .testi-info .role{font-size:11px;color:var(--text-dim)}
+    .testi-stars{margin-left:auto;font-size:12px;letter-spacing:1px}
+    .testi-text{font-size:13px;color:var(--text);line-height:1.6}
+    .testi-result{display:inline-block;margin-top:10px;padding:5px 12px;border-radius:100px;
+      font-size:11px;font-weight:700;background:rgba(52,211,153,.1);color:var(--green);border:1px solid rgba(52,211,153,.15)}
+
+    /* ═══════ FAQ ═══════ */
+    .faq-list{display:flex;flex-direction:column;gap:8px}
+    .faq-item{border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;background:var(--card)}
+    .faq-q{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;cursor:pointer;
+      font-size:14px;font-weight:600;color:#fff;gap:10px;transition:background .2s}
+    .faq-q:hover{background:var(--card-hover)}
+    .faq-q .arrow{font-size:18px;color:var(--text-dim);transition:transform .3s;flex-shrink:0}
+    .faq-item.open .faq-q .arrow{transform:rotate(45deg);color:var(--accent-light)}
+    .faq-a{max-height:0;overflow:hidden;transition:max-height .4s ease}
+    .faq-item.open .faq-a{max-height:400px}
+    .faq-a-inner{padding:0 18px 16px;font-size:13px;color:var(--text-dim);line-height:1.7}
+
+    /* ═══════ CTA BOTTOM ═══════ */
+    .cta-final{text-align:center;padding:50px 0 20px}
+    .cta-final h2{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:#fff;line-height:1.15;margin-bottom:10px}
+    .cta-final p{font-size:14px;color:var(--text-dim);margin-bottom:28px;max-width:320px;margin-left:auto;margin-right:auto}
+
+    /* ═══════ FOOTER ═══════ */
+    .footer{text-align:center;padding:24px 0 36px;border-top:1px solid var(--border);margin-top:20px}
+    .footer p{font-size:11px;color:var(--text-muted)}
+
+    /* ═══════ ANIMATIONS ═══════ */
+    @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes scaleIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+    .reveal{opacity:0;transform:translateY(30px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
+    .reveal.vis{opacity:1;transform:translateY(0)}
+    .reveal-delay-1{transition-delay:.1s}
+    .reveal-delay-2{transition-delay:.2s}
+    .reveal-delay-3{transition-delay:.3s}
+
+    /* ═══════ LOADING / NOTIF ═══════ */
+    .pay-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center}
+    .pay-overlay.show{display:flex}
+    .pay-overlay .spin{width:50px;height:50px;border:3px solid var(--border);border-top-color:var(--accent-light);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .notif{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-120px);
+      background:var(--surface);border:1px solid var(--green);border-radius:var(--radius-sm);
+      padding:14px 28px;font-size:14px;font-weight:600;color:var(--green);z-index:10000;
+      transition:transform .4s cubic-bezier(.16,1,.3,1);box-shadow:0 12px 40px rgba(0,0,0,.5)}
+    .notif.show{transform:translateX(-50%) translateY(0)}
+    .notif.err{border-color:var(--red);color:var(--red)}
+
+    /* ═══════ PARTICLE FIELD ═══════ */
+    .particles{position:fixed;inset:0;z-index:0;pointer-events:none}
+    .particle{position:absolute;border-radius:50%;background:var(--accent-light);opacity:0;animation:float-up linear infinite}
+    @keyframes float-up{
+      0%{opacity:0;transform:translateY(100vh) scale(0)}
+      10%{opacity:.3}
+      90%{opacity:.1}
+      100%{opacity:0;transform:translateY(-10vh) scale(1)}
+    }
+  </style>
 </head>
 <body>
-<div class="bg-effects"><div class="bg-orb bg-orb-1"></div><div class="bg-orb bg-orb-2"></div></div>
 
-<div class="app-container">
+<!-- BG EFFECTS -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+<div class="grid-bg"></div>
+<div class="particles" id="particles"></div>
 
-    <!-- HOME -->
-    <div id="page-home" class="page active">
-        <div class="hero">
-            <h1>Smilskiy P2P</h1>
-            <p>Арбітраж криптовалюти</p>
-        </div>
-        <div class="card">
-            <div class="user-card" id="home-user-card">
-                <img class="avatar" src="" alt="avatar">
-                <div class="info">
-                    <div class="name">Завантаження...</div>
-                    <div class="rank-badge"></div>
-                    <div class="xp-text"></div>
-                    <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
-                </div>
-            </div>
-        </div>
-        <div id="home-courses"></div>
-        <div class="card challenge-card" id="home-challenge"></div>
-        <div class="card" id="home-daily-content">
-            <div class="card-header"><div class="icon" style="background:rgba(108,92,231,0.15);color:var(--primary)">&#x1F4A1;</div><h3>Порада дня</h3></div>
-            <div id="daily-tip" class="tip-card"></div>
-            <div id="daily-fact" class="fact-card" style="margin-top:8px"></div>
-        </div>
+<!-- OVERLAYS -->
+<div class="pay-overlay" id="payOverlay"><div class="spin"></div></div>
+<div class="notif" id="notif"></div>
+
+<div class="wrap">
+
+  <!-- ═══════ HERO ═══════ -->
+  <section class="hero">
+    <div class="hero-tag"><span class="dot"></span> Набір відкрито — місця обмежені</div>
+    <h1 class="heading">ЗАРОБЛЯЙ<br>НА P2P</h1>
+    <p class="sub">Навчися обмінювати криптовалюту та заробляти <b>від 1 000 ₴ на день</b> вже за 3 дні</p>
+    <div class="hero-cta">
+      <button class="btn-main" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">
+        <span class="shimmer"></span>
+        ПЕРЕЙТИ ДО ТАРИФІВ ↓
+      </button>
+    </div>
+  </section>
+
+  <!-- ═══════ TICKER ═══════ -->
+  <div class="ticker-wrap reveal">
+    <div class="ticker">
+      <span>P2P арбітраж</span><span>від 1000 грн/день</span><span>працюй з телефону</span><span>без досвіду</span><span>10 уроків</span><span>кураторська підтримка</span><span>гарантія результату</span>
+      <span>P2P арбітраж</span><span>від 1000 грн/день</span><span>працюй з телефону</span><span>без досвіду</span><span>10 уроків</span><span>кураторська підтримка</span><span>гарантія результату</span>
+    </div>
+  </div>
+
+  <!-- ═══════ COUNTERS ═══════ -->
+  <div class="counters reveal">
+    <div class="counter-box">
+      <div class="num" data-target="500">0</div>
+      <div class="lbl">учнів</div>
+    </div>
+    <div class="counter-box">
+      <div class="num" data-target="96">0</div>
+      <div class="lbl">% задоволених</div>
+    </div>
+    <div class="counter-box">
+      <div class="num" data-target="2000">0</div>
+      <div class="lbl">$/міс сер.</div>
+    </div>
+  </div>
+
+  <!-- ═══════ ДЛЯ КОГО ═══════ -->
+  <div class="sec-title reveal">
+    <div class="eyebrow">Для кого</div>
+    <h2 class="heading">Цей курс для тебе, якщо ти…</h2>
+  </div>
+  <div class="pains">
+    <div class="pain reveal">
+      <div class="icon">😤</div>
+      <div><h4>Набридла робота по найму</h4><p>Хочеш змінити свою роботу, але не знаєш на що. Шукаєш вихід з рутини та фінансову свободу.</p></div>
+    </div>
+    <div class="pain reveal reveal-delay-1">
+      <div class="icon">💸</div>
+      <div><h4>Не вистачає грошей</h4><p>Зарплата не покриває бажання. Хочеш додатковий заробіток без прив'язки до офісу.</p></div>
+    </div>
+    <div class="pain reveal reveal-delay-2">
+      <div class="icon">🧭</div>
+      <div><h4>Шукаєш себе</h4><p>Нічого не тішить? Хочеш нові емоції, нове оточення та реальний результат від своїх дій.</p></div>
+    </div>
+    <div class="pain reveal reveal-delay-3">
+      <div class="icon">🔄</div>
+      <div><h4>Колись вже крутив P2P</h4><p>Хочеш повернутися з актуальними зв'язками та стратегіями. Бачити нові можливості, а не старі схеми.</p></div>
+    </div>
+    <div class="pain reveal">
+      <div class="icon">🎓</div>
+      <div><h4>Студент чи молодий</h4><p>Хочеш стати лідером серед ровесників, здійснити мрії та не залежати від батьків.</p></div>
+    </div>
+  </div>
+
+  <!-- ═══════ ПРОГРАМА КУРСУ ═══════ -->
+  <div class="sec-title reveal">
+    <div class="eyebrow">Програма</div>
+    <h2 class="heading">Що ти вивчиш</h2>
+    <p>10 модулів від нуля до стабільного заробітку</p>
+  </div>
+  <div class="modules reveal">
+    <div class="mod">
+      <h4>Що таке P2P і чому це працює</h4>
+      <p>Як працює арбітраж на простому прикладі. Потенціал ніші від $500 до $10K+. Міфи, які заважають стартувати.</p>
+    </div>
+    <div class="mod">
+      <h4>Вибір біржі та верифікація</h4>
+      <p>Яка біржа краще для старту. Як правильно пройти верифікацію. Статус мерчанта.</p>
+    </div>
+    <div class="mod">
+      <h4>Інтерфейс та безпека</h4>
+      <p>Налаштування 2FA, антифішинг-код. Як переводити через Binance ID. Практика.</p>
+    </div>
+    <div class="mod">
+      <h4>Прогрів акаунту</h4>
+      <p>Правильна накрутка статистики. Уникнення вош-трейдингу. Безпечний старт.</p>
+      <span class="tag">🔥 Ключовий модуль</span>
+    </div>
+    <div class="mod">
+      <h4>Банки: реєстрація та ліміти</h4>
+      <p>Як виглядати «звичайним клієнтом». Прогрів картки. Ліміти фінмоніторингу.</p>
+    </div>
+    <div class="mod">
+      <h4>Скам-схеми у P2P</h4>
+      <p>Чорний трикутник, жива схема, натупняк — як розпізнати та захиститися.</p>
+    </div>
+    <div class="mod">
+      <h4>Робота мейкером</h4>
+      <p>Власні оголошення, авто-реплайер, обхід T+1, готові шаблони.</p>
+    </div>
+    <div class="mod">
+      <h4>Апеляції без паніки</h4>
+      <p>Коли подавати, які докази прикріпити, як пришвидшити розгляд.</p>
+    </div>
+    <div class="mod">
+      <h4>Емулятор: 1 ПК = 100 телефонів</h4>
+      <p>Налаштування, оптимізація, масштабування з одного комп'ютера.</p>
+    </div>
+    <div class="mod">
+      <h4>Як рахувати прибуток</h4>
+      <p>Excel-таблиця, бот для звітів, ручний та автоматичний облік доходів.</p>
+      <span class="tag">📊 + Бонусний бот</span>
+    </div>
+  </div>
+
+  <!-- ═══════ РЕЗУЛЬТАТИ УЧНІВ ═══════ -->
+  <div class="sec-title reveal">
+    <div class="eyebrow">До / Після</div>
+    <h2 class="heading">Результати учнів</h2>
+    <p>Реальні кейси людей, які пройшли курс</p>
+  </div>
+  <div class="results-scroll reveal">
+    <div class="result-card">
+      <div class="result-name">Олексій, 22 роки • Старт: $300</div>
+      <div class="result-top"><div class="result-label before">ДО</div><div class="result-amount neg">$0 /міс</div><div class="result-desc">Працював на касі, зарплата 15 000 грн. Ненавидів понеділки.</div></div>
+      <div class="result-arrow">⬇️</div>
+      <div class="result-bottom"><div class="result-label after">ПІСЛЯ</div><div class="result-amount pos">+$1 240 /міс</div><div class="result-desc">Звільнився через 5 тижнів. Працює 2–3 год/день з телефону.</div></div>
+    </div>
+    <div class="result-card">
+      <div class="result-name">Марія, 28 років • Старт: $500</div>
+      <div class="result-top"><div class="result-label before">ДО</div><div class="result-amount neg">Борг 30к грн</div><div class="result-desc">Кредити за навчання. Не знала що таке крипта.</div></div>
+      <div class="result-arrow">⬇️</div>
+      <div class="result-bottom"><div class="result-label after">ПІСЛЯ</div><div class="result-amount pos">+$3 800 за 2 міс</div><div class="result-desc">Закрила борг за 6 тижнів. Тепер інвестує.</div></div>
+    </div>
+    <div class="result-card">
+      <div class="result-name">Дмитро, 19 років • Студент</div>
+      <div class="result-top"><div class="result-label before">ДО</div><div class="result-amount neg">0 досвіду</div><div class="result-desc">Ніколи не працював з криптою. Просив гроші у батьків.</div></div>
+      <div class="result-arrow">⬇️</div>
+      <div class="result-bottom"><div class="result-label after">ПІСЛЯ</div><div class="result-amount pos">+$780 за 3 тижні</div><div class="result-desc">Заробляє у вільний час між парами.</div></div>
+    </div>
+  </div>
+
+  <!-- ═══════ ТАРИФИ ═══════ -->
+  <div class="sec-title reveal" id="pricing">
+    <div class="eyebrow">Тарифи</div>
+    <h2 class="heading">Обери свій план</h2>
+    <p>Інвестиція, що окупається за перший тиждень</p>
+  </div>
+  <div class="pricing">
+
+    <!-- PLAN 1 -->
+    <div class="plan reveal">
+      <div class="plan-header">
+        <div class="spots"><span class="blink-dot"></span> Залишилось 47 місць</div>
+        <div class="tier">Базовий</div>
+        <h3>Курс 1 — Старт</h3>
+        <div class="desc">Все для впевненого старту в P2P</div>
+      </div>
+      <div class="plan-price">
+        <span class="old">3 499</span>
+        <span class="new">1 999</span>
+        <span class="cur">грн</span>
+      </div>
+      <ul class="plan-features">
+        <li><span class="ck">✓</span>10 відео-уроків з практикою</li>
+        <li><span class="ck">✓</span>Методичка «Описання оголошень»</li>
+        <li><span class="ck">✓</span>Методичка «Як подати апеляцію»</li>
+        <li><span class="ck">✓</span>Підтримка куратора 7 днів</li>
+        <li><span class="ck">✓</span>Доступ до бота з уроками</li>
+      </ul>
+      <button class="plan-btn primary" onclick="payForCourse('course1')">
+        <span class="shimmer"></span>
+        ПРИДБАТИ ЗА 1 999 ₴ →
+      </button>
+      <div class="plan-footer">Одразу після оплати отримаєш доступ</div>
     </div>
 
-    <!-- COURSE -->
-    <div id="page-course" class="page">
-        <div class="back-btn" onclick="App.navigate('home')"><i class="fas fa-arrow-left"></i> Назад</div>
-        <h2 id="course-title" style="font-size:20px;font-weight:800;margin-bottom:4px"></h2>
-        <p id="course-progress-text" style="font-size:13px;color:var(--text-secondary);margin-bottom:12px"></p>
-        <div class="progress-bar" style="margin-bottom:16px"><div id="course-progress-fill" class="progress-fill" style="width:0%"></div></div>
-        <div class="grid-2" style="margin-bottom:12px">
-            <button class="btn btn-outline btn-sm" onclick="App.showMaterials()"><i class="fas fa-folder-open"></i> Матеріали</button>
-            <button class="btn btn-outline btn-sm" onclick="App.navigate('home')"><i class="fas fa-home"></i> Головна</button>
-        </div>
-        <div id="lesson-grid" class="lesson-grid"></div>
+    <!-- PLAN 2 -->
+    <div class="plan featured reveal reveal-delay-1">
+      <div class="plan-header">
+        <div class="spots"><span class="blink-dot"></span> Залишилось 18 місць</div>
+        <div class="tier">Pro</div>
+        <h3>Курс 2 — Максимум</h3>
+        <div class="desc">Повний пакет з VIP-підтримкою</div>
+      </div>
+      <div class="plan-price">
+        <span class="old">6 499</span>
+        <span class="new">3 999</span>
+        <span class="cur">грн</span>
+      </div>
+      <ul class="plan-features">
+        <li><span class="ck">✓</span>Все з Курсу 1</li>
+        <li><span class="ck">✓</span>Pro-бот для аналітики ринку (14 дн.)</li>
+        <li><span class="ck">✓</span>VIP-чат підтримки (відповідь до 30 хв)</li>
+        <li><span class="ck">✓</span>Щотижневий созвон з куратором</li>
+        <li><span class="ck">✓</span>4 ексклюзивних методички</li>
+        <li><span class="ck">✓</span>Методичка пошуку постійних клієнтів</li>
+        <li><span class="ck">✓</span>Методичка по емулятору</li>
+      </ul>
+      <button class="plan-btn gold" onclick="payForCourse('course2')">
+        <span class="shimmer"></span>
+        ПРИДБАТИ ЗА 3 999 ₴ →
+      </button>
+      <div class="plan-footer">⚡ За перші 2 години на реферальних програмах<br>можна відбити вартість курсу!</div>
     </div>
+  </div>
 
-    <!-- LESSON -->
-    <div id="page-lesson" class="page">
-        <div class="back-btn" onclick="App.backToCourse()"><i class="fas fa-arrow-left"></i> До курсу</div>
-        <h2 id="lesson-title" style="font-size:18px;font-weight:800;margin-bottom:12px"></h2>
-        <div id="lesson-video"></div>
-        <div class="card"><div id="lesson-text" class="lesson-content"></div></div>
-        <div id="lesson-quiz-btn" style="margin:16px 0"></div>
-        <div id="lesson-nav" class="lesson-nav"></div>
+  <!-- ═══════ GUARANTEE ═══════ -->
+  <div class="guarantee reveal">
+    <div class="icon">🛡️</div>
+    <h3>100% Гарантія повернення</h3>
+    <p>Якщо після перших 3 уроків ти зрозумієш, що курс не для тебе&nbsp;— повернемо гроші повністю. Без питань, без складнощів, без дрібного шрифту.</p>
+  </div>
+
+  <!-- ═══════ ВІДГУКИ ═══════ -->
+  <div class="sec-title reveal">
+    <div class="eyebrow">Відгуки</div>
+    <h2 class="heading">Що кажуть учні</h2>
+  </div>
+  <div class="testimonials">
+    <div class="testi reveal">
+      <div class="testi-head">
+        <div class="testi-ava c1">О</div>
+        <div class="testi-info"><div class="name">Олексій К.</div><div class="role">Курс 2 — Pro</div></div>
+        <div class="testi-stars">⭐⭐⭐⭐⭐</div>
+      </div>
+      <div class="testi-text">Курс окупився за 5 днів! Все чітко, по ділу, без води. Кураторська підтримка — вогонь. Нарешті знайшов щось, що реально працює 🔥</div>
+      <div class="testi-result">+$1 240 за місяць</div>
     </div>
-
-    <!-- QUIZ -->
-    <div id="page-quiz" class="page">
-        <div class="back-btn" onclick="App.backToLesson()"><i class="fas fa-arrow-left"></i> До уроку</div>
-        <div id="quiz-dots" class="quiz-dots"></div>
-        <div class="card">
-            <div id="quiz-question" class="quiz-q"></div>
-            <div id="quiz-options"></div>
-        </div>
-        <div id="quiz-explanation" class="quiz-explanation"></div>
+    <div class="testi reveal reveal-delay-1">
+      <div class="testi-head">
+        <div class="testi-ava c2">М</div>
+        <div class="testi-info"><div class="name">Марія В.</div><div class="role">Курс 1 — Старт</div></div>
+        <div class="testi-stars">⭐⭐⭐⭐⭐</div>
+      </div>
+      <div class="testi-text">Боялась починати, бо нічого не знала про крипту. Після курсу заробила перші $400 за 2 тижні. Зараз закриваю кредити 💪</div>
+      <div class="testi-result">+$400 за 2 тижні</div>
     </div>
-
-    <!-- QUIZ RESULTS -->
-    <div id="page-quiz-results" class="page">
-        <div id="quiz-results-content" style="text-align:center;padding:40px 0"></div>
+    <div class="testi reveal reveal-delay-2">
+      <div class="testi-head">
+        <div class="testi-ava c3">Д</div>
+        <div class="testi-info"><div class="name">Дмитро Р.</div><div class="role">Курс 2 — Pro</div></div>
+        <div class="testi-stars">⭐⭐⭐⭐⭐</div>
+      </div>
+      <div class="testi-text">Pro-бот для аналітики — це зброя. Бачу спреди раніше за інших. Созвони з куратором дали розуміння, яке жоден ютуб не дасть!</div>
+      <div class="testi-result">$100+/день стабільно</div>
     </div>
+  </div>
 
-    <!-- AI CHAT -->
-    <div id="page-ai" class="page">
-        <div class="ai-chat-container">
-            <div class="card-header" style="padding:4px 0 8px">
-                <div class="icon" style="background:rgba(0,206,206,0.15);color:var(--accent)">&#x1F916;</div>
-                <div><h3>AI-Асистент</h3><div class="subtitle">Запитуй про P2P</div></div>
-            </div>
-            <div id="ai-quick-qs" class="quick-questions">
-                <div class="quick-q" onclick="App.aiQuick(this)">Що таке P2P?</div>
-                <div class="quick-q" onclick="App.aiQuick(this)">Як заробити на спреді?</div>
-                <div class="quick-q" onclick="App.aiQuick(this)">Як уникнути скаму?</div>
-                <div class="quick-q" onclick="App.aiQuick(this)">Який стартовий капітал?</div>
-            </div>
-            <div id="ai-messages" class="ai-messages">
-                <div class="ai-msg bot">Привіт! Я AI-асистент Smilskiy Course. Запитуй будь-що про P2P-арбітраж!</div>
-            </div>
-            <div id="ai-typing" class="ai-typing"><div class="typing-dots"><span></span><span></span><span></span></div></div>
-            <div class="ai-input-area">
-                <textarea id="ai-input" class="ai-input" rows="1" placeholder="Запитай про P2P..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();App.aiSend()}"></textarea>
-                <button id="ai-send" class="ai-send-btn" onclick="App.aiSend()"><i class="fas fa-paper-plane"></i></button>
-            </div>
-        </div>
+  <!-- ═══════ FAQ ═══════ -->
+  <div class="sec-title reveal">
+    <div class="eyebrow">FAQ</div>
+    <h2 class="heading">Поширені запитання</h2>
+  </div>
+  <div class="faq-list">
+    <div class="faq-item reveal">
+      <div class="faq-q" onclick="toggleFaq(this)"><span>💰 З якої суми починати?</span><span class="arrow">+</span></div>
+      <div class="faq-a"><div class="faq-a-inner">Мінімально рекомендована сума — <b>$200–500</b>. З цим бюджетом можна робити 3–5 угод на день і заробляти $5–15 щоденно. Але навіть з $50 можна почати вчитися і отримати перший досвід. Головне — <b>почати</b>!</div></div>
     </div>
-
-    <!-- DEMO TRADING -->
-    <div id="page-demo" class="page">
-        <div class="demo-balance-card">
-            <div class="label">Демо-баланс</div>
-            <div id="demo-balance-amount" class="amount">$1,000.00</div>
-            <div class="currency">Віртуальні USDT</div>
-        </div>
-        <div class="trade-form">
-            <div class="section-header"><h3>Нова угода</h3></div>
-            <div class="trade-pair" id="demo-pairs">
-                <div class="trade-pair-btn active" onclick="App.selectPair(this,'USDT/UAH')" data-pair="USDT/UAH">USDT/UAH</div>
-                <div class="trade-pair-btn" onclick="App.selectPair(this,'BTC/USDT')" data-pair="BTC/USDT">BTC/USDT</div>
-                <div class="trade-pair-btn" onclick="App.selectPair(this,'ETH/USDT')" data-pair="ETH/USDT">ETH/USDT</div>
-            </div>
-            <div class="trade-input-group">
-                <label>Сума (USDT)</label>
-                <input type="number" id="demo-amount" class="trade-input" placeholder="100" min="1" step="1">
-            </div>
-            <div class="trade-input-group">
-                <label>Ціна</label>
-                <input type="number" id="demo-price" class="trade-input" placeholder="41.50" step="0.01">
-            </div>
-            <div class="trade-btns">
-                <button class="btn btn-success btn-block" onclick="App.demoTrade('buy')"><i class="fas fa-arrow-up"></i> Купити</button>
-                <button class="btn btn-danger btn-block" onclick="App.demoTrade('sell')"><i class="fas fa-arrow-down"></i> Продати</button>
-            </div>
-        </div>
-        <div class="card">
-            <div class="section-header"><h3>Історія угод</h3></div>
-            <div id="demo-history"></div>
-        </div>
+    <div class="faq-item reveal reveal-delay-1">
+      <div class="faq-q" onclick="toggleFaq(this)"><span>⏰ Скільки часу потрібно на день?</span><span class="arrow">+</span></div>
+      <div class="faq-a"><div class="faq-a-inner"><b>1–2 години</b> — $200–500/міс (спокійний режим). <b>3–4 години</b> — $500–2000/міс. <b>Full-time</b> — $2000–10000+. Можна працювати з телефону в будь-який зручний час. Немає графіку — ти сам собі бос.</div></div>
     </div>
-
-    <!-- PROFILE -->
-    <div id="page-profile" class="page">
-        <div class="profile-header">
-            <img id="profile-avatar" class="profile-avatar" src="" alt="">
-            <div id="profile-name" class="profile-name">Гравець</div>
-            <div id="profile-rank" class="profile-rank"></div>
-        </div>
-        <div class="card">
-            <div class="progress-bar"><div id="profile-xp-fill" class="progress-fill" style="width:0%"></div></div>
-            <p id="profile-xp-text" style="font-size:12px;color:var(--text-secondary);text-align:center;margin-top:4px"></p>
-        </div>
-        <div id="profile-stats" class="stat-grid"></div>
-        <div class="card" id="profile-courses"></div>
-        <div class="card"><div class="section-header"><h3>Досягнення</h3><span class="see-all" onclick="App.navigate('achievements')">Усі</span></div><div id="profile-achs" class="ach-grid"></div></div>
-        <canvas id="profile-chart" style="margin:16px 0;max-height:200px"></canvas>
-        <div class="grid-2" style="margin-top:12px">
-            <button class="btn btn-outline btn-sm btn-block" onclick="App.navigate('settings')"><i class="fas fa-cog"></i> Налаштування</button>
-            <button class="btn btn-outline btn-sm btn-block" onclick="App.exportData()"><i class="fas fa-download"></i> Експорт</button>
-        </div>
+    <div class="faq-item reveal reveal-delay-2">
+      <div class="faq-q" onclick="toggleFaq(this)"><span>⚠️ Чи є ризики?</span><span class="arrow">+</span></div>
+      <div class="faq-a"><div class="faq-a-inner">Як у будь-якому бізнесі. Але ми працюємо зі стейблкоїнами (USDT). Курс навчить тебе: уникати блокування карток, розпізнавати шахраїв, дотримуватися лімітів. З правильним підходом — ризики мінімальні.</div></div>
     </div>
-
-    <!-- LEADERBOARD -->
-    <div id="page-leaderboard" class="page">
-        <div class="card-header" style="padding:0 0 4px"><div class="icon" style="background:rgba(255,215,0,0.15);color:var(--gold)">&#x1F3C6;</div><h3>Рейтинг гравців</h3></div>
-        <div id="lb-podium" class="podium"></div>
-        <div class="card"><div id="lb-list" class="lb-list"></div></div>
+    <div class="faq-item reveal">
+      <div class="faq-q" onclick="toggleFaq(this)"><span>📋 Це легально?</span><span class="arrow">+</span></div>
+      <div class="faq-a"><div class="faq-a-inner">Так! P2P-торгівля — <b>легальна діяльність</b> через ліцензовані біржі (Binance, Bybit). Курс навчить працювати правильно та безпечно, зберігати історію транзакцій та декларувати доходи.</div></div>
     </div>
-
-    <!-- ACHIEVEMENTS -->
-    <div id="page-achievements" class="page">
-        <div class="back-btn" onclick="App.navigate('profile')"><i class="fas fa-arrow-left"></i> Профіль</div>
-        <div class="card-header" style="padding:0 0 12px"><div class="icon" style="background:rgba(0,214,143,0.15);color:var(--success)">&#x1F396;</div><h3>Усі досягнення</h3></div>
-        <div id="achs-grid" class="ach-grid"></div>
+    <div class="faq-item reveal reveal-delay-1">
+      <div class="faq-q" onclick="toggleFaq(this)"><span>🚀 Коли я отримаю доступ?</span><span class="arrow">+</span></div>
+      <div class="faq-a"><div class="faq-a-inner"><b>Одразу після оплати!</b> Тебе автоматично перенаправить у Telegram-бот, де вже чекають усі 10 уроків. Процес повністю автоматизований — жодних очікувань.</div></div>
     </div>
-
-    <!-- FAQ -->
-    <div id="page-faq" class="page">
-        <div class="card-header" style="padding:0 0 12px"><div class="icon" style="background:rgba(255,170,0,0.15);color:var(--warning)">&#x2753;</div><h3>Часті запитання</h3></div>
-        <div id="faq-list"></div>
-        <div style="margin-top:20px"><div class="section-header"><h3>Поради</h3></div><div id="tips-list"></div></div>
-        <div style="margin-top:20px"><div class="section-header"><h3>Факти</h3></div><div id="facts-list"></div></div>
+    <div class="faq-item reveal reveal-delay-2">
+      <div class="faq-q" onclick="toggleFaq(this)"><span>🔄 Як швидко окуплю навчання?</span><span class="arrow">+</span></div>
+      <div class="faq-a"><div class="faq-a-inner">Залежить від тебе! Хтось окупає в <b>перший день</b>, хтось за тиждень. Середній результат наших учнів — окупність курсу за <b>3–7 днів</b> активної роботи.</div></div>
     </div>
+  </div>
 
-    <!-- SETTINGS -->
-    <div id="page-settings" class="page">
-        <div class="back-btn" onclick="App.navigate('profile')"><i class="fas fa-arrow-left"></i> Профіль</div>
-        <div class="card-header" style="padding:0 0 12px"><div class="icon" style="background:rgba(108,92,231,0.15);color:var(--primary)">&#x2699;</div><h3>Налаштування</h3></div>
-        <div class="settings-item">
-            <div><div class="label">Сповіщення</div><div class="desc">Нагадування про уроки</div></div>
-            <div class="toggle" id="notif-toggle" onclick="App.toggleNotif()"></div>
-        </div>
-        <div class="settings-item">
-            <div><div class="label">Тема</div><div class="desc">Telegram автотема</div></div>
-            <div style="font-size:13px;color:var(--text-muted)">Авто</div>
-        </div>
-        <div class="card" style="margin-top:16px">
-            <div class="section-header"><h3>Реферальна програма</h3></div>
-            <div class="referral-card">
-                <div style="font-size:13px;opacity:0.8">Запрошено друзів</div>
-                <div id="ref-count" class="ref-count">0</div>
-                <div style="font-size:12px;opacity:0.7;margin-top:4px">+100 XP за кожного!</div>
-                <div class="referral-link">
-                    <input type="text" id="ref-link" class="ref-link-input" readonly>
-                    <button class="ref-copy-btn" onclick="App.copyRefLink()">Copy</button>
-                </div>
-            </div>
-        </div>
-        <button class="btn btn-outline btn-block" style="margin-top:16px" onclick="App.exportData()"><i class="fas fa-download"></i> Експорт даних</button>
-    </div>
+  <!-- ═══════ FINAL CTA ═══════ -->
+  <section class="cta-final reveal">
+    <h2 class="heading">Готовий змінити<br>своє фінансове життя?</h2>
+    <p>Приєднуйся до 500+ учнів, які вже заробляють на P2P-арбітражі щодня</p>
+    <button class="btn-main" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" style="box-shadow:0 0 50px var(--accent-glow)">
+      <span class="shimmer"></span>
+      ОБРАТИ ТАРИФ ↑
+    </button>
+  </section>
 
-</div>
+  <div class="footer">
+    <p>© 2026 Smilskiy Course. Всі права захищені.</p>
+  </div>
 
-<!-- Bottom Navigation -->
-<div class="bottom-nav">
-    <div class="nav-item active" onclick="App.navigate('home')" data-page="home"><i class="fas fa-home"></i><span>Головна</span></div>
-    <div class="nav-item" onclick="App.navigate('ai')" data-page="ai"><i class="fas fa-robot"></i><span>AI</span></div>
-    <div class="nav-item" onclick="App.navigate('demo')" data-page="demo"><i class="fas fa-chart-line"></i><span>Трейд</span></div>
-    <div class="nav-item" onclick="App.navigate('profile')" data-page="profile"><i class="fas fa-user"></i><span>Профіль</span></div>
-    <div class="nav-item" onclick="App.navigate('leaderboard')" data-page="leaderboard"><i class="fas fa-trophy"></i><span>Рейтинг</span></div>
-    <div class="nav-item" onclick="App.navigate('faq')" data-page="faq"><i class="fas fa-question-circle"></i><span>FAQ</span></div>
 </div>
 
 <script>
-/* ================================================================
-   DATA CONSTANTS
-   ================================================================ */
-const LESSONS={
-    1:{title:"Урок 1. P2P-арбітраж — що це і як заробляти",short:"P2P: вступ",text:"Що таке P2P-арбітраж і чому це — одна з найлегших точок входу в крипту\nРеальний потенціал: від $500 до $10K+/міс\nЩо потрібно для старту: мінімум вкладень, максимум системності\nОбсяг модуля: 10 уроків, що проведуть від нуля до впевненого мержу",video_url:"https://example.com/video1"},
-    2:{title:"Урок 2. Реєстрація на біржі: Binance, Bybit, OKX",short:"Реєстрація",text:"Покрокова реєстрація на топ-біржах (Binance, Bybit, OKX)\nВерифікація KYC — що це та навіщо\nP2P-розділ: як знайти, як орієнтуватися\nНалаштування профілю під P2P-торгівлю",video_url:"https://example.com/video2"},
-    3:{title:"Урок 3. Безпека акаунту та 2FA",short:"Безпека",text:"Чому ламають трейдерів і як цього уникнути\n2FA (Google Authenticator / SMS / Email) — як увімкнути\nАнтифішинг-код: що це і як налаштувати\nЗбереження seed-фрази та бекапів",video_url:"https://example.com/video3"},
-    4:{title:"Урок 4. Перша угода: покрокова інструкція",short:"Перша угода",text:"Як створити першу P2P-угоду (і не помилитися)\nВибір контрагента: рейтинг, об'єм, відгуки\nЩо писати в чаті угоди\nЧому не варто поспішати: правильна перевірка оплати\nЯк «прогріти» акаунт до статусу мерчанта",video_url:"https://example.com/video4"},
-    5:{title:"Урок 5. Банки у P2P: реєстрація та ліміти",short:"Банки",text:"Як правильно відкрити картку без зайвих питань\nЯкі дані вказувати, щоб обійти довідки\nОсновні ліміти та коли спрацьовує фінмон\nПрогрів картки: оплати в магазинах, заправках, сервісах\nЯк виглядати 'звичайним клієнтом', а не арбітражником",video_url:"https://example.com/video5"},
-    6:{title:"Урок 6. Скам-схеми у P2P",short:"Скам",text:"Найпопулярніший 'чорний трикутник' і як він працює\nЧому не можна приймати оплату від третіх осіб\n'Жива схема' — коли тебе втираються в довіру\nКласичний 'натупняк': натиснув «Оплачено», а грошей нема\nГоловні правила безпеки, щоб не втратити USDT",video_url:"https://example.com/video6"},
-    7:{title:"Урок 7. Робота по оголошеннях: старт мейкера",short:"Мейкер",text:"Як створити оголошення та приймати/відправляти оплату\nГотові шаблони описів і авто-реплайер\nЯк обходити T+1: продаж — купівля = повний круг\nСтартуємо стабільно навіть із обмеженнями",video_url:"https://example.com/video7"},
-    8:{title:"Урок 8. Апеляції без паніки",short:"Апеляції",text:"Коли тиснути «Подати апеляцію» і що писати\nВипадки: «оплачено, а грошей нема» / «оплатив, а USDT не відпускають»\nЯкі докази прикріпити (квитанції, відео)\nЯк пришвидшити розгляд: простий чекліст",video_url:"https://example.com/video8"},
-    9:{title:"Урок 9. Емулятор: 1 ПК замість 100 телефонів",short:"Емулятор",text:"Навіщо він у P2P і як економить час/гроші\nСкільки вікон тягне слабкий/середній/потужний ПК\nБанки в емуляторі працюють стабільно після апдейтів\nОтримаєш PDF з посиланням і налаштуваннями",video_url:"https://example.com/video9"},
-    10:{title:"Урок 10. Як рахувати прибуток у P2P",short:"Прибуток",text:"Ручний розрахунок і метод через % зазору\nExcel/Google Sheets: обов'язкові поля для обліку\nНаш Telegram-бот: CSV з Binance — повний звіт за день/місяць",video_url:"https://example.com/video10"},
-};
+  /* ═══════ TELEGRAM ═══════ */
+  const tg = window.Telegram?.WebApp;
+  if(tg){tg.ready();tg.expand();tg.setHeaderColor('#09090f');tg.setBackgroundColor('#09090f')}
 
-const QUIZZES={
-    1:[{q:"Що таке P2P-арбітраж?",options:["Торгівля криптою через централізовану біржу","Заробіток на різниці курсів між покупцями та продавцями","Інвестування в акції","Майнінг криптовалюти"],correct:1,explanation:"P2P-арбітраж — це заробіток на спреді (різниці) між ціною купівлі та продажу криптовалюти між реальними людьми."},{q:"Який потенціал доходу у P2P?",options:["До $100/міс","Від $500 до $10K+/міс","Тільки $50/міс","Заробити неможливо"],correct:1,explanation:"При правильному підході P2P може приносити від $500 до $10,000+ на місяць залежно від обсягів."}],
-    2:[{q:"Яка біржа є номер 1 у світі для P2P?",options:["Bybit","OKX","Binance","Huobi"],correct:2,explanation:"Binance — найбільша криптобіржа у світі з найбільшим обсягом P2P-торгівлі."},{q:"Для чого потрібна верифікація?",options:["Для краси","Для підвищення лімітів та довіри","Це необов'язково","Тільки для виведення грошей"],correct:1,explanation:"Верифікація підвищує ліміти, додає довіру контрагентів і відкриває статус мерчанта."}],
-    3:[{q:"Що таке 2FA?",options:["Другий акаунт","Двофакторна аутентифікація","Два фінансових активи","Подвійний фільтр"],correct:1,explanation:"2FA (двофакторна аутентифікація) захищає акаунт додатковим кодом при вході."}],
-    4:[{q:"Що таке прогрів акаунту?",options:["Майнінг криптовалюти","Поступове нарощування активності для отримання статусу мерчанта","Видалення старих угод","Зміна пароля"],correct:1,explanation:"Прогрів — це поступове нарощування кількості угод та обсягів для отримання статусу мерчанта."}],
-    5:[{q:"Навіщо тримати окрему картку для P2P?",options:["Для зручності","Щоб уникнути блокування основної картки банком","Немає причини","Для знижок"],correct:1,explanation:"Окрема картка ізолює P2P-операції від повсякденних фінансів і знижує ризик блокування."}],
-    6:[{q:"Що таке чорний трикутник у P2P?",options:["Тип криптовалюти","Шахрайська схема з використанням третіх осіб","Назва біржі","Вид графіка"],correct:1,explanation:"Чорний трикутник — це шахрайська схема, де гроші надходять від третьої особи, а не від контрагента."}],
-    7:[{q:"Що таке T+1 обмеження?",options:["Комісія біржі","Затримка виведення після поповнення на 1 день","Тип ордера","Ціна активу"],correct:1,explanation:"T+1 означає, що після покупки крипти потрібно чекати 1 день перед виведенням."}],
-    8:[{q:"Коли потрібно подавати апеляцію?",options:["Завжди після угоди","Коли контрагент не виконує умови угоди","Щоб отримати бонус","Ніколи"],correct:1,explanation:"Апеляція подається, коли другий учасник порушує умови — не оплачує або не відпускає крипту."}],
-    9:[{q:"Навіщо потрібен емулятор у P2P?",options:["Для ігор","Щоб працювати з кількох акаунтів/банків з одного ПК","Для хакінгу","Для перегляду відео"],correct:1,explanation:"Емулятор дозволяє відкрити кілька банківських додатків на одному ПК замість купівлі десятків телефонів."}],
-    10:[{q:"Як правильно рахувати прибуток?",options:["На око","Через Excel/Google Sheets з усіма полями","Не потрібно рахувати","Тільки за курсом біржі"],correct:1,explanation:"Облік через таблиці дозволяє бачити реальний прибуток, відстежувати динаміку та знаходити помилки."}],
-};
+  /* ═══════ WAYFORPAY ═══════ */
+  const MERCHANT_ACCOUNT  = 'YOUR_MERCHANT_ACCOUNT';
+  const MERCHANT_DOMAIN   = 'daviscortes.github.io';
+  const BOT_USERNAME      = 'YOUR_BOT_USERNAME';
 
-const ACHIEVEMENTS={
-    first_step:{icon:"\u{1F3C5}",title:"Перший крок",desc:"Переглянув перший урок"},
-    halfway:{icon:"\u2B50",title:"Половина шляху",desc:"Пройшов 50% курсу"},
-    graduate:{icon:"\u{1F3C6}",title:"Випускник",desc:"Пройшов увесь курс"},
-    full_pack:{icon:"\u{1F48E}",title:"Повний пакет",desc:"Придбав обидва курси"},
-    in_game:{icon:"\u{1F680}",title:"У грі",desc:"Перейшов до основного бота"},
-    quiz_ace:{icon:"\u{1F9E0}",title:"Розумник",desc:"5 правильних квізів"},
-    quiz_master:{icon:"\u{1F393}",title:"Квіз-майстер",desc:"10 квізів без помилок"},
-    streak_3:{icon:"\u{1F525}",title:"3 дні поспіль",desc:"Серія з 3 днів"},
-    streak_7:{icon:"\u{1F525}",title:"Тижнева серія",desc:"Серія з 7 днів"},
-    streak_30:{icon:"\u{1F451}",title:"Місячна серія",desc:"Серія з 30 днів"},
-    level_5:{icon:"\u{1F4C8}",title:"Рівень 5",desc:"Досягнув 5-го рівня"},
-    level_10:{icon:"\u{1F4C8}",title:"Рівень 10",desc:"Досягнув 10-го рівня"},
-    level_20:{icon:"\u{1F4C8}",title:"Рівень 20",desc:"Досягнув 20-го рівня"},
-    fast_learner:{icon:"\u26A1",title:"Швидкий учень",desc:"3 уроки за один день"},
-    night_owl:{icon:"\u{1F989}",title:"Нічна сова",desc:"Урок після 23:00"},
-    early_bird:{icon:"\u{1F426}",title:"Рання пташка",desc:"Урок до 7:00"},
-    curious:{icon:"\u{1F50D}",title:"Допитливий",desc:"Прочитав усі FAQ"},
-};
+  const COURSES={
+    course1:{name:'Smilskiy Course — Базовий (Курс 1)',price:1999,currency:'UAH'},
+    course2:{name:'Smilskiy Course — Pro (Курс 2)',price:3999,currency:'UAH'},
+  };
 
-const FAQ_ITEMS={
-    faq_start_sum:{q:"З якої суми починати?",a:"Мінімально рекомендована сума — <b>$200-500</b>.<br><br>З цим бюджетом ти зможеш:<br>- Робити 3-5 угод на день<br>- Заробляти $5-15 щоденно<br>- Набивати статистику для мерчанта<br><br>Але навіть з $50-100 можна навчитися. Головне — <b>почати</b>!"},
-    faq_risks:{q:"Чи є ризики?",a:"Як і в будь-якому бізнесі, ризики є:<br><br><b>Блокування картки</b> — мінімізується прогрівом<br><b>Скам-угоди</b> — курс навчить розпізнавати<br><b>Волатильність</b> — працюємо з USDT<br><b>Фінмоніторинг</b> — уникається лімітами<br><br>З правильним підходом — ризики мінімальні!"},
-    faq_time:{q:"Скільки часу потрібно?",a:"Все залежить від цілей:<br><br><b>1-2 год/день</b> — $200-500/міс<br><b>3-4 год/день</b> — $500-2000/міс<br><b>Full-time</b> — $2000-10000+/міс<br><br>Можна працювати з телефону. <b>Ти сам собі бос</b>"},
-    faq_legal:{q:"Чи це легально?",a:"P2P-торгівля — це <b>легальна діяльність</b>.<br><br>Ти працюєш через ліцензовані біржі (Binance, Bybit). Важливо:<br>- Декларуй доходи<br>- Не працюй з підозрілими контрагентами<br>- Зберігай історію транзакцій<br><br>Курс навчить працювати правильно"},
-};
+  function payForCourse(key){
+    const c=COURSES[key];if(!c)return;
+    const ref=key+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+    const date=Math.floor(Date.now()/1000);
+    showLoad(true);
+    const pay=new WayForPay();
+    pay.run({
+      merchantAccount:MERCHANT_ACCOUNT,merchantDomainName:MERCHANT_DOMAIN,
+      authorizationType:'SimpleSignature',merchantSignature:'GENERATE_ON_SERVER',
+      orderReference:ref,orderDate:date,amount:c.price,currency:c.currency,
+      productName:[c.name],productPrice:[c.price],productCount:[1],
+      language:'UA',
+      returnUrl:`https://t.me/${BOT_USERNAME}?start=${key}`,
+      serviceUrl:`https://daviscortes.github.io/wayforpay-callback`,
+    },
+    function(r){showLoad(false);notify('✅ Оплата успішна! Переходимо…','ok');
+      if(tg){tg.sendData(JSON.stringify({action:'payment_success',course:key,orderRef:ref}))}
+      else{setTimeout(()=>{window.location.href=`https://t.me/${BOT_USERNAME}?start=${key}`},1500)}},
+    function(r){showLoad(false);notify('❌ Оплату відхилено','err')},
+    function(r){showLoad(false);notify('⏳ Оплата в обробці…','ok')});
+    setTimeout(()=>showLoad(false),2000);
+  }
 
-const P2P_TIPS=["Ніколи не відпускай крипту поки гроші не прийшли на карту. Правило номер 1!","Тримай окрему картку для P2P — уникнеш питань від банку.","Починай з малих сум. 10 угод по $100 краще за одну на $1000.","Записуй свої угоди — відстежуй прибуток і помічай помилки.","Стеж за курсами на різних біржах — найкращі спреди несподівані.","Верифіковані акаунти мають більше довіри і кращий ліміт.","Використовуй 2FA скрізь. Безпека = гроші.","Працюй тільки з перевіреними контрагентами.","Стабільні 1-2% краще ніж ризикові 5%.","Найкращий час для P2P — ранок та вечір."];
-const P2P_FACTS=["Щоденний обсяг P2P на Binance перевищує $500 млн!","Середній P2P-трейдер заробляє 1-3% на кожній угоді.","78% успішних трейдерів ведуть облік угод.","Найбільший P2P-ринок — Нігерія, потім Китай і В'єтнам.","Мерчанти з рейтингом 99%+ отримують 3x більше угод.","USDT — 89% усіх P2P-угод.","Досвідчений арбітражник обробляє 20-50 угод/день.","Прогрів картки — 2-4 тижні, але захищає на місяці."];
-const DAILY_CHALLENGES=[{id:"view_lesson",text:"Переглянь 1 урок",xp:20,type:"lesson",target:1},{id:"view_2_lessons",text:"Переглянь 2 уроки",xp:40,type:"lesson",target:2},{id:"pass_quiz",text:"Пройди 1 квіз",xp:25,type:"quiz",target:1},{id:"pass_2_quizzes",text:"Пройди 2 квізи",xp:50,type:"quiz",target:2},{id:"read_tip",text:"Прочитай пораду",xp:10,type:"tip",target:1},{id:"check_profile",text:"Переглянь профіль",xp:10,type:"profile",target:1}];
-const LEVEL_RANKS=[[1,"Новачок"],[3,"Учень"],[5,"Студент"],[8,"Досвідчений"],[12,"Просунутий"],[16,"Майстер"],[20,"Експерт P2P"],[25,"Легенда"]];
-const COURSE1_MAT="Матеріали Курс 1:\n\n1. Підтримка (30 хв - 6 год, 7 днів)\n2. Методичка Описание объявлений\n3. Методичка Как подать апелляцию";
-const COURSE2_MAT="Матеріали Курс 2:\n\n1. Чат підтримки (5-30 хв, 14 днів)\n2. Pro-бот аналітики (14 днів)\n3. Созвон в неділю\n4. Методичка по банкам\n5. Призначення платежів\n6. Емулятор\n7. Пошук клієнтів";
-const TOTAL_LESSONS=10;
+  /* ═══════ UI HELPERS ═══════ */
+  function showLoad(v){document.getElementById('payOverlay').classList.toggle('show',v)}
+  function notify(t,type){const n=document.getElementById('notif');n.textContent=t;n.className='notif '+(type==='err'?'err ':'')+' show';setTimeout(()=>n.classList.remove('show'),4000)}
+  function toggleFaq(el){el.closest('.faq-item').classList.toggle('open')}
 
-const DEMO_PRICES={"USDT/UAH":41.50,"BTC/USDT":67500,"ETH/USDT":3450};
+  /* ═══════ SCROLL REVEAL ═══════ */
+  const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target)}})},{threshold:.08,rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 
-/* ================================================================
-   API CONFIG
-   ================================================================ */
-// Change API_BASE to your server URL when deployed
-const API_BASE = (function(){
-    var h = window.location.hostname;
-    if(h === 'daviscortes.github.io') return 'https://YOUR_SERVER.com'; // <-- Replace with your server
-    if(h === 'localhost' || h === '127.0.0.1') return 'http://'+h+':8000';
-    return 'http://'+h+':8000';
-})();
+  /* ═══════ ANIMATED COUNTERS ═══════ */
+  let counted=false;
+  const cObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting&&!counted){counted=true;animateCounters();cObs.unobserve(e.target)}})},{threshold:.5});
+  const counterRow=document.querySelector('.counters');
+  if(counterRow)cObs.observe(counterRow);
 
-/* ================================================================
-   HELPERS
-   ================================================================ */
-function xpForLevel(l){return Math.floor(100*Math.pow(l,1.5))}
-function levelFromXp(xp){var l=1;while(xpForLevel(l+1)<=xp)l++;return l}
-function xpProgress(xp){var l=levelFromXp(xp);return{cur:xp-xpForLevel(l),need:xpForLevel(l+1)-xpForLevel(l)}}
-function getRank(l){var r="Новачок";for(var i=0;i<LEVEL_RANKS.length;i++){if(l>=LEVEL_RANKS[i][0])r=LEVEL_RANKS[i][1]}return r}
-function avatarUrl(n,s,bg){s=s||128;bg=bg||'6C5CE7';return'https://ui-avatars.com/api/?name='+encodeURIComponent(n)+'&size='+s+'&background='+bg+'&color=fff&bold=true&format=svg'}
-function getSt(k,d){try{var v=localStorage.getItem('sc_'+k);return v?JSON.parse(v):(d===undefined?null:d)}catch(e){return d===undefined?null:d}}
-function setSt(k,v){try{localStorage.setItem('sc_'+k,JSON.stringify(v))}catch(e){}}
-function fmtMoney(n){return parseFloat(n).toLocaleString('uk-UA',{minimumFractionDigits:2,maximumFractionDigits:2})}
-
-function apiRequest(endpoint,method,body){
-    method=method||'GET';
-    body=body||null;
-    var opts={method:method,headers:{'Content-Type':'application/json'}};
-    if(body) opts.body=JSON.stringify(body);
-    return fetch(API_BASE+endpoint,opts).then(function(r){
-        if(!r.ok) return r.json().catch(function(){return{detail:r.statusText}}).then(function(err){throw new Error(err.detail||r.statusText)});
-        return r.json();
-    }).catch(function(e){
-        console.warn('API error:',endpoint,e.message);
-        return null;
+  function animateCounters(){
+    document.querySelectorAll('.counter-box .num').forEach(el=>{
+      const target=+el.dataset.target;let cur=0;
+      const step=Math.max(1,Math.floor(target/60));
+      const interval=setInterval(()=>{cur+=step;if(cur>=target){cur=target;clearInterval(interval)}
+        el.textContent=target>=1000?cur.toLocaleString('uk-UA'):cur+(el.closest('.counter-box').querySelector('.lbl').textContent.includes('%')?'%':'+');
+      },25);
     });
-}
+  }
 
-/* ================================================================
-   APP
-   ================================================================ */
-var App={
-    tg:null, user:null, userId:null, currentCourse:null, currentLesson:null, quizState:null, progressChart:null,
-    selectedPair:'USDT/UAH', apiOnline:false, _aiHistoryLoaded:false,
-    state:{c1_viewed:[],c2_viewed:[],xp:0,streak:0,quizzes_correct:0,quizzes_total:0,earned_achievements:[],quiz_results:{},demo_balance:1000,referral_count:0,level:1,rank:'Новачок',position:0},
+  /* ═══════ PARALLAX ORBS ═══════ */
+  let tick=false;
+  window.addEventListener('scroll',()=>{if(!tick){requestAnimationFrame(()=>{const y=window.scrollY;
+    document.querySelectorAll('.orb').forEach((o,i)=>{o.style.transform=`translateY(${y*(0.04+i*0.015)}px)`});tick=false});tick=true}});
 
-    init:function(){
-        var self=this;
-        self.tg=window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null;
-        if(self.tg){
-            self.tg.ready();self.tg.expand();
-            if(self.tg.colorScheme==='light') document.body.classList.add('light-theme');
-            self.tg.BackButton.onClick(function(){self.handleBack()});
-            self.user=self.tg.initDataUnsafe?self.tg.initDataUnsafe.user:null;
-        }
-        self.userId=self.user?self.user.id:getSt('userId',0);
-        if(self.userId) setSt('userId',self.userId);
-
-        // Load from localStorage
-        var saved=getSt('state');
-        if(saved){for(var k in saved){if(saved.hasOwnProperty(k))self.state[k]=saved[k]}}
-
-        self.parseUrlData();
-
-        // Sync from server then render
-        self.syncFromServer().then(function(){
-            // Update streak
-            if(self.userId && self.apiOnline){
-                apiRequest('/api/streak?user_id='+self.userId,'POST');
-            }
-            self.renderHome();
-            self.showDailyContent();
-            self.initChallenge();
-        });
-    },
-
-    parseUrlData:function(){
-        try{
-            var p=new URLSearchParams(window.location.search);
-            var d=p.get('data');
-            if(d){var o=JSON.parse(atob(d));for(var k in o){if(o.hasOwnProperty(k))this.state[k]=o[k]}this.saveState()}
-        }catch(e){}
-    },
-
-    syncFromServer:function(){
-        var self=this;
-        if(!self.userId) return Promise.resolve();
-        return apiRequest('/api/user/'+self.userId).then(function(data){
-            if(data){
-                self.apiOnline=true;
-                self.state.xp=data.xp||0;
-                self.state.streak=data.streak_days||0;
-                self.state.c1_viewed=data.c1_viewed||[];
-                self.state.c2_viewed=data.c2_viewed||[];
-                self.state.earned_achievements=data.achievements||[];
-                self.state.level=data.level||1;
-                self.state.rank=data.rank||'Новачок';
-                self.state.position=data.position||0;
-                self.state.demo_balance=data.demo_balance||1000;
-                self.state.referral_count=data.referral_count||0;
-                if(data.quiz_stats){
-                    self.state.quizzes_correct=data.quiz_stats.correct||0;
-                    self.state.quizzes_total=data.quiz_stats.total||0;
-                }
-                self.saveState();
-            }
-        });
-    },
-
-    saveState:function(){setSt('state',this.state)},
-
-    sendToBot:function(action,extra){
-        extra=extra||{};
-        if(this.tg){try{this.tg.sendData(JSON.stringify(Object.assign({action:action},extra)))}catch(e){}}
-    },
-
-    showToast:function(text,type,ms){
-        type=type||'success';ms=ms||3000;
-        var t=document.createElement('div');t.className='toast '+type;t.textContent=text;
-        document.body.appendChild(t);setTimeout(function(){t.remove()},ms);
-    },
-
-    navigate:function(page){
-        document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
-        var el=document.getElementById('page-'+page);
-        if(el) el.classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(function(n){
-            n.classList.toggle('active',n.dataset.page===page);
-        });
-        if(this.tg){
-            if(page==='home') this.tg.BackButton.hide();
-            else this.tg.BackButton.show();
-        }
-        var self=this;
-        switch(page){
-            case 'home': self.renderHome(); break;
-            case 'profile': self.renderProfile(); break;
-            case 'leaderboard': self.renderLeaderboard(); break;
-            case 'achievements': self.renderAchievementsPage(); break;
-            case 'faq': self.renderFaqPage(); break;
-            case 'ai': self.renderAi(); break;
-            case 'demo': self.renderDemo(); break;
-            case 'settings': self.renderSettings(); break;
-        }
-        window.scrollTo({top:0,behavior:'smooth'});
-    },
-
-    handleBack:function(){
-        var active=document.querySelector('.page.active');
-        if(!active) return this.navigate('home');
-        var id=active.id.replace('page-','');
-        var routes={course:'home',lesson:'course',quiz:'lesson','quiz-results':'lesson',achievements:'profile',settings:'profile'};
-        this.navigate(routes[id]||'home');
-    },
-
-    /* ============ HOME ============ */
-    renderHome:function(){
-        var s=this.state;
-        var name=this.user?this.user.first_name:'Гравець';
-        var lvl=levelFromXp(s.xp);
-        var prog=xpProgress(s.xp);
-        var pct=prog.need>0?Math.min(100,Math.round(prog.cur/prog.need*100)):0;
-        var rank=getRank(lvl);
-
-        var uc=document.getElementById('home-user-card');
-        uc.querySelector('.avatar').src=avatarUrl(name);
-        uc.querySelector('.name').textContent=name;
-        uc.querySelector('.rank-badge').textContent=rank+' \u2022 Рівень '+lvl;
-        uc.querySelector('.xp-text').textContent=s.xp+' XP \u2022 '+prog.cur+'/'+prog.need+' до наступного';
-        uc.querySelector('.progress-fill').style.width=pct+'%';
-
-        var c1p=Math.round(s.c1_viewed.length/TOTAL_LESSONS*100);
-        var c2p=Math.round(s.c2_viewed.length/TOTAL_LESSONS*100);
-        document.getElementById('home-courses').innerHTML=
-            '<div class="card" style="cursor:pointer" onclick="App.openCourse(\'course1\')">'+
-                '<div class="card-header"><div class="icon" style="background:rgba(108,92,231,0.15);color:var(--primary)">&#x1F4D8;</div><div><h3>Базовий курс</h3><div class="subtitle">'+s.c1_viewed.length+'/'+TOTAL_LESSONS+' уроків</div></div></div>'+
-                '<div class="progress-bar"><div class="progress-fill" style="width:'+c1p+'%"></div></div>'+
-            '</div>'+
-            '<div class="card" style="cursor:pointer" onclick="App.openCourse(\'course2\')">'+
-                '<div class="card-header"><div class="icon" style="background:rgba(0,206,206,0.15);color:var(--accent)">&#x1F4D7;</div><div><h3>Pro курс</h3><div class="subtitle">'+s.c2_viewed.length+'/'+TOTAL_LESSONS+' уроків</div></div></div>'+
-                '<div class="progress-bar"><div class="progress-fill" style="width:'+c2p+'%"></div></div>'+
-            '</div>';
-    },
-
-    showDailyContent:function(){
-        var d=Math.floor(Date.now()/(1000*86400));
-        document.getElementById('daily-tip').innerHTML='<span class="tip-icon">&#x1F4A1;</span> '+P2P_TIPS[d%P2P_TIPS.length];
-        document.getElementById('daily-fact').innerHTML='<span class="fact-icon">&#x1F4CA;</span> '+P2P_FACTS[d%P2P_FACTS.length];
-    },
-
-    initChallenge:function(){
-        var d=Math.floor(Date.now()/(1000*86400));
-        var ch=DAILY_CHALLENGES[d%DAILY_CHALLENGES.length];
-        var done=getSt('ch_'+ch.id,0);
-        var pct=Math.min(100,Math.round(done/ch.target*100));
-        document.getElementById('home-challenge').innerHTML=
-            '<div class="card-header"><div class="icon" style="background:rgba(255,170,0,0.15);color:var(--warning)">&#x1F3AF;</div><div><h3>Денне завдання</h3><div class="subtitle">+'+ch.xp+' XP</div></div></div>'+
-            '<div style="font-size:14px;margin-bottom:8px">'+ch.text+'</div>'+
-            '<div class="challenge-progress"><div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:'+pct+'%"></div></div><span class="cp-text">'+done+'/'+ch.target+'</span></div>';
-    },
-
-    /* ============ COURSE ============ */
-    openCourse:function(ck){
-        this.currentCourse=ck;
-        var prefix=ck==='course1'?'c1':'c2';
-        var viewed=this.state[prefix+'_viewed']||[];
-        document.getElementById('course-title').textContent=ck==='course1'?'Базовий курс':'Pro курс';
-        document.getElementById('course-progress-text').textContent=viewed.length+'/'+TOTAL_LESSONS+' уроків пройдено';
-        document.getElementById('course-progress-fill').style.width=Math.round(viewed.length/TOTAL_LESSONS*100)+'%';
-        var html='';
-        for(var i=1;i<=TOTAL_LESSONS;i++){
-            var l=LESSONS[i];
-            var lid=prefix+'_l'+i;
-            var v=viewed.indexOf(lid)>=0?'viewed':'';
-            html+='<div class="lesson-item '+v+'" onclick="App.openLesson('+i+')"><div class="num">'+i+'</div><div class="title">'+l.short+'</div></div>';
-        }
-        document.getElementById('lesson-grid').innerHTML=html;
-        this.navigate('course');
-    },
-
-    showMaterials:function(){
-        var txt=this.currentCourse==='course1'?COURSE1_MAT:COURSE2_MAT;
-        if(this.tg) this.tg.showAlert(txt);
-        else alert(txt);
-    },
-
-    /* ============ LESSON ============ */
-    openLesson:function(num){
-        var self=this;
-        self.currentLesson=num;
-        var l=LESSONS[num];
-        if(!l) return;
-        document.getElementById('lesson-title').textContent=l.title;
-        var vf=document.getElementById('lesson-video');
-        if(l.video_url && l.video_url.indexOf('example.com')<0){
-            var vid=l.video_url.match(/(?:youtu\.be\/|v=)([\w-]+)/);
-            if(vid) vf.innerHTML='<iframe class="video-frame" src="https://www.youtube.com/embed/'+vid[1]+'" frameborder="0" allowfullscreen></iframe>';
-            else vf.innerHTML='<a href="'+l.video_url+'" target="_blank" class="btn btn-primary btn-block"><i class="fas fa-play"></i> Дивитися відео</a>';
-        }else{vf.innerHTML='<div class="video-frame" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted)"><i class="fas fa-video" style="font-size:32px"></i></div>'}
-        document.getElementById('lesson-text').textContent=l.text;
-        var hasQuiz=QUIZZES[num]&&QUIZZES[num].length>0;
-        document.getElementById('lesson-quiz-btn').innerHTML=hasQuiz?'<button class="btn btn-primary btn-block" onclick="App.startQuiz('+num+')"><i class="fas fa-brain"></i> Пройти квіз</button>':'';
-        document.getElementById('lesson-nav').innerHTML=
-            (num>1?'<button class="btn btn-outline btn-sm" onclick="App.openLesson('+(num-1)+')"><i class="fas fa-arrow-left"></i> Урок '+(num-1)+'</button>':'<span></span>')+
-            (num<TOTAL_LESSONS?'<button class="btn btn-outline btn-sm" onclick="App.openLesson('+(num+1)+')">Урок '+(num+1)+' <i class="fas fa-arrow-right"></i></button>':'<span></span>');
-        self.navigate('lesson');
-        self.markViewed(num);
-    },
-
-    markViewed:function(num){
-        var self=this;
-        if(!self.currentCourse) return;
-        var prefix=self.currentCourse==='course1'?'c1':'c2';
-        var lid=prefix+'_l'+num;
-        var key=prefix+'_viewed';
-        if(self.state[key].indexOf(lid)>=0) return;
-        if(self.apiOnline){
-            apiRequest('/api/lesson/view','POST',{user_id:self.userId,lesson_id:lid,course:self.currentCourse}).then(function(res){
-                if(res&&res.xp_added){
-                    self.state.xp+=res.xp_added;
-                    self.showToast('+'+res.xp_added+' XP за урок!');
-                }
-            });
-        }else{
-            self.state.xp+=50;
-            self.showToast('+50 XP за урок!');
-        }
-        self.state[key].push(lid);
-        self.saveState();
-        self.sendToBot('lesson_viewed',{lesson_id:lid});
-        self.incChallenge('lesson');
-    },
-
-    backToCourse:function(){this.navigate('course');if(this.currentCourse)this.openCourse(this.currentCourse)},
-    backToLesson:function(){if(this.currentLesson)this.openLesson(this.currentLesson)},
-
-    /* ============ QUIZ ============ */
-    startQuiz:function(ln){
-        var qs=QUIZZES[ln];
-        if(!qs||!qs.length) return;
-        this.quizState={lesson:ln,questions:qs,current:0,correct:0,answered:[]};
-        this.renderQuiz();
-        this.navigate('quiz');
-    },
-
-    renderQuiz:function(){
-        var qs=this.quizState;
-        var q=qs.questions[qs.current];
-        var dots='';
-        for(var i=0;i<qs.questions.length;i++){
-            var cls='quiz-dot';
-            if(i===qs.current) cls+=' active';
-            else if(typeof qs.answered[i]!=='undefined') cls+=qs.answered[i]?' correct':' wrong';
-            dots+='<div class="'+cls+'"></div>';
-        }
-        document.getElementById('quiz-dots').innerHTML=dots;
-        document.getElementById('quiz-question').textContent=q.q;
-        var opts='';
-        for(var j=0;j<q.options.length;j++){opts+='<div class="quiz-option" onclick="App.answer('+j+')">'+q.options[j]+'</div>'}
-        document.getElementById('quiz-options').innerHTML=opts;
-        document.getElementById('quiz-explanation').style.display='none';
-    },
-
-    answer:function(si){
-        var self=this;
-        var qs=self.quizState;
-        if(typeof qs.answered[qs.current]!=='undefined') return;
-        var q=qs.questions[qs.current];
-        var isCorrect=si===q.correct;
-        qs.answered[qs.current]=isCorrect;
-        if(isCorrect) qs.correct++;
-        var opts=document.querySelectorAll('#quiz-options .quiz-option');
-        opts[si].classList.add(isCorrect?'selected-correct':'selected-wrong');
-        if(!isCorrect) opts[q.correct].classList.add('selected-correct');
-        var expl=document.getElementById('quiz-explanation');
-        expl.textContent=q.explanation;expl.style.display='block';
-        self.state.quizzes_total++;
-        if(isCorrect){
-            self.state.quizzes_correct++;
-            self.state.xp+=30;
-            self.showToast('+30 XP!');
-        }
-        if(self.apiOnline){
-            apiRequest('/api/quiz/answer','POST',{
-                user_id:self.userId,
-                course:self.currentCourse||'course1',
-                lesson:qs.lesson,
-                q_index:qs.current,
-                correct:isCorrect
-            });
-        }
-        self.saveState();
-        self.sendToBot('quiz_answer',{lesson:qs.lesson,q:qs.current,correct:isCorrect});
-        self.incChallenge('quiz');
-        setTimeout(function(){
-            if(qs.current<qs.questions.length-1){qs.current++;self.renderQuiz()}
-            else self.quizResults();
-        },1500);
-    },
-
-    quizResults:function(){
-        var qs=this.quizState;
-        var pct=Math.round(qs.correct/qs.questions.length*100);
-        var emoji='&#x1F614;',msg='Спробуй ще раз!';
-        if(pct>=80){emoji='&#x1F389;';msg='Чудовий результат!'}
-        else if(pct>=50){emoji='&#x1F44D;';msg='Непогано!'}
-        var bonus='';
-        if(pct===100){this.state.xp+=100;bonus='<div style="margin-top:12px;color:var(--success);font-weight:700">+100 XP бонус за 100%!</div>';this.saveState()}
-        document.getElementById('quiz-results-content').innerHTML=
-            '<div style="font-size:64px;margin-bottom:16px">'+emoji+'</div>'+
-            '<h2 style="font-size:24px;font-weight:800;margin-bottom:8px">'+msg+'</h2>'+
-            '<p style="color:var(--text-secondary)">Правильних: '+qs.correct+'/'+qs.questions.length+' ('+pct+'%)</p>'+
-            bonus+
-            '<div style="margin-top:24px;display:flex;gap:10px;justify-content:center">'+
-                '<button class="btn btn-outline" onclick="App.startQuiz('+qs.lesson+')"><i class="fas fa-redo"></i> Ще раз</button>'+
-                '<button class="btn btn-primary" onclick="App.backToCourse()"><i class="fas fa-arrow-left"></i> До курсу</button>'+
-            '</div>';
-        this.navigate('quiz-results');
-    },
-
-    /* ============ AI CHAT ============ */
-    renderAi:function(){
-        var self=this;
-        if(self.apiOnline && !self._aiHistoryLoaded){
-            self._aiHistoryLoaded=true;
-            apiRequest('/api/ai/history?user_id='+self.userId+'&limit=20').then(function(h){
-                if(h&&h.length){
-                    var mc=document.getElementById('ai-messages');
-                    h.reverse();
-                    for(var i=0;i<h.length;i++){
-                        self._addAiMsg('user',h[i].question);
-                        self._addAiMsg('bot',h[i].answer,h[i].id);
-                    }
-                    mc.scrollTop=mc.scrollHeight;
-                }
-            });
-        }
-    },
-
-    aiQuick:function(el){
-        document.getElementById('ai-input').value=el.textContent;
-        this.aiSend();
-    },
-
-    aiSend:function(){
-        var self=this;
-        var input=document.getElementById('ai-input');
-        var q=input.value.trim();
-        if(!q) return;
-        input.value='';
-        document.getElementById('ai-quick-qs').style.display='none';
-        self._addAiMsg('user',q);
-
-        var typing=document.getElementById('ai-typing');
-        typing.style.display='block';
-        var mc=document.getElementById('ai-messages');
-        mc.scrollTop=mc.scrollHeight;
-
-        document.getElementById('ai-send').disabled=true;
-
-        if(self.apiOnline){
-            apiRequest('/api/ai/ask','POST',{user_id:self.userId,question:q}).then(function(res){
-                typing.style.display='none';
-                document.getElementById('ai-send').disabled=false;
-                if(res&&res.answer){
-                    self._addAiMsg('bot',res.answer,res.conv_id,res.sources,res.lesson_source);
-                }else{
-                    self._addAiMsg('bot','Не вдалося отримати відповідь. Спробуйте пізніше.');
-                }
-                mc.scrollTop=mc.scrollHeight;
-            });
-        }else{
-            typing.style.display='none';
-            document.getElementById('ai-send').disabled=false;
-            self._addAiMsg('bot','API-сервер недоступний. Запустіть бота для роботи AI.');
-            mc.scrollTop=mc.scrollHeight;
-        }
-    },
-
-    _addAiMsg:function(role,text,convId,sources,lessonSrc){
-        var mc=document.getElementById('ai-messages');
-        var d=document.createElement('div');
-        d.className='ai-msg '+role;
-        if(role==='bot'){
-            var html=text;
-            if(sources) html+='<div class="sources">Джерела: '+sources+'</div>';
-            if(lessonSrc) html+='<div class="sources">Урок: '+lessonSrc+'</div>';
-            if(convId){
-                html+='<div class="rate-btns">'+
-                    '<div class="rate-btn" onclick="App.aiRate('+convId+',1,this)">&#x1F44D;</div>'+
-                    '<div class="rate-btn" onclick="App.aiRate('+convId+',-1,this)">&#x1F44E;</div>'+
-                '</div>'+
-                '<div class="action-btns">'+
-                    '<div class="action-btn" onclick="App.aiDetail('+convId+')">Детальніше</div>'+
-                    '<div class="action-btn" onclick="App.aiExample('+convId+')">Приклад</div>'+
-                '</div>';
-            }
-            d.innerHTML=html;
-        }else{
-            d.textContent=text;
-        }
-        mc.appendChild(d);
-    },
-
-    aiRate:function(convId,rating,btn){
-        if(btn.classList.contains('rated')) return;
-        apiRequest('/api/ai/rate','POST',{conv_id:convId,rating:rating});
-        btn.classList.add('rated');
-        this.showToast(rating>0?'Дякую за оцінку!':'Враховано');
-    },
-
-    aiDetail:function(convId){
-        var self=this;
-        var typing=document.getElementById('ai-typing');
-        typing.style.display='block';
-        apiRequest('/api/ai/detail','POST',{conv_id:convId}).then(function(res){
-            typing.style.display='none';
-            if(res&&res.answer) self._addAiMsg('bot',res.answer);
-            var mc=document.getElementById('ai-messages');
-            mc.scrollTop=mc.scrollHeight;
-        });
-    },
-
-    aiExample:function(convId){
-        var self=this;
-        var typing=document.getElementById('ai-typing');
-        typing.style.display='block';
-        apiRequest('/api/ai/example','POST',{conv_id:convId}).then(function(res){
-            typing.style.display='none';
-            if(res&&res.answer) self._addAiMsg('bot',res.answer);
-            var mc=document.getElementById('ai-messages');
-            mc.scrollTop=mc.scrollHeight;
-        });
-    },
-
-    /* ============ DEMO TRADING ============ */
-    renderDemo:function(){
-        document.getElementById('demo-balance-amount').textContent='$'+fmtMoney(this.state.demo_balance);
-        document.getElementById('demo-price').placeholder=DEMO_PRICES[this.selectedPair]||'0';
-        this.loadDemoHistory();
-    },
-
-    selectPair:function(el,pair){
-        this.selectedPair=pair;
-        document.querySelectorAll('.trade-pair-btn').forEach(function(b){b.classList.remove('active')});
-        el.classList.add('active');
-        document.getElementById('demo-price').placeholder=DEMO_PRICES[pair]||'0';
-    },
-
-    demoTrade:function(type){
-        var self=this;
-        var amount=parseFloat(document.getElementById('demo-amount').value);
-        var price=parseFloat(document.getElementById('demo-price').value)||DEMO_PRICES[self.selectedPair];
-        if(!amount||amount<=0){self.showToast('Вкажіть суму','warning');return}
-        if(amount>self.state.demo_balance){self.showToast('Недостатньо коштів','error');return}
-
-        if(self.apiOnline){
-            apiRequest('/api/demo/trade','POST',{user_id:self.userId,type:type,amount:amount,price:price}).then(function(res){
-                if(res){
-                    self.state.demo_balance=res.new_balance;
-                    self.saveState();
-                    var profitStr=res.profit>=0?'+$'+fmtMoney(res.profit):'-$'+fmtMoney(Math.abs(res.profit));
-                    self.showToast((type==='buy'?'Купівля':'Продаж')+': '+profitStr+' | +'+res.xp_earned+' XP',res.profit>=0?'success':'warning');
-                    self.renderDemo();
-                }
-            });
-        }else{
-            var spread=Math.random()*3;
-            var profit=type==='buy'?amount*(spread/100):amount*((Math.random()*5-2)/100);
-            self.state.demo_balance+=profit;
-            self.state.xp+=5;
-            self.saveState();
-            self.showToast((profit>=0?'+':'')+' $'+fmtMoney(profit),profit>=0?'success':'warning');
-            self.renderDemo();
-        }
-        document.getElementById('demo-amount').value='';
-    },
-
-    loadDemoHistory:function(){
-        var self=this;
-        var cont=document.getElementById('demo-history');
-        if(self.apiOnline){
-            apiRequest('/api/demo/history?user_id='+self.userId+'&limit=20').then(function(h){
-                if(h&&h.length){
-                    cont.innerHTML=h.map(function(t){
-                        return '<div class="trade-history-item">'+
-                            '<div><div class="trade-type '+t.type+'">'+(t.type==='buy'?'\u2191 Купівля':'\u2193 Продаж')+'</div><div class="trade-details">$'+fmtMoney(t.amount)+' @ '+t.price+'</div></div>'+
-                            '<div class="trade-profit '+(t.profit>=0?'positive':'negative')+'">'+(t.profit>=0?'+':'')+' $'+fmtMoney(t.profit)+'</div>'+
-                        '</div>';
-                    }).join('');
-                }else{
-                    cont.innerHTML='<p style="text-align:center;color:var(--text-muted);padding:20px">Ще немає угод</p>';
-                }
-            });
-        }else{
-            cont.innerHTML='<p style="text-align:center;color:var(--text-muted);padding:20px">Історія доступна при підключенні до сервера</p>';
-        }
-    },
-
-    /* ============ PROFILE ============ */
-    renderProfile:function(){
-        var s=this.state;
-        var name=this.user?this.user.first_name:'Гравець';
-        var lvl=levelFromXp(s.xp);
-        var prog=xpProgress(s.xp);
-        var pct=prog.need>0?Math.min(100,Math.round(prog.cur/prog.need*100)):0;
-
-        document.getElementById('profile-avatar').src=avatarUrl(name,160);
-        document.getElementById('profile-name').textContent=name;
-        document.getElementById('profile-rank').textContent=getRank(lvl)+' \u2022 Рівень '+lvl;
-        document.getElementById('profile-xp-fill').style.width=pct+'%';
-        document.getElementById('profile-xp-text').textContent=s.xp+' XP \u2022 '+prog.cur+'/'+prog.need+' до рівня '+(lvl+1);
-
-        document.getElementById('profile-stats').innerHTML=
-            '<div class="stat-item"><div class="stat-value">'+s.streak+'</div><div class="stat-label">Серія</div></div>'+
-            '<div class="stat-item"><div class="stat-value">'+s.quizzes_correct+'</div><div class="stat-label">Квізи</div></div>'+
-            '<div class="stat-item"><div class="stat-value">'+(s.position||'\u2014')+'</div><div class="stat-label">Місце</div></div>';
-
-        document.getElementById('profile-courses').innerHTML=
-            '<div class="card-header"><div class="icon" style="background:rgba(108,92,231,0.15);color:var(--primary)">&#x1F4CA;</div><h3>Прогрес курсів</h3></div>'+
-            '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Базовий</span><span>'+s.c1_viewed.length+'/'+TOTAL_LESSONS+'</span></div><div class="progress-bar"><div class="progress-fill" style="width:'+(s.c1_viewed.length/TOTAL_LESSONS*100)+'%"></div></div></div>'+
-            '<div><div style="display:flex;justify-content:space-between;font-size:13px"><span>Pro</span><span>'+s.c2_viewed.length+'/'+TOTAL_LESSONS+'</span></div><div class="progress-bar"><div class="progress-fill" style="width:'+(s.c2_viewed.length/TOTAL_LESSONS*100)+'%;background:linear-gradient(90deg,var(--accent),var(--success))"></div></div></div>';
-
-        var achKeys=Object.keys(ACHIEVEMENTS);
-        var achHtml='';
-        for(var i=0;i<Math.min(6,achKeys.length);i++){
-            var k=achKeys[i];var a=ACHIEVEMENTS[k];
-            var earned=s.earned_achievements.indexOf(k)>=0;
-            achHtml+='<div class="ach-item '+(earned?'earned':'locked')+'" onclick="App.showAch(\''+k+'\')"><div class="ach-icon">'+a.icon+'</div><div class="ach-title">'+a.title+'</div></div>';
-        }
-        document.getElementById('profile-achs').innerHTML=achHtml;
-
-        this.renderChart();
-        this.incChallenge('profile');
-    },
-
-    renderChart:function(){
-        var ctx=document.getElementById('profile-chart');
-        if(this.progressChart) this.progressChart.destroy();
-        this.progressChart=new Chart(ctx,{
-            type:'line',
-            data:{
-                labels:['Т1','Т2','Т3','Т4','Т5'],
-                datasets:[
-                    {label:'Курс 1',data:[0,Math.min(3,this.state.c1_viewed.length),Math.min(6,this.state.c1_viewed.length),Math.min(8,this.state.c1_viewed.length),this.state.c1_viewed.length],borderColor:'#6C5CE7',tension:0.4,fill:false},
-                    {label:'Курс 2',data:[0,Math.min(2,this.state.c2_viewed.length),Math.min(4,this.state.c2_viewed.length),Math.min(7,this.state.c2_viewed.length),this.state.c2_viewed.length],borderColor:'#00CECE',tension:0.4,fill:false},
-                ]
-            },
-            options:{responsive:true,plugins:{legend:{labels:{color:'#a0a0b8',font:{size:11}}}},scales:{x:{ticks:{color:'#6b6b80'}},y:{beginAtZero:true,max:TOTAL_LESSONS,ticks:{color:'#6b6b80'}}}}
-        });
-    },
-
-    /* ============ LEADERBOARD ============ */
-    renderLeaderboard:function(){
-        var self=this;
-        var renderLb=function(lb){
-            if(!lb||!lb.length){
-                var names=['Олексій','Марія','Дмитро','Аня','Іван','Катя','Микола','Тетяна','Богдан','Юлія'];
-                lb=names.map(function(n,i){return{position:i+1,first_name:n,xp:Math.max(0,2000-i*180),level:Math.max(1,12-i),rank:getRank(Math.max(1,12-i)),streak:Math.max(0,10-i)}});
-                lb.push({position:0,first_name:self.user?self.user.first_name:'Я',xp:self.state.xp,level:levelFromXp(self.state.xp),user_id:self.userId,rank:getRank(levelFromXp(self.state.xp))});
-                lb.sort(function(a,b){return b.xp-a.xp});
-                lb.forEach(function(u,i){u.position=i+1});
-            }
-
-            var top3=[];
-            if(lb[1]) top3.push(lb[1]);
-            if(lb[0]) top3.push(lb[0]);
-            if(lb[2]) top3.push(lb[2]);
-            var podiumClasses=['podium-2','podium-1','podium-3'];
-            var medals=['\u{1F948}','\u{1F947}','\u{1F949}'];
-            var podHtml='';
-            for(var i=0;i<top3.length;i++){
-                var u=top3[i];
-                podHtml+='<div class="podium-item '+podiumClasses[i]+'">'+
-                    '<div style="font-size:20px">'+medals[i]+'</div>'+
-                    '<img src="'+avatarUrl(u.first_name||'?',64)+'" alt="">'+
-                    '<div class="name">'+(u.first_name||'Гравець')+'</div>'+
-                    '<div class="xp">'+(u.xp||0)+' XP</div>'+
-                '</div>';
-            }
-            document.getElementById('lb-podium').innerHTML=podHtml;
-
-            var listHtml='';
-            for(var j=3;j<lb.length;j++){
-                var u2=lb[j];
-                var highlight=u2.user_id===self.userId?' style="background:rgba(108,92,231,0.08)"':'';
-                listHtml+='<div class="lb-item"'+highlight+'>'+
-                    '<div class="pos">'+u2.position+'</div>'+
-                    '<img src="'+avatarUrl(u2.first_name||'?',48)+'">'+
-                    '<div class="info"><div class="lb-name">'+(u2.first_name||'Гравець')+'</div><div class="lb-rank">'+(u2.rank||getRank(u2.level||1))+'</div></div>'+
-                    '<div class="lb-xp">'+(u2.xp||0)+' XP</div>'+
-                '</div>';
-            }
-            document.getElementById('lb-list').innerHTML=listHtml;
-        };
-
-        if(self.apiOnline){
-            apiRequest('/api/leaderboard?limit=20').then(renderLb);
-        }else{
-            renderLb(null);
-        }
-    },
-
-    /* ============ ACHIEVEMENTS ============ */
-    renderAchievementsPage:function(){
-        var s=this.state;
-        var keys=Object.keys(ACHIEVEMENTS);
-        var html='';
-        for(var i=0;i<keys.length;i++){
-            var k=keys[i];var a=ACHIEVEMENTS[k];
-            var earned=s.earned_achievements.indexOf(k)>=0;
-            html+='<div class="ach-item '+(earned?'earned':'locked')+'" onclick="App.showAch(\''+k+'\')"><div class="ach-icon">'+a.icon+'</div><div class="ach-title">'+a.title+'</div></div>';
-        }
-        document.getElementById('achs-grid').innerHTML=html;
-    },
-
-    showAch:function(k){
-        var a=ACHIEVEMENTS[k];if(!a)return;
-        var earned=this.state.earned_achievements.indexOf(k)>=0;
-        var txt=a.icon+' '+a.title+'\n\n'+a.desc+'\n\nСтатус: '+(earned?'Отримано':'Заблоковано');
-        if(this.tg) this.tg.showAlert(txt);else alert(txt);
-    },
-
-    earnAch:function(k){
-        if(this.state.earned_achievements.indexOf(k)>=0) return;
-        this.state.earned_achievements.push(k);
-        this.saveState();
-        var a=ACHIEVEMENTS[k];
-        this.showToast(a.icon+' '+a.title+'!');
-    },
-
-    /* ============ FAQ ============ */
-    renderFaqPage:function(){
-        var keys=Object.keys(FAQ_ITEMS);
-        var html='';
-        for(var i=0;i<keys.length;i++){
-            var f=FAQ_ITEMS[keys[i]];
-            html+='<div class="faq-item" onclick="this.classList.toggle(\'open\');App.incChallenge(\'tip\')">'+
-                '<div class="faq-q">'+f.q+'</div>'+
-                '<div class="faq-a">'+f.a+'</div>'+
-            '</div>';
-        }
-        document.getElementById('faq-list').innerHTML=html;
-        var tipsHtml='';
-        for(var j=0;j<P2P_TIPS.length;j++) tipsHtml+='<div class="tip-card">'+P2P_TIPS[j]+'</div>';
-        document.getElementById('tips-list').innerHTML=tipsHtml;
-        var factsHtml='';
-        for(var m=0;m<P2P_FACTS.length;m++) factsHtml+='<div class="fact-card">'+P2P_FACTS[m]+'</div>';
-        document.getElementById('facts-list').innerHTML=factsHtml;
-        if(keys.length<=4) this.earnAch('curious');
-    },
-
-    /* ============ SETTINGS ============ */
-    renderSettings:function(){
-        var self=this;
-        var t=document.getElementById('notif-toggle');
-        if(self.apiOnline){
-            apiRequest('/api/settings?user_id='+self.userId).then(function(s){
-                if(s) t.classList.toggle('on',s.notifications_enabled);
-                else t.classList.add('on');
-            });
-        }else{
-            t.classList.toggle('on',getSt('notif',true));
-        }
-        document.getElementById('ref-count').textContent=self.state.referral_count;
-        document.getElementById('ref-link').value='https://t.me/SmilskiyBot?start=ref_'+self.userId;
-    },
-
-    toggleNotif:function(){
-        var t=document.getElementById('notif-toggle');
-        var on=!t.classList.contains('on');
-        t.classList.toggle('on',on);
-        setSt('notif',on);
-        if(this.apiOnline) apiRequest('/api/settings','POST',{user_id:this.userId,notifications_enabled:on});
-    },
-
-    copyRefLink:function(){
-        var self=this;
-        var link=document.getElementById('ref-link').value;
-        if(navigator.clipboard){
-            navigator.clipboard.writeText(link).then(function(){self.showToast('Посилання скопійовано!')});
-        }else{
-            var inp=document.getElementById('ref-link');inp.select();document.execCommand('copy');
-            self.showToast('Посилання скопійовано!');
-        }
-    },
-
-    /* ============ EXPORT ============ */
-    exportData:function(){
-        var self=this;
-        if(self.apiOnline){
-            apiRequest('/api/export?user_id='+self.userId).then(function(data){
-                if(data){
-                    var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-                    var url=URL.createObjectURL(blob);
-                    var a=document.createElement('a');a.href=url;a.download='smilskiy_export_'+self.userId+'.json';
-                    a.click();URL.revokeObjectURL(url);
-                    self.showToast('Дані експортовано!');
-                    return;
-                }
-                self._exportLocal();
-            });
-        }else{
-            self._exportLocal();
-        }
-    },
-
-    _exportLocal:function(){
-        var blob=new Blob([JSON.stringify(this.state,null,2)],{type:'application/json'});
-        var url=URL.createObjectURL(blob);
-        var a=document.createElement('a');a.href=url;a.download='smilskiy_export.json';
-        a.click();URL.revokeObjectURL(url);
-        this.showToast('Дані експортовано (офлайн)!');
-    },
-
-    /* ============ CHALLENGES ============ */
-    incChallenge:function(type){
-        var d=Math.floor(Date.now()/(1000*86400));
-        var ch=DAILY_CHALLENGES[d%DAILY_CHALLENGES.length];
-        if(ch.type!==type) return;
-        var cur=getSt('ch_'+ch.id,0);
-        if(cur>=ch.target) return;
-        cur++;setSt('ch_'+ch.id,cur);
-        if(cur>=ch.target){
-            this.state.xp+=ch.xp;this.saveState();
-            this.showToast('+'+ch.xp+' XP за завдання!');
-        }
-        this.initChallenge();
-    },
-};
-
-/* ============ INIT ============ */
-document.addEventListener('DOMContentLoaded',function(){App.init()});
+  /* ═══════ PARTICLES ═══════ */
+  (function(){
+    const c=document.getElementById('particles');
+    for(let i=0;i<15;i++){
+      const p=document.createElement('div');p.className='particle';
+      const s=2+Math.random()*3;
+      p.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${8+Math.random()*12}s;animation-delay:${Math.random()*10}s;`;
+      c.appendChild(p);
+    }
+  })();
 </script>
+
 </body>
 </html>
