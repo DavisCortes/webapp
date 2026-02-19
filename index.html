@@ -112,7 +112,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 @keyframes shimmer{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
 
 /* ═══ AVATAR ═══ */
-.avatar{border-radius:50%;border:2px solid var(--neon);box-shadow:0 0 15px var(--neon-glow);transition:var(--transition)}
+.avatar{border-radius:50%;border:2px solid var(--neon);box-shadow:0 0 15px var(--neon-glow);transition:var(--transition);object-fit:cover}
 .avatar:hover{box-shadow:0 0 25px var(--neon-glow);transform:scale(1.05)}
 
 /* ═══ USER ROW ═══ */
@@ -731,7 +731,7 @@ function xpFor(l){return Math.floor(100*Math.pow(l,1.5))}
 function lvlOf(xp){var l=1;while(xpFor(l+1)<=xp)l++;return l}
 function xpProg(xp){var l=lvlOf(xp);return{cur:xp-xpFor(l),need:xpFor(l+1)-xpFor(l)}}
 function rankOf(l){var r=RANKS[0][1];for(var i=0;i<RANKS.length;i++){if(l>=RANKS[i][0])r=RANKS[i][1]}return r}
-function avatarUrl(n,s){return'https://ui-avatars.com/api/?name='+encodeURIComponent(n||'?')+'&size='+(s||128)+'&background=6C5CE7&color=fff&bold=true&format=svg'}
+function avatarUrl(n,s,photo){if(photo)return photo;return'https://ui-avatars.com/api/?name='+encodeURIComponent(n||'?')+'&size='+(s||128)+'&background=6C5CE7&color=fff&bold=true&format=svg'}
 
 /* ═══════════════════════════════════════════════════════════════
    APP — CORE
@@ -761,6 +761,9 @@ var App={
   sync:function(){
     var self=this;
     if(!self.userId)return Promise.resolve();
+    // Send photo_url to backend
+    var photoUrl=self.user&&self.user.photo_url?self.user.photo_url:'';
+    if(photoUrl){api('/api/user/'+self.userId+'/sync','POST',{photo_url:photoUrl,first_name:self.user.first_name||'',username:self.user.username||''})}
     return api('/api/user/'+self.userId).then(function(d){
       if(d){self.online=true;
         self.state.xp=d.xp||0;self.state.streak=d.streak_days||0;
@@ -768,6 +771,7 @@ var App={
         self.state.achs=d.achievements||[];self.state.level=d.level||1;
         self.state.rank=d.rank||'🌱 Новачок';self.state.pos=d.position||0;
         self.state.plan=d.plan||'none';self.state.refCount=d.referral_count||0;
+        self.state.photoUrl=d.photo_url||'';
         if(d.quiz_stats){self.state.qOk=d.quiz_stats.correct||0;self.state.qTot=d.quiz_stats.total||0}}
     });
   },
@@ -798,7 +802,8 @@ var App={
     var s=this.state,name=this.user?this.user.first_name:'Гравець';
     var l=lvlOf(s.xp),p=xpProg(s.xp),pct=p.need>0?Math.min(100,Math.round(p.cur/p.need*100)):0;
     var u=document.getElementById('homeUser');
-    u.querySelector('.avatar').src=avatarUrl(name);u.querySelector('.name').textContent=name;
+    var myPhoto=App.user&&App.user.photo_url?App.user.photo_url:(App.state.photoUrl||'');
+    u.querySelector('.avatar').src=avatarUrl(name,128,myPhoto);u.querySelector('.name').textContent=name;
     u.querySelector('.rank').textContent=rankOf(l)+' • Lv.'+l;
     u.querySelector('.xp-info').textContent=s.xp+' XP • '+p.cur+'/'+p.need;
     u.querySelector('.fill').style.width=pct+'%';
@@ -1495,7 +1500,8 @@ App.modules.profile=(function(){
     render:function(){
       var s=App.state,name=App.user?App.user.first_name:'Гравець';
       var l=lvlOf(s.xp),p=xpProg(s.xp),pct=p.need>0?Math.min(100,Math.round(p.cur/p.need*100)):0;
-      document.getElementById('profAvatar').src=avatarUrl(name,160);
+      var myPhoto=App.user&&App.user.photo_url?App.user.photo_url:(App.state.photoUrl||'');
+      document.getElementById('profAvatar').src=avatarUrl(name,160,myPhoto);
       document.getElementById('profName').textContent=name;
       document.getElementById('profRank').textContent=rankOf(l)+' • Lv.'+l;
       var planBadge=document.getElementById('profPlan');
@@ -1552,10 +1558,10 @@ App.modules.leaderboard=(function(){
         var t3=[];if(lb[1])t3.push(lb[1]);if(lb[0])t3.push(lb[0]);if(lb[2])t3.push(lb[2]);
         var pc=['pod-2','pod-1','pod-3'],medals=['🥈','🥇','🥉'],ph='';
         for(var i=0;i<t3.length;i++){var u=t3[i];
-          ph+='<div class="pod '+pc[i]+'"><div class="medal">'+medals[i]+'</div><img src="'+avatarUrl(u.first_name,64)+'" alt=""><div class="p-name">'+(u.first_name||'?')+'</div><div class="p-xp">'+(u.xp||0)+' XP</div></div>'}
+          ph+='<div class="pod '+pc[i]+'"><div class="medal">'+medals[i]+'</div><img src="'+avatarUrl(u.first_name,64,u.photo_url)+'" alt=""><div class="p-name">'+(u.first_name||'?')+'</div><div class="p-xp">'+(u.xp||0)+' XP</div></div>'}}
         document.getElementById('lbPodium').innerHTML=ph;
         var lh='';for(var j=3;j<lb.length;j++){var u2=lb[j],me=u2.user_id===App.userId;
-          lh+='<div class="lb-row'+(me?' me':'')+'"><div class="lb-pos">'+u2.position+'</div><img src="'+avatarUrl(u2.first_name,48)+'"><div class="lb-info"><div class="lb-name">'+(u2.first_name||'?')+'</div><div class="lb-rank">'+(u2.rank||rankOf(u2.level||1))+'</div></div><div class="lb-xp">'+(u2.xp||0)+'</div></div>'}
+          lh+='<div class="lb-row'+(me?' me':'')+'"><div class="lb-pos">'+u2.position+'</div><img src="'+avatarUrl(u2.first_name,48,u2.photo_url)+'"><div class="lb-info"><div class="lb-name">'+(u2.first_name||'?')+'</div><div class="lb-rank">'+(u2.rank||rankOf(u2.level||1))+'</div></div><div class="lb-xp">'+(u2.xp||0)+'</div></div>'}
         document.getElementById('lbList').innerHTML=lh;
       };
       if(App.online)api('/api/leaderboard?limit=20').then(doRender);else doRender(null);
