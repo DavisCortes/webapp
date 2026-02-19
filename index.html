@@ -719,12 +719,14 @@ var App={
     self.user=self.tg&&self.tg.initDataUnsafe?self.tg.initDataUnsafe.user:null;
     self.userId=self.user?self.user.id:0;
     self.initBg();
+    var loaded=false;
+    function hideLoading(){if(loaded)return;loaded=true;document.getElementById('loadingScreen').classList.add('hide');setTimeout(function(){document.getElementById('loadingScreen').style.display='none'},600)}
+    setTimeout(function(){if(!loaded){console.warn('Loading timeout, forcing hide');self.renderHome();hideLoading()}},5000);
     self.sync().then(function(){
       Object.keys(self.modules).forEach(function(k){if(self.modules[k].init)self.modules[k].init()});
       self.renderHome();
-      document.getElementById('loadingScreen').classList.add('hide');
-      setTimeout(function(){document.getElementById('loadingScreen').style.display='none'},600);
-    });
+      hideLoading();
+    }).catch(function(e){console.error('Init error:',e);self.renderHome();hideLoading()});
   },
 
   sync:function(){
@@ -1346,7 +1348,7 @@ App.modules.admin=(function(){
     setAccess:function(uid,plan){
       var action=plan==='revoke'?'revoke':'grant';
       var p=plan==='revoke'?'free':plan;
-      api('/api/admin/grant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,action:action,plan:p})}).then(function(d){
+      api('/api/admin/grant','POST',{user_id:uid,action:action,plan:p}).then(function(d){
         if(d&&d.ok){App.toast((action==='revoke'?'Доступ забрано':'Доступ '+p.toUpperCase()+' видано'),'success');loadUsers()}
         else{App.toast('Помилка: '+(d&&d.detail||'невідомо'),'error')}
       })
@@ -1354,7 +1356,7 @@ App.modules.admin=(function(){
     broadcast:function(){App.openModal('<div style="text-align:center;padding:10px"><h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px">РОЗСИЛКА</h3><textarea id="broadcastText" placeholder="Текст повідомлення..." style="width:100%;height:100px;padding:10px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-sm);color:var(--text);font-family:var(--font-body);font-size:13px;resize:none;outline:none;margin-bottom:12px"></textarea><button class="btn btn-neon btn-block" onclick="App.modules.admin.sendBroadcast()">ВІДПРАВИТИ</button></div>')},
     sendBroadcast:function(){
       var txt=document.getElementById('broadcastText');if(!txt||!txt.value.trim()){App.toast('Введіть текст','error');return}
-      api('/api/admin/broadcast',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt.value.trim()})}).then(function(d){
+      api('/api/admin/broadcast','POST',{text:txt.value.trim()}).then(function(d){
         if(d&&d.ok){App.toast('Розсилка відправлена: '+d.sent+' користувачам','success');App.closeModal()}
         else{App.toast('Помилка: '+(d&&d.detail||'невідомо'),'error')}
       })
