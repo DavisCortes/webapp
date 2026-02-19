@@ -193,6 +193,18 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
   padding:4px 10px;cursor:pointer;font-size:11px;color:var(--text2);transition:var(--transition)}
 .ai-bubble .a-btn:hover{border-color:var(--neon);color:var(--neon)}
 .ai-bubble .a-btn.rated{border-color:var(--green);color:var(--green)}
+.ai-bubble h2,.ai-bubble h3{font-family:var(--font-display);color:var(--neon);margin:12px 0 6px;font-size:15px;font-weight:700}
+.ai-bubble h2:first-child,.ai-bubble h3:first-child{margin-top:0}
+.ai-bubble p{margin:6px 0}
+.ai-bubble ul,.ai-bubble ol{margin:6px 0 6px 18px;padding:0}
+.ai-bubble li{margin:3px 0}
+.ai-bubble strong{color:#e2e8f0;font-weight:700}
+.ai-bubble em{color:var(--text2);font-style:italic}
+.ai-bubble code{background:rgba(110,86,207,.25);padding:1px 5px;border-radius:4px;font-size:12px;color:var(--neon)}
+.ai-bubble pre{background:rgba(0,0,0,.35);border:1px solid var(--glass-border);border-radius:var(--r-xs);padding:10px;margin:8px 0;overflow-x:auto}
+.ai-bubble pre code{background:none;padding:0;font-size:12px;color:var(--text1)}
+.ai-bubble hr{border:none;border-top:1px solid var(--glass-border);margin:10px 0}
+.ai-bubble blockquote{border-left:3px solid var(--neon);margin:8px 0;padding:4px 12px;color:var(--text2);font-style:italic}
 .ai-typing{align-self:flex-start;padding:12px 16px;background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--r-sm);display:none}
 .typing-dots{display:flex;gap:5px}
 .typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--neon);animation:bounce .6s infinite alternate}
@@ -488,38 +500,11 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 <div id="p-accountant" class="page">
   <div class="page-header">
     <div class="icon-box" style="color:var(--green)">📊</div>
-    <div><h2>БУХГАЛТЕР</h2><div class="sub">AI-аналітика P2P</div></div>
+    <div><h2>БУХГАЛТЕР</h2><div class="sub">Binance P2P аналітика</div></div>
   </div>
-  <div class="acc-widget">
-    <div class="lbl">ПРИБУТОК СЬОГОДНІ</div>
-    <div class="val" id="accProfit">$0.00</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px" id="accTrades">0 угод</div>
+  <div id="accountantContent">
+    <div class="g-card" style="text-align:center"><div class="spinner"></div></div>
   </div>
-  <div class="g-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <h3 style="font-family:var(--font-display);font-size:13px;letter-spacing:1px">БІРЖІ</h3>
-      <button class="btn btn-ghost btn-sm" onclick="App.modules.accountant.addExchange()"><i class="fas fa-plus"></i></button>
-    </div>
-    <div id="accExchanges">
-      <div class="exchange-card">
-        <div class="ex-icon">🔶</div>
-        <div><div class="ex-name">Binance</div><div class="ex-status">P2P арбітраж</div></div>
-        <div class="ex-badge ex-disconnected">Відключено</div>
-      </div>
-      <div class="exchange-card">
-        <div class="ex-icon">⚡</div>
-        <div><div class="ex-name">Bybit</div><div class="ex-status">Скоро</div></div>
-        <div class="ex-badge ex-disconnected">Скоро</div>
-      </div>
-    </div>
-  </div>
-  <div class="g-card">
-    <h3 style="font-family:var(--font-display);font-size:13px;letter-spacing:1px;margin-bottom:12px">ГРАФІК ПРИБУТКУ</h3>
-    <canvas id="profitChart" style="max-height:180px"></canvas>
-  </div>
-  <button class="btn btn-neon btn-block" onclick="App.modules.accountant.calculate()" style="margin-top:8px">
-    <i class="fas fa-calculator"></i> ПОРАХУВАТИ FIFO
-  </button>
 </div>
 
 <!-- ========== PROFILE ========== -->
@@ -694,17 +679,18 @@ const FACTS=["Обсяг P2P на Binance > $500M/день!","Середній �
 const CHALLENGES=[{id:"lesson",text:"Переглянь 1 урок",xp:20,type:"lesson",n:1},{id:"2lessons",text:"Переглянь 2 уроки",xp:40,type:"lesson",n:2},
 {id:"quiz",text:"Пройди 1 квіз",xp:25,type:"quiz",n:1},{id:"2quiz",text:"Пройди 2 квізи",xp:50,type:"quiz",n:2},
 {id:"tip",text:"Прочитай пораду",xp:10,type:"tip",n:1},{id:"profile",text:"Переглянь профіль",xp:10,type:"profile",n:1}];
-const RANKS=[[1,"🐣 Новачок"],[3,"📖 Учень"],[5,"🎓 Студент"],[8,"💼 Досвідчений"],[12,"🚀 Просунутий"],
-[16,"⚡ Майстер"],[20,"🔱 Експерт"],[25,"👑 Легенда"]];
+const RANKS=[[1,"🌱 Новачок"],[3,"📖 Учень"],[5,"🎓 Студент"],[8,"🔥 Досвідчений"],[12,"🚀 Просунутий"],
+[16,"⚡ Майстер"],[20,"🏆 Експерт"],[25,"👑 Легенда"]];
 const MAT1="Матеріали Курс 1:\n\n1. Підтримка (30 хв – 6 год, 7 днів)\n2. Методичка: Описание объявлений\n3. Методичка: Як подати апеляцію";
 const MAT2="Матеріали Курс 2:\n\n1. Чат підтримки (5–30 хв, 14 днів)\n2. Pro-бот аналітики (14 днів)\n3. Созвон в неділю\n4. Методичка по банкам\n5. Призначення платежів\n6. Емулятор\n7. Пошук клієнтів";
 const TOTAL=10;const ADMINS=[728309625,584189889];
 
 /* ───── API ───── */
 const API=(function(){var h=location.hostname;
+  if(h.indexOf('ngrok')>=0)return location.origin;
   if(h==='daviscortes.github.io')return'https://fd19-2a02-ab04-2ec6-3f00-dda9-5656-8b3f-3407.ngrok-free.app';
   if(h==='localhost'||h==='127.0.0.1')return'http://'+h+':8000';
-  return'http://'+h+':8000'})();
+  return location.origin})();
 
 function api(ep,method,body){
   method=method||'GET';var o={method:method,headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'}};
@@ -723,7 +709,7 @@ function avatarUrl(n,s){return'https://ui-avatars.com/api/?name='+encodeURICompo
    ═══════════════════════════════════════════════════════════════ */
 var App={
   tg:null,user:null,userId:null,online:false,chart:null,profitChart:null,
-  state:{c1:[],c2:[],xp:0,streak:0,qOk:0,qTot:0,achs:[],plan:'none',refCount:0,level:1,rank:'🐣 Новачок',pos:0},
+  state:{c1:[],c2:[],xp:0,streak:0,qOk:0,qTot:0,achs:[],plan:'none',refCount:0,level:1,rank:'🌱 Новачок',pos:0},
 
   /* ─── INIT ─── */
   init:function(){
@@ -749,7 +735,7 @@ var App={
         self.state.xp=d.xp||0;self.state.streak=d.streak_days||0;
         self.state.c1=d.c1_viewed||[];self.state.c2=d.c2_viewed||[];
         self.state.achs=d.achievements||[];self.state.level=d.level||1;
-        self.state.rank=d.rank||'🐣 Новачок';self.state.pos=d.position||0;
+        self.state.rank=d.rank||'🌱 Новачок';self.state.pos=d.position||0;
         self.state.plan=d.plan||'none';self.state.refCount=d.referral_count||0;
         if(d.quiz_stats){self.state.qOk=d.quiz_stats.correct||0;self.state.qTot=d.quiz_stats.total||0}}
     });
@@ -966,9 +952,30 @@ App.modules.ai=(function(){
       api('/api/ai/example','POST',{conv_id:id}).then(function(r){typ.style.display='none';
         if(r&&r.answer)addMsg('bot',r.answer);var mc=document.getElementById('aiMsgs');mc.scrollTop=mc.scrollHeight})}
   };
+  function md(t){
+    t=t.replace(/```([\s\S]*?)```/g,function(m,c){return'<pre><code>'+c.replace(/</g,'&lt;')+'</code></pre>'});
+    t=t.replace(/`([^`]+)`/g,'<code>$1</code>');
+    t=t.replace(/^### (.+)$/gm,'<h3>$1</h3>');
+    t=t.replace(/^## (.+)$/gm,'<h2>$1</h2>');
+    t=t.replace(/^# (.+)$/gm,'<h2>$1</h2>');
+    t=t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+    t=t.replace(/\*(.+?)\*/g,'<em>$1</em>');
+    t=t.replace(/^---$/gm,'<hr>');
+    t=t.replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>');
+    t=t.replace(/^\d+\. (.+)$/gm,'<li>$1</li>');
+    t=t.replace(/^- (.+)$/gm,'<li>$1</li>');
+    t=t.replace(/(<li>.*<\/li>)/gs,function(m){return'<ul>'+m+'</ul>'});
+    t=t.replace(/<\/ul>\s*<ul>/g,'');
+    t=t.replace(/\n{2,}/g,'</p><p>');
+    t=t.replace(/\n/g,'<br>');
+    t='<p>'+t+'</p>';
+    t=t.replace(/<p><(h[23]|pre|ul|ol|hr|blockquote)/g,'<$1');
+    t=t.replace(/<\/(h[23]|pre|ul|ol|hr|blockquote)><\/p>/g,'</$1>');
+    t=t.replace(/<p><\/p>/g,'');
+    return t}
   function addMsg(role,text,cid,src){var mc=document.getElementById('aiMsgs'),d=document.createElement('div');
     d.className='ai-bubble '+role;
-    if(role==='bot'){var h=text;if(src)h+='<div class="src">📚 '+src+'</div>';
+    if(role==='bot'){var h=md(text);if(src)h+='<div class="src">📚 '+src+'</div>';
       if(cid)h+='<div class="actions">'+
         '<div class="a-btn" onclick="App.modules.ai.rate('+cid+',1,this)">👍</div>'+
         '<div class="a-btn" onclick="App.modules.ai.rate('+cid+',-1,this)">👎</div>'+
@@ -981,20 +988,194 @@ App.modules.ai=(function(){
    MODULE: ACCOUNTANT
    ═══════════════════════════════════════════════════════════════ */
 App.modules.accountant=(function(){
-  var chart=null;
+  var chart=null,binStatus=null;
   return{
     init:function(){},
-    render:function(){this.renderChart()},
+    render:function(){
+      var self=this,el=document.getElementById('accountantContent');
+      if(!el)return;
+      el.innerHTML='<div class="g-card" style="text-align:center"><div class="spinner"></div><p style="color:var(--text2);margin-top:10px">Завантаження...</p></div>';
+      if(App.online){
+        api('/api/binance/status').then(function(st){
+          binStatus=st;
+          if(st&&st.connected){
+            Promise.all([api('/api/binance/dashboard'),api('/api/binance/price?asset=USDT&fiat=UAH')])
+              .then(function(results){self.renderDashboard(results[0],results[1],st)});
+          }else{self.renderDisconnected(st)}
+        });
+      }else{self.renderDisconnected(null)}
+    },
+    renderDisconnected:function(st){
+      var el=document.getElementById('accountantContent');
+      el.innerHTML=
+        '<div class="g-card" style="text-align:center;padding:30px">'+
+        '<div style="font-size:50px;margin-bottom:14px">📊</div>'+
+        '<h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:10px">P2P БУХГАЛТЕР</h3>'+
+        '<p style="font-size:13px;color:var(--text2);margin-bottom:20px">'+(st?st.message||'Binance API не підключено':'API сервер недоступний')+'</p>'+
+        '<p style="font-size:12px;color:var(--text3)">Binance API налаштовується адміністратором на сервері</p></div>';
+    },
+    renderDashboard:function(dash,price,st){
+      var el=document.getElementById('accountantContent');
+      var nick=st.nickname||'Трейдер';
+      var priceVal=price&&price.data?price.data:'—';
+      var h='<div class="g-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
+        '<div><div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px;color:var(--neon)">BINANCE P2P</div>'+
+        '<div style="font-size:13px;color:var(--text2);margin-top:2px">'+nick+'</div></div>'+
+        '<div style="text-align:right"><div style="font-size:11px;color:var(--text3)">USDT/UAH</div>'+
+        '<div style="font-family:var(--font-display);font-size:18px;color:var(--green)">₴'+priceVal+'</div></div></div>';
+
+      if(dash){
+        var buy30=dash.buy_30d||{},sell30=dash.sell_30d||{};
+        h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'+
+          '<div style="padding:12px;background:var(--glass);border-radius:var(--r-sm);text-align:center">'+
+          '<div style="font-size:11px;color:var(--text3)">КУПІВЛЯ 30д</div>'+
+          '<div style="font-family:var(--font-display);font-size:16px;color:var(--neon)">'+(buy30.total_count||0)+'</div>'+
+          '<div style="font-size:11px;color:var(--text2)">'+(buy30.total_amount?parseFloat(buy30.total_amount).toFixed(2):0)+' USDT</div></div>'+
+          '<div style="padding:12px;background:var(--glass);border-radius:var(--r-sm);text-align:center">'+
+          '<div style="font-size:11px;color:var(--text3)">ПРОДАЖ 30д</div>'+
+          '<div style="font-family:var(--font-display);font-size:16px;color:var(--purple)">'+(sell30.total_count||0)+'</div>'+
+          '<div style="font-size:11px;color:var(--text2)">'+(sell30.total_amount?parseFloat(sell30.total_amount).toFixed(2):0)+' USDT</div></div></div>';
+        var commish=dash.commission||{};
+        if(commish&&commish.data){
+          h+='<div style="padding:10px;background:var(--glass);border-radius:var(--r-sm);margin-bottom:14px;font-size:12px">'+
+            '<span style="color:var(--text3)">Комісія:</span> '+
+            '<span style="color:var(--gold)">'+(commish.data.makerRate||'—')+'% мейкер</span> / '+
+            '<span style="color:var(--gold)">'+(commish.data.takerRate||'—')+'% тейкер</span></div>'}
+      }
+
+      h+='</div>'; // close main card
+
+      // Action buttons
+      h+='<div class="g-card"><div class="g2" style="gap:10px">'+
+        '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.showOrders()"><i class="fas fa-list"></i> Угоди</button>'+
+        '<button class="btn btn-purple btn-sm btn-block" onclick="App.modules.accountant.calcProfit()"><i class="fas fa-calculator"></i> FIFO</button></div>'+
+        '<div class="g2" style="gap:10px;margin-top:10px">'+
+        '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.showAds()"><i class="fas fa-search"></i> Оголошення</button>'+
+        '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.showStats()"><i class="fas fa-chart-bar"></i> Статистика</button></div></div>';
+
+      // Profit chart placeholder
+      h+='<div class="g-card"><div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px;margin-bottom:14px">ГРАФІК ПРИБУТКУ</div>'+
+        '<canvas id="profitChart" height="200"></canvas></div>';
+
+      el.innerHTML=h;
+      this.renderChart();
+    },
+    showOrders:function(){
+      var self=this;
+      App.openModal('<div style="padding:10px"><h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px;text-align:center">ІСТОРІЯ УГОД</h3>'+
+        '<div class="g2" style="gap:8px;margin-bottom:12px">'+
+        '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.loadOrders(\'BUY\')">КУПІВЛЯ</button>'+
+        '<button class="btn btn-purple btn-sm btn-block" onclick="App.modules.accountant.loadOrders(\'SELL\')">ПРОДАЖ</button></div>'+
+        '<div id="ordersList" style="max-height:400px;overflow-y:auto"><div class="spinner" style="margin:20px auto"></div></div></div>');
+      self.loadOrders('BUY');
+    },
+    loadOrders:function(type){
+      var el=document.getElementById('ordersList');
+      if(!el)return;
+      el.innerHTML='<div class="spinner" style="margin:20px auto"></div>';
+      api('/api/binance/orders','POST',{trade_type:type,page:1,rows:15}).then(function(r){
+        if(!r||!r.orders||!r.orders.length){el.innerHTML='<p style="text-align:center;color:var(--text3);padding:20px">Угод не знайдено</p>';return}
+        var h='';
+        for(var i=0;i<r.orders.length;i++){
+          var o=r.orders[i],dt=o.createTime?new Date(o.createTime).toLocaleDateString('uk-UA'):'—';
+          var amt=o.amount?parseFloat(o.amount).toFixed(2):'—';
+          var price=o.unitPrice?parseFloat(o.unitPrice).toFixed(2):'—';
+          var total=o.totalPrice?parseFloat(o.totalPrice).toFixed(2):'—';
+          var stColor=o.orderStatus===4?'var(--green)':o.orderStatus===6?'var(--red)':'var(--gold)';
+          h+='<div style="padding:10px;border-bottom:1px solid var(--glass-border);font-size:12px">'+
+            '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
+            '<span style="color:'+(type==='BUY'?'var(--green)':'var(--purple)');font-weight:700">'+type+'</span>'+
+            '<span style="color:var(--text3)">'+dt+'</span></div>'+
+            '<div style="display:flex;justify-content:space-between">'+
+            '<span>'+amt+' '+(o.asset||'USDT')+'</span>'+
+            '<span style="color:var(--text2)">@'+price+'</span>'+
+            '<span style="font-weight:600">'+total+' '+(o.fiat||'UAH')+'</span></div>'+
+            '<div style="color:'+stColor+';font-size:11px;margin-top:2px">'+(o.statusLabel||'')+'</div></div>'
+        }
+        el.innerHTML=h;
+      });
+    },
+    calcProfit:function(){
+      App.openModal('<div style="text-align:center;padding:10px"><div style="font-size:40px;margin-bottom:10px">🧮</div>'+
+        '<h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:10px">FIFO КАЛЬКУЛЯТОР</h3>'+
+        '<p style="font-size:13px;color:var(--text2);margin-bottom:14px">AI аналізує ваші угоди методом FIFO</p>'+
+        '<div class="g2" style="gap:8px;margin-bottom:12px">'+
+        '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.runFifo(7)">7 дн</button>'+
+        '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.runFifo(30)">30 дн</button>'+
+        '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.runFifo(90)">90 дн</button></div>'+
+        '<div id="fifoResult"></div></div>');
+    },
+    runFifo:function(days){
+      var el=document.getElementById('fifoResult');
+      if(!el)return;
+      el.innerHTML='<div class="spinner" style="margin:20px auto"></div><p style="font-size:11px;color:var(--text3)">Аналіз угод... може зайняти хвилину</p>';
+      api('/api/binance/profit','POST',{days:days}).then(function(r){
+        if(!r){el.innerHTML='<p style="color:var(--red)">Помилка</p>';return}
+        var profitColor=r.total_profit_fiat>=0?'var(--green)':'var(--red)';
+        el.innerHTML=
+          '<div style="padding:14px;background:var(--glass);border-radius:var(--r-sm);text-align:left;font-size:12px">'+
+          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Угод оброблено:</span> <b>'+(r.total_orders||0)+'</b></div>'+
+          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Куплено:</span> <b>'+(r.total_bought?parseFloat(r.total_bought).toFixed(2):0)+' USDT</b></div>'+
+          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Продано:</span> <b>'+(r.total_sold?parseFloat(r.total_sold).toFixed(2):0)+' USDT</b></div>'+
+          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Витрати (fiat):</span> <b>'+(r.total_cost_fiat?parseFloat(r.total_cost_fiat).toFixed(2):0)+'</b></div>'+
+          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Виручка (fiat):</span> <b>'+(r.total_revenue_fiat?parseFloat(r.total_revenue_fiat).toFixed(2):0)+'</b></div>'+
+          '<div style="font-size:16px;font-family:var(--font-display);color:'+profitColor+';margin-top:12px;text-align:center">'+
+          'ПРИБУТОК: '+(r.total_profit_fiat?parseFloat(r.total_profit_fiat).toFixed(2):0)+' '+( r.fiat||'UAH')+'</div></div>';
+      });
+    },
+    showAds:function(){
+      App.openModal('<div style="padding:10px"><h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px;text-align:center">ОГОЛОШЕННЯ P2P</h3>'+
+        '<div class="g2" style="gap:8px;margin-bottom:12px">'+
+        '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.loadAds(\'BUY\')">КУПІВЛЯ</button>'+
+        '<button class="btn btn-purple btn-sm btn-block" onclick="App.modules.accountant.loadAds(\'SELL\')">ПРОДАЖ</button></div>'+
+        '<div id="adsList" style="max-height:400px;overflow-y:auto"><div class="spinner" style="margin:20px auto"></div></div></div>');
+      this.loadAds('BUY');
+    },
+    loadAds:function(type){
+      var el=document.getElementById('adsList');
+      if(!el)return;
+      el.innerHTML='<div class="spinner" style="margin:20px auto"></div>';
+      api('/api/binance/ads','POST',{asset:'USDT',fiat:'UAH',trade_type:type,page:1,rows:10}).then(function(r){
+        if(!r||!r.data||!r.data.length){el.innerHTML='<p style="text-align:center;color:var(--text3);padding:20px">Немає оголошень</p>';return}
+        var h='';
+        for(var i=0;i<r.data.length;i++){
+          var ad=r.data[i],adv=ad.advertiser||{};
+          h+='<div style="padding:10px;border-bottom:1px solid var(--glass-border);font-size:12px">'+
+            '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
+            '<span style="font-weight:600">'+(adv.nickName||'—')+'</span>'+
+            '<span style="color:var(--green);font-family:var(--font-display);font-size:14px">'+parseFloat(ad.price).toFixed(2)+'</span></div>'+
+            '<div style="display:flex;justify-content:space-between;color:var(--text2)">'+
+            '<span>'+parseFloat(ad.surplusAmount).toFixed(2)+' USDT</span>'+
+            '<span>'+(ad.minSingleTransAmount||'—')+'–'+(ad.maxSingleTransAmount||'—')+' UAH</span></div></div>'
+        }
+        el.innerHTML=h;
+      });
+    },
+    showStats:function(){
+      App.openModal('<div style="text-align:center;padding:10px"><div style="font-size:40px;margin-bottom:10px">📈</div>'+
+        '<h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px">СТАТИСТИКА ОРДЕРІВ</h3>'+
+        '<div id="binStats"><div class="spinner" style="margin:20px auto"></div></div></div>');
+      api('/api/binance/stats').then(function(r){
+        var el=document.getElementById('binStats');
+        if(!r||!r.data){el.innerHTML='<p style="color:var(--text3)">Дані недоступні</p>';return}
+        var d=r.data;
+        el.innerHTML=
+          '<div style="text-align:left;font-size:12px;padding:10px;background:var(--glass);border-radius:var(--r-sm)">'+
+          '<div style="margin-bottom:6px"><span style="color:var(--text3)">Всього угод (30д):</span> <b>'+(d.orderCount30d||'—')+'</b></div>'+
+          '<div style="margin-bottom:6px"><span style="color:var(--text3)">Completion rate:</span> <b>'+(d.completionRate||'—')+'%</b></div>'+
+          '<div style="margin-bottom:6px"><span style="color:var(--text3)">Позитивних відгуків:</span> <b>'+(d.positiveCount||'—')+'</b></div>'+
+          '<div><span style="color:var(--text3)">Негативних:</span> <b>'+(d.negativeCount||'—')+'</b></div></div>';
+      });
+    },
     renderChart:function(){
       var ctx=document.getElementById('profitChart');if(!ctx)return;
       if(chart)chart.destroy();
       chart=new Chart(ctx,{type:'line',data:{labels:['Пн','Вт','Ср','Чт','Пт','Сб','Нд'],
-        datasets:[{label:'Profit ($)',data:[0,12,8,25,18,32,28],borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.1)',
+        datasets:[{label:'Profit ($)',data:[0,0,0,0,0,0,0],borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.1)',
           tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#10b981',borderWidth:2}]},
         options:{responsive:true,plugins:{legend:{labels:{color:'#94a3b8',font:{family:'Orbitron',size:10}}}},
-          scales:{x:{ticks:{color:'#475569',font:{family:'Orbitron',size:9}}},y:{beginAtZero:true,ticks:{color:'#475569',font:{family:'Orbitron',size:9}}}}}})},
-    addExchange:function(){App.openModal('<div style="text-align:center;padding:10px"><h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px">ПІДКЛЮЧИТИ BINANCE</h3><p style="font-size:13px;color:var(--text2);margin-bottom:16px">Ключі зберігаються на сервері з AES-шифруванням. Ніколи не передаються на фронтенд.</p><div style="margin-bottom:10px"><input type="text" placeholder="API Key" style="width:100%;padding:10px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-sm);color:var(--text);font-family:monospace;font-size:12px;outline:none"></div><div style="margin-bottom:16px"><input type="password" placeholder="Secret Key" style="width:100%;padding:10px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-sm);color:var(--text);font-family:monospace;font-size:12px;outline:none"></div><button class="btn btn-neon btn-block" onclick="App.toast(\'Підключення Binance — скоро!\',\'info\');App.closeModal()">ЗБЕРЕГТИ</button></div>')},
-    calculate:function(){App.openModal('<div style="text-align:center;padding:10px"><div style="font-size:40px;margin-bottom:10px">🧮</div><h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:10px">FIFO КАЛЬКУЛЯТОР</h3><p style="font-size:13px;color:var(--text2)">AI аналізує ваші угоди методом FIFO та рахує прибуток.</p><div class="spinner" style="margin:20px auto"></div><p style="font-size:11px;color:var(--text3)">Підключіть біржу для роботи</p></div>')}
+          scales:{x:{ticks:{color:'#475569',font:{family:'Orbitron',size:9}}},y:{beginAtZero:true,ticks:{color:'#475569',font:{family:'Orbitron',size:9}}}}}});
+    }
   };
 })();
 
@@ -1126,6 +1307,23 @@ App.modules.settings=(function(){
    MODULE: ADMIN
    ═══════════════════════════════════════════════════════════════ */
 App.modules.admin=(function(){
+  function loadUsers(){
+    api('/api/admin/users').then(function(d){
+      if(!d||!d.users){document.getElementById('adminUsers').innerHTML='<div style="text-align:center;padding:20px;color:var(--text3)">Помилка завантаження</div>';return}
+      var h='';d.users.forEach(function(u){
+        var plan=u.plan||'free';var planBadge=plan==='pro'?'<span style="color:var(--purple);font-weight:700">PRO</span>':plan==='basic'?'<span style="color:var(--cyan);font-weight:700">BASIC</span>':'<span style="color:var(--text3)">FREE</span>';
+        h+='<div class="admin-user-row" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--glass-border)">'
+          +'<div><div style="font-weight:600;font-size:13px">'+(u.first_name||'User')+' <span style="color:var(--text3);font-size:11px">ID:'+u.user_id+'</span></div>'
+          +'<div style="font-size:11px;color:var(--text3)">Lv.'+(u.level||1)+' · XP:'+(u.xp||0)+' · '+planBadge+'</div></div>'
+          +'<div style="display:flex;gap:6px">'
+          +'<button class="btn btn-ghost btn-sm" onclick="App.modules.admin.setAccess('+u.user_id+',\'basic\')" title="Basic">B</button>'
+          +'<button class="btn btn-purple btn-sm" onclick="App.modules.admin.setAccess('+u.user_id+',\'pro\')" title="Pro">P</button>'
+          +'<button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="App.modules.admin.setAccess('+u.user_id+',\'revoke\')" title="Забрати"><i class="fas fa-ban"></i></button>'
+          +'</div></div>'
+      });
+      document.getElementById('adminUsers').innerHTML=h||'<div style="text-align:center;padding:20px;color:var(--text3)">Немає користувачів</div>';
+    })
+  }
   return{
     init:function(){},
     render:function(){
@@ -1134,16 +1332,34 @@ App.modules.admin=(function(){
         '<div class="a-box"><div class="a-val">—</div><div class="a-lbl">Users</div></div>'+
         '<div class="a-box"><div class="a-val">—</div><div class="a-lbl">Pro</div></div>'+
         '<div class="a-box"><div class="a-val">—</div><div class="a-lbl">Basic</div></div>'+
-        '<div class="a-box"><div class="a-val">—</div><div class="a-lbl">Revenue</div></div>';
-      if(App.online){api('/api/admin/stats').then(function(d){
-        if(d){var boxes=document.querySelectorAll('#adminStats .a-val');
-          if(boxes[0])boxes[0].textContent=d.total_users||0;
-          if(boxes[1])boxes[1].textContent=d.pro_users||0;
-          if(boxes[2])boxes[2].textContent=d.basic_users||0}})}
-      document.getElementById('adminUsers').innerHTML='<div style="text-align:center;padding:20px;color:var(--text3)">Завантаження...</div>';
+        '<div class="a-box"><div class="a-val">—</div><div class="a-lbl">Уроків</div></div>';
+      if(App.online){
+        api('/api/admin/stats').then(function(d){
+          if(d){var boxes=document.querySelectorAll('#adminStats .a-val');
+            if(boxes[0])boxes[0].textContent=d.total_users||0;
+            if(boxes[1])boxes[1].textContent=d.pro_users||0;
+            if(boxes[2])boxes[2].textContent=d.basic_users||0;
+            if(boxes[3])boxes[3].textContent=d.total_lessons_viewed||0}});
+        loadUsers();
+      }
     },
-    broadcast:function(){App.openModal('<div style="text-align:center;padding:10px"><h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px">РОЗСИЛКА</h3><textarea placeholder="Текст повідомлення..." style="width:100%;height:100px;padding:10px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-sm);color:var(--text);font-family:var(--font-body);font-size:13px;resize:none;outline:none;margin-bottom:12px"></textarea><button class="btn btn-neon btn-block" onclick="App.toast(\'Розсилка через бота\',\'info\');App.closeModal()">ВІДПРАВИТИ</button></div>')},
-    grantAccess:function(){App.openModal('<div style="text-align:center;padding:10px"><h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px">ВИДАТИ ДОСТУП</h3><div style="margin-bottom:10px"><input type="text" placeholder="User ID" style="width:100%;padding:10px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-sm);color:var(--text);font-size:13px;outline:none"></div><div class="g2" style="margin-bottom:14px"><button class="btn btn-ghost btn-sm btn-block" onclick="App.toast(\'Basic\',\'info\');App.closeModal()">BASIC</button><button class="btn btn-purple btn-sm btn-block" onclick="App.toast(\'Pro\',\'info\');App.closeModal()">PRO</button></div></div>')}
+    setAccess:function(uid,plan){
+      var action=plan==='revoke'?'revoke':'grant';
+      var p=plan==='revoke'?'free':plan;
+      api('/api/admin/grant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,action:action,plan:p})}).then(function(d){
+        if(d&&d.ok){App.toast((action==='revoke'?'Доступ забрано':'Доступ '+p.toUpperCase()+' видано'),'success');loadUsers()}
+        else{App.toast('Помилка: '+(d&&d.detail||'невідомо'),'error')}
+      })
+    },
+    broadcast:function(){App.openModal('<div style="text-align:center;padding:10px"><h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px">РОЗСИЛКА</h3><textarea id="broadcastText" placeholder="Текст повідомлення..." style="width:100%;height:100px;padding:10px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-sm);color:var(--text);font-family:var(--font-body);font-size:13px;resize:none;outline:none;margin-bottom:12px"></textarea><button class="btn btn-neon btn-block" onclick="App.modules.admin.sendBroadcast()">ВІДПРАВИТИ</button></div>')},
+    sendBroadcast:function(){
+      var txt=document.getElementById('broadcastText');if(!txt||!txt.value.trim()){App.toast('Введіть текст','error');return}
+      api('/api/admin/broadcast',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt.value.trim()})}).then(function(d){
+        if(d&&d.ok){App.toast('Розсилка відправлена: '+d.sent+' користувачам','success');App.closeModal()}
+        else{App.toast('Помилка: '+(d&&d.detail||'невідомо'),'error')}
+      })
+    },
+    grantAccess:function(){App.openModal('<div style="text-align:center;padding:10px"><h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px">ВИДАТИ ДОСТУП</h3><div style="margin-bottom:10px"><input type="text" id="grantUserId" placeholder="User ID" style="width:100%;padding:10px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-sm);color:var(--text);font-size:13px;outline:none"></div><div class="g2" style="margin-bottom:14px"><button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.admin.setAccess(parseInt(document.getElementById(\'grantUserId\').value),\'basic\');App.closeModal()">BASIC</button><button class="btn btn-purple btn-sm btn-block" onclick="App.modules.admin.setAccess(parseInt(document.getElementById(\'grantUserId\').value),\'pro\');App.closeModal()">PRO</button></div></div>')}
   };
 })();
 
