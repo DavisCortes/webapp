@@ -991,21 +991,62 @@ App.modules.ai=(function(){
    ═══════════════════════════════════════════════════════════════ */
 App.modules.accountant=(function(){
   var chart=null,binStatus=null;
+  function uid(){return App.userId||0}
   return{
     init:function(){},
     render:function(){
       var self=this,el=document.getElementById('accountantContent');
       if(!el)return;
       el.innerHTML='<div class="g-card" style="text-align:center"><div class="spinner"></div><p style="color:var(--text2);margin-top:10px">Завантаження...</p></div>';
-      if(App.online){
-        api('/api/binance/status').then(function(st){
+      if(!App.online){self.renderDisconnected(null);return}
+      // Check if user has keys
+      api('/api/binance/keys/'+uid()).then(function(kr){
+        if(!kr||!kr.has_keys){self.renderSetup();return}
+        api('/api/binance/status?user_id='+uid()).then(function(st){
           binStatus=st;
           if(st&&st.connected){
-            Promise.all([api('/api/binance/dashboard'),api('/api/binance/price?asset=USDT&fiat=UAH')])
-              .then(function(results){self.renderDashboard(results[0],results[1],st)});
+            Promise.all([api('/api/binance/dashboard?user_id='+uid()),api('/api/binance/price?asset=USDT&fiat=UAH')])
+              .then(function(results){self.renderDashboard(results[0],results[1],st)})
+              .catch(function(){self.renderDisconnected(st)});
           }else{self.renderDisconnected(st)}
         });
-      }else{self.renderDisconnected(null)}
+      });
+    },
+    renderSetup:function(){
+      var el=document.getElementById('accountantContent');
+      el.innerHTML=
+        '<div class="g-card" style="text-align:center;padding:30px">'+
+        '<div style="font-size:50px;margin-bottom:14px">🔑</div>'+
+        '<h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:10px">НАЛАШТУВАННЯ BINANCE</h3>'+
+        '<p style="font-size:13px;color:var(--text2);margin-bottom:20px">Додайте ваші API ключі Binance щоб бачити свої угоди та аналітику</p>'+
+        '<div style="text-align:left;margin-bottom:12px">'+
+        '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">API Key</label>'+
+        '<input id="binApiKey" type="text" placeholder="Ваш Binance API Key" style="width:100%;padding:10px 12px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-xs);color:var(--text);font-size:13px;outline:none"></div>'+
+        '<div style="text-align:left;margin-bottom:16px">'+
+        '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Secret Key</label>'+
+        '<input id="binSecretKey" type="password" placeholder="Ваш Binance Secret Key" style="width:100%;padding:10px 12px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-xs);color:var(--text);font-size:13px;outline:none"></div>'+
+        '<div id="binKeyError" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none"></div>'+
+        '<button class="btn btn-neon btn-block" onclick="App.modules.accountant.saveKeys()"><i class="fas fa-save"></i> Зберегти ключі</button>'+
+        '<div style="margin-top:14px;padding:12px;background:var(--glass);border-radius:var(--r-xs);font-size:11px;color:var(--text3);text-align:left">'+
+        '<div style="font-weight:600;margin-bottom:6px;color:var(--gold)">⚠️ Як отримати ключі:</div>'+
+        '<div>1. Binance → API Management</div>'+
+        '<div>2. Create API → введіть назву</div>'+
+        '<div>3. Увімкніть: <b>Enable Reading</b></div>'+
+        '<div>4. Скопіюйте API Key та Secret Key</div>'+
+        '<div style="margin-top:6px;color:var(--red)">НЕ вмикайте виведення та торгівлю!</div></div></div>';
+    },
+    saveKeys:function(){
+      var ak=document.getElementById('binApiKey').value.trim();
+      var sk=document.getElementById('binSecretKey').value.trim();
+      var errEl=document.getElementById('binKeyError');
+      if(!ak||!sk){errEl.textContent='Заповніть обидва поля';errEl.style.display='block';return}
+      errEl.style.display='none';
+      var el=document.getElementById('accountantContent');
+      el.innerHTML='<div class="g-card" style="text-align:center"><div class="spinner"></div><p style="color:var(--text2);margin-top:10px">Перевірка ключів...</p></div>';
+      api('/api/binance/keys','POST',{user_id:uid(),api_key:ak,secret_key:sk}).then(function(r){
+        if(r&&r.ok){App.toast('Ключі збережено! Нікнейм: '+(r.nickname||''),'success');App.modules.accountant.render()}
+        else{App.toast('Помилка збереження ключів','error');App.modules.accountant.renderSetup()}
+      }).catch(function(e){App.toast(e.message||'Помилка','error');App.modules.accountant.renderSetup()});
     },
     renderDisconnected:function(st){
       var el=document.getElementById('accountantContent');
@@ -1014,38 +1055,32 @@ App.modules.accountant=(function(){
         '<div style="font-size:50px;margin-bottom:14px">📊</div>'+
         '<h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:10px">P2P БУХГАЛТЕР</h3>'+
         '<p style="font-size:13px;color:var(--text2);margin-bottom:20px">'+(st?st.message||'Binance API не підключено':'API сервер недоступний')+'</p>'+
-        '<p style="font-size:12px;color:var(--text3)">Binance API налаштовується адміністратором на сервері</p></div>';
+        '<button class="btn btn-neon" onclick="App.modules.accountant.renderSetup()"><i class="fas fa-key"></i> Налаштувати ключі</button></div>';
     },
     renderDashboard:function(dash,price,st){
       var el=document.getElementById('accountantContent');
-      var nick=st.nickname||'Трейдер';
-      var priceVal=price&&price.data?price.data:'—';
+      var nick=(dash&&dash.nickname)?dash.nickname:(st.nickname||'Трейдер');
+      var priceVal=(price&&price.price)?price.price:'—';
       var h='<div class="g-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
         '<div><div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px;color:var(--neon)">BINANCE P2P</div>'+
         '<div style="font-size:13px;color:var(--text2);margin-top:2px">'+nick+'</div></div>'+
         '<div style="text-align:right"><div style="font-size:11px;color:var(--text3)">USDT/UAH</div>'+
         '<div style="font-family:var(--font-display);font-size:18px;color:var(--green)">₴'+priceVal+'</div></div></div>';
 
-      if(dash){
+      if(dash&&dash.ok){
         var buy30=dash.buy_30d||{},sell30=dash.sell_30d||{};
         h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'+
           '<div style="padding:12px;background:var(--glass);border-radius:var(--r-sm);text-align:center">'+
           '<div style="font-size:11px;color:var(--text3)">КУПІВЛЯ 30д</div>'+
           '<div style="font-family:var(--font-display);font-size:16px;color:var(--neon)">'+(buy30.total_count||0)+'</div>'+
-          '<div style="font-size:11px;color:var(--text2)">'+(buy30.total_amount?parseFloat(buy30.total_amount).toFixed(2):0)+' USDT</div></div>'+
+          '<div style="font-size:11px;color:var(--text2)">'+(buy30.total_amount||0)+' USDT</div></div>'+
           '<div style="padding:12px;background:var(--glass);border-radius:var(--r-sm);text-align:center">'+
           '<div style="font-size:11px;color:var(--text3)">ПРОДАЖ 30д</div>'+
           '<div style="font-family:var(--font-display);font-size:16px;color:var(--purple)">'+(sell30.total_count||0)+'</div>'+
-          '<div style="font-size:11px;color:var(--text2)">'+(sell30.total_amount?parseFloat(sell30.total_amount).toFixed(2):0)+' USDT</div></div></div>';
-        var commish=dash.commission||{};
-        if(commish&&commish.data){
-          h+='<div style="padding:10px;background:var(--glass);border-radius:var(--r-sm);margin-bottom:14px;font-size:12px">'+
-            '<span style="color:var(--text3)">Комісія:</span> '+
-            '<span style="color:var(--gold)">'+(commish.data.makerRate||'—')+'% мейкер</span> / '+
-            '<span style="color:var(--gold)">'+(commish.data.takerRate||'—')+'% тейкер</span></div>'}
+          '<div style="font-size:11px;color:var(--text2)">'+(sell30.total_amount||0)+' USDT</div></div></div>';
       }
 
-      h+='</div>'; // close main card
+      h+='</div>';
 
       // Action buttons
       h+='<div class="g-card"><div class="g2" style="gap:10px">'+
@@ -1053,44 +1088,49 @@ App.modules.accountant=(function(){
         '<button class="btn btn-purple btn-sm btn-block" onclick="App.modules.accountant.calcProfit()"><i class="fas fa-calculator"></i> FIFO</button></div>'+
         '<div class="g2" style="gap:10px;margin-top:10px">'+
         '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.showAds()"><i class="fas fa-search"></i> Оголошення</button>'+
-        '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.showStats()"><i class="fas fa-chart-bar"></i> Статистика</button></div></div>';
+        '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.showStats()"><i class="fas fa-chart-bar"></i> Статистика</button></div>'+
+        '<div style="margin-top:10px;text-align:center">'+
+        '<button class="btn btn-ghost btn-sm" onclick="App.modules.accountant.resetKeys()" style="font-size:11px;padding:6px 12px;color:var(--text3)"><i class="fas fa-cog"></i> Змінити ключі</button></div></div>';
 
-      // Profit chart placeholder
+      // Profit chart
       h+='<div class="g-card"><div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px;margin-bottom:14px">ГРАФІК ПРИБУТКУ</div>'+
         '<canvas id="profitChart" height="200"></canvas></div>';
 
       el.innerHTML=h;
       this.renderChart();
     },
+    resetKeys:function(){
+      if(!confirm('Видалити збережені ключі Binance?'))return;
+      api('/api/binance/keys/'+uid(),'DELETE').then(function(){App.toast('Ключі видалено','info');App.modules.accountant.render()});
+    },
     showOrders:function(){
-      var self=this;
       App.openModal('<div style="padding:10px"><h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px;text-align:center">ІСТОРІЯ УГОД</h3>'+
         '<div class="g2" style="gap:8px;margin-bottom:12px">'+
         '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.loadOrders(\'BUY\')">КУПІВЛЯ</button>'+
         '<button class="btn btn-purple btn-sm btn-block" onclick="App.modules.accountant.loadOrders(\'SELL\')">ПРОДАЖ</button></div>'+
         '<div id="ordersList" style="max-height:400px;overflow-y:auto"><div class="spinner" style="margin:20px auto"></div></div></div>');
-      self.loadOrders('BUY');
+      this.loadOrders('BUY');
     },
     loadOrders:function(type){
       var el=document.getElementById('ordersList');
       if(!el)return;
       el.innerHTML='<div class="spinner" style="margin:20px auto"></div>';
-      api('/api/binance/orders','POST',{trade_type:type,page:1,rows:15}).then(function(r){
+      api('/api/binance/orders','POST',{user_id:uid(),trade_type:type,page:1,rows:15}).then(function(r){
         if(!r||!r.orders||!r.orders.length){el.innerHTML='<p style="text-align:center;color:var(--text3);padding:20px">Угод не знайдено</p>';return}
         var h='';
         for(var i=0;i<r.orders.length;i++){
           var o=r.orders[i],dt=o.createTime?new Date(o.createTime).toLocaleDateString('uk-UA'):'—';
           var amt=o.amount?parseFloat(o.amount).toFixed(2):'—';
-          var price=o.unitPrice?parseFloat(o.unitPrice).toFixed(2):'—';
+          var pr=o.unitPrice?parseFloat(o.unitPrice).toFixed(2):'—';
           var total=o.totalPrice?parseFloat(o.totalPrice).toFixed(2):'—';
-          var stColor=o.orderStatus===4?'var(--green)':o.orderStatus===6?'var(--red)':'var(--gold)';
+          var stColor=o.orderStatus==='COMPLETED'?'var(--green)':o.orderStatus==='CANCELLED_BY_SYSTEM'?'var(--red)':'var(--gold)';
           h+='<div style="padding:10px;border-bottom:1px solid var(--glass-border);font-size:12px">'+
             '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
             '<span style="color:'+(type==='BUY'?'var(--green)':'var(--purple)')+';font-weight:700">'+type+'</span>'+
             '<span style="color:var(--text3)">'+dt+'</span></div>'+
             '<div style="display:flex;justify-content:space-between">'+
             '<span>'+amt+' '+(o.asset||'USDT')+'</span>'+
-            '<span style="color:var(--text2)">@'+price+'</span>'+
+            '<span style="color:var(--text2)">@'+pr+'</span>'+
             '<span style="font-weight:600">'+total+' '+(o.fiat||'UAH')+'</span></div>'+
             '<div style="color:'+stColor+';font-size:11px;margin-top:2px">'+(o.statusLabel||'')+'</div></div>'
         }
@@ -1111,18 +1151,26 @@ App.modules.accountant=(function(){
       var el=document.getElementById('fifoResult');
       if(!el)return;
       el.innerHTML='<div class="spinner" style="margin:20px auto"></div><p style="font-size:11px;color:var(--text3)">Аналіз угод... може зайняти хвилину</p>';
-      api('/api/binance/profit','POST',{days:days}).then(function(r){
+      api('/api/binance/profit','POST',{user_id:uid(),days:days,fiat:'UAH',asset:'USDT'}).then(function(r){
         if(!r){el.innerHTML='<p style="color:var(--red)">Помилка</p>';return}
-        var profitColor=r.total_profit_fiat>=0?'var(--green)':'var(--red)';
+        var fifoColor=(r.net_profit||0)>=0?'var(--green)':'var(--red)';
+        var pair=(r.asset||'USDT')+'/'+(r.fiat||'UAH');
+        var unmatch=r.unmatched_buy_crypto||0;
         el.innerHTML=
           '<div style="padding:14px;background:var(--glass);border-radius:var(--r-sm);text-align:left;font-size:12px">'+
-          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Угод оброблено:</span> <b>'+(r.total_orders||0)+'</b></div>'+
-          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Куплено:</span> <b>'+(r.total_bought?parseFloat(r.total_bought).toFixed(2):0)+' USDT</b></div>'+
-          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Продано:</span> <b>'+(r.total_sold?parseFloat(r.total_sold).toFixed(2):0)+' USDT</b></div>'+
-          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Витрати (fiat):</span> <b>'+(r.total_cost_fiat?parseFloat(r.total_cost_fiat).toFixed(2):0)+'</b></div>'+
-          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Виручка (fiat):</span> <b>'+(r.total_revenue_fiat?parseFloat(r.total_revenue_fiat).toFixed(2):0)+'</b></div>'+
-          '<div style="font-size:16px;font-family:var(--font-display);color:'+profitColor+';margin-top:12px;text-align:center">'+
-          'ПРИБУТОК: '+(r.total_profit_fiat?parseFloat(r.total_profit_fiat).toFixed(2):0)+' '+( r.fiat||'UAH')+'</div></div>';
+          '<div style="text-align:center;margin-bottom:10px;font-size:11px;color:var(--text3)">Пара: <b>'+pair+'</b></div>'+
+          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Угод оброблено:</span> <b>'+(r.total_orders||0)+'</b> ('+
+            (r.buy_orders||0)+' купівля / '+(r.sell_orders||0)+' продаж)</div>'+
+          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Куплено:</span> <b>'+(r.total_buy_crypto||0)+' '+(r.asset||'USDT')+'</b> за <b>'+(r.total_buy_fiat||0)+' '+(r.fiat||'UAH')+'</b></div>'+
+          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Продано:</span> <b>'+(r.total_sell_crypto||0)+' '+(r.asset||'USDT')+'</b> за <b>'+(r.total_sell_fiat||0)+' '+(r.fiat||'UAH')+'</b></div>'+
+          (unmatch>0?'<div style="margin-bottom:8px"><span style="color:var(--text3)">Залишок (не продано):</span> <b>'+unmatch+' '+(r.asset||'USDT')+'</b></div>':'')+
+          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Комісії:</span> <b>'+(r.total_commission||0)+' '+(r.asset||'USDT')+'</b></div>'+
+          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Сер. ціна купівлі:</span> <b>'+(r.avg_buy_price||0)+' '+(r.fiat||'UAH')+'</b></div>'+
+          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Сер. ціна продажу:</span> <b>'+(r.avg_sell_price||0)+' '+(r.fiat||'UAH')+'</b></div>'+
+          '<div style="margin-bottom:8px"><span style="color:var(--text3)">Спред:</span> <b>'+(r.avg_spread||0)+' '+(r.fiat||'UAH')+'</b></div>'+
+          '<div style="font-size:16px;font-family:var(--font-display);color:'+fifoColor+';margin-top:12px;text-align:center">'+
+          'FIFO ПРИБУТОК: '+(r.net_profit||0)+' '+(r.fiat||'UAH')+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);text-align:center;margin-top:4px">Зіставлено '+(r.matched_crypto||0)+' '+(r.asset||'USDT')+' (продажі → найстаріші покупки)</div></div>';
       });
     },
     showAds:function(){
@@ -1141,14 +1189,19 @@ App.modules.accountant=(function(){
         if(!r||!r.data||!r.data.length){el.innerHTML='<p style="text-align:center;color:var(--text3);padding:20px">Немає оголошень</p>';return}
         var h='';
         for(var i=0;i<r.data.length;i++){
-          var ad=r.data[i],adv=ad.advertiser||{};
+          var ad=r.data[i];
+          var adPrice=parseFloat(ad.price||0);
+          var adAmount=parseFloat(ad.surplusAmount||0);
+          var rate=parseFloat(ad.monthFinishRate||0)*100;
           h+='<div style="padding:10px;border-bottom:1px solid var(--glass-border);font-size:12px">'+
             '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
-            '<span style="font-weight:600">'+(adv.nickName||'—')+'</span>'+
-            '<span style="color:var(--green);font-family:var(--font-display);font-size:14px">'+parseFloat(ad.price).toFixed(2)+'</span></div>'+
+            '<div><span style="font-weight:600">'+(ad.nickName||'—')+'</span>'+
+            '<span style="font-size:10px;color:var(--text3);margin-left:6px">'+(ad.monthOrderCount||0)+' угод</span></div>'+
+            '<span style="color:var(--green);font-family:var(--font-display);font-size:14px">'+adPrice.toFixed(2)+'</span></div>'+
             '<div style="display:flex;justify-content:space-between;color:var(--text2)">'+
-            '<span>'+parseFloat(ad.surplusAmount).toFixed(2)+' USDT</span>'+
-            '<span>'+(ad.minSingleTransAmount||'—')+'–'+(ad.maxSingleTransAmount||'—')+' UAH</span></div></div>'
+            '<span>'+adAmount.toFixed(2)+' USDT</span>'+
+            '<span>'+(ad.minAmount||'—')+'–'+(ad.maxAmount||'—')+' UAH</span></div>'+
+            (ad.payMethods&&ad.payMethods.length?'<div style="font-size:10px;color:var(--text3);margin-top:3px">'+ad.payMethods.join(', ')+'</div>':'')+'</div>'
         }
         el.innerHTML=h;
       });
@@ -1157,16 +1210,17 @@ App.modules.accountant=(function(){
       App.openModal('<div style="text-align:center;padding:10px"><div style="font-size:40px;margin-bottom:10px">📈</div>'+
         '<h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px">СТАТИСТИКА ОРДЕРІВ</h3>'+
         '<div id="binStats"><div class="spinner" style="margin:20px auto"></div></div></div>');
-      api('/api/binance/stats').then(function(r){
+      api('/api/binance/stats?user_id='+uid()).then(function(r){
         var el=document.getElementById('binStats');
-        if(!r||!r.data){el.innerHTML='<p style="color:var(--text3)">Дані недоступні</p>';return}
-        var d=r.data;
+        if(!r){el.innerHTML='<p style="color:var(--text3)">Дані недоступні</p>';return}
         el.innerHTML=
           '<div style="text-align:left;font-size:12px;padding:10px;background:var(--glass);border-radius:var(--r-sm)">'+
-          '<div style="margin-bottom:6px"><span style="color:var(--text3)">Всього угод (30д):</span> <b>'+(d.orderCount30d||'—')+'</b></div>'+
-          '<div style="margin-bottom:6px"><span style="color:var(--text3)">Completion rate:</span> <b>'+(d.completionRate||'—')+'%</b></div>'+
-          '<div style="margin-bottom:6px"><span style="color:var(--text3)">Позитивних відгуків:</span> <b>'+(d.positiveCount||'—')+'</b></div>'+
-          '<div><span style="color:var(--text3)">Негативних:</span> <b>'+(d.negativeCount||'—')+'</b></div></div>';
+          '<div style="margin-bottom:6px"><span style="color:var(--text3)">Нікнейм:</span> <b>'+(r.nickname||'—')+'</b></div>'+
+          '<div style="margin-bottom:6px"><span style="color:var(--text3)">Днів на Binance:</span> <b>'+(r.registerDays||'—')+'</b></div>'+
+          '<div style="margin-bottom:6px"><span style="color:var(--text3)">KYC:</span> <b>'+(r.kycPassed?'✅ Пройдено':'❌ Ні')+'</b></div>'+
+          '<div style="margin-bottom:6px"><span style="color:var(--text3)">Всього угод (30д):</span> <b>'+(r.orderCount30d||0)+'</b></div>'+
+          '<div style="margin-bottom:6px"><span style="color:var(--text3)">Виконано (30д):</span> <b>'+(r.completedCount30d||0)+'</b></div>'+
+          '<div><span style="color:var(--text3)">Completion rate:</span> <b>'+(r.completionRate||0)+'%</b></div></div>';
       });
     },
     renderChart:function(){
