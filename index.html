@@ -162,6 +162,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
   position:relative;overflow:hidden}
 .video-wrap::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--neon-dim),var(--purple-dim));opacity:0.3}
 .video-wrap i{font-size:36px;color:var(--neon);position:relative;z-index:1;text-shadow:0 0 20px var(--neon-glow)}
+.video-wrap iframe{width:100%;height:100%;border:none;position:absolute;inset:0;z-index:2}
 .lesson-nav{display:flex;justify-content:space-between;gap:10px;margin-top:16px}
 
 /* ═══ QUIZ ═══ */
@@ -652,7 +653,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 
 /* ───── DATA ───── */
 const LESSONS={
-1:{title:"P2P-арбітраж — що це і як заробляти",short:"P2P: вступ",text:"Що таке P2P-арбітраж і чому це — одна з найлегших точок входу в крипту\nРеальний потенціал: від $500 до $10K+/міс\nЩо потрібно для старту: мінімум вкладень, максимум системності\nОбсяг модуля: 10 уроків, що проведуть від нуля до впевненого мержу",xp:50},
+1:{title:"P2P-арбітраж — що це і як заробляти",short:"P2P: вступ",text:"Що таке P2P-арбітраж і чому це — одна з найлегших точок входу в крипту\nРеальний потенціал: від $500 до $10K+/міс\nЩо потрібно для старту: мінімум вкладень, максимум системності\nОбсяг модуля: 10 уроків, що проведуть від нуля до впевненого мержу",xp:50,video:"https://player.cloudinary.com/embed/?cloud_name=dc76ee4qn&public_id=1.1_sylcoh"},
 2:{title:"Реєстрація на біржі: Binance, Bybit, OKX",short:"Реєстрація",text:"Покрокова реєстрація на топ-біржах (Binance, Bybit, OKX)\nВерифікація KYC — що це та навіщо\nP2P-розділ: як знайти, як орієнтуватися\nНалаштування профілю під P2P-торгівлю",xp:50},
 3:{title:"Безпека акаунту та 2FA",short:"Безпека",text:"Чому ламають трейдерів і як цього уникнути\n2FA (Google Authenticator / SMS / Email) — як увімкнути\nАнтифішинг-код: що це і як налаштувати\nЗбереження seed-фрази та бекапів",xp:50},
 4:{title:"Перша угода: покрокова інструкція",short:"Перша угода",text:"Як створити першу P2P-угоду (і не помилитися)\nВибір контрагента: рейтинг, об'єм, відгуки\nЩо писати в чаті угоди\nЧому не варто поспішати: правильна перевірка оплати\nЯк «прогріти» акаунт до статусу мерчанта",xp:50},
@@ -885,7 +886,7 @@ App.modules.courses=(function(){
     lesson:function(n){
       curLesson=n;var l=LESSONS[n];if(!l)return;
       document.getElementById('lessonTitle').textContent='Урок '+n+'. '+l.title;
-      document.getElementById('lessonVideo').innerHTML='<div class="video-wrap"><i class="fas fa-play-circle"></i></div>';
+      document.getElementById('lessonVideo').innerHTML=l.video?'<div class="video-wrap"><iframe src="'+l.video+'" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>':'<div class="video-wrap"><i class="fas fa-play-circle"></i></div>';
       document.getElementById('lessonBody').textContent=l.text;
       var hq=QUIZZES[n]&&QUIZZES[n].length>0;
       document.getElementById('lessonQuizBtn').innerHTML=hq?'<button class="btn btn-neon btn-block" onclick="App.modules.quizzes.start('+n+')"><i class="fas fa-brain"></i> ПРОЙТИ КВІЗ</button>':'';
@@ -1173,6 +1174,9 @@ App.modules.accountant=(function(){
       var spPct=t.spread_pct||0;
       var spColor=spPct>0?'var(--green)':spPct<0?'var(--red)':'var(--text3)';
       var spSign=spPct>0?'+':'';
+      var gapVal=t.gap||0;
+      var gapColor=gapVal>0?'var(--green)':gapVal<0?'var(--red)':'var(--text3)';
+      var gapSign=gapVal>0?'+':'';
       return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'+
         '<div class="today-stat"><div class="ts-icon" style="background:rgba(0,240,255,0.1);color:var(--neon)">'+
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'+
@@ -1188,8 +1192,10 @@ App.modules.accountant=(function(){
         '<div><div class="ts-label">Сер. купівля</div><div class="ts-val">'+(t.avg_buy||'—')+'</div></div></div>'+
         '<div class="today-stat"><div class="ts-icon" style="background:rgba(168,85,247,0.06)">📈</div>'+
         '<div><div class="ts-label">Сер. продаж</div><div class="ts-val">'+(t.avg_sell||'—')+'</div></div></div>'+
-        '<div class="today-stat" style="grid-column:1/-1"><div class="ts-icon" style="background:rgba(251,191,36,0.08)">📐</div>'+
-        '<div><div class="ts-label">Спред</div><div class="ts-val" style="color:'+spColor+'">'+spSign+spPct+'%</div></div></div></div>'+
+        '<div class="today-stat"><div class="ts-icon" style="background:rgba(251,191,36,0.08)">📐</div>'+
+        '<div><div class="ts-label">Спред</div><div class="ts-val" style="color:'+spColor+'">'+spSign+spPct+'%</div></div></div>'+
+        '<div class="today-stat"><div class="ts-icon" style="background:rgba(16,185,129,0.08)">📏</div>'+
+        '<div><div class="ts-label">Зазор</div><div class="ts-val" style="color:'+gapColor+'">'+gapSign+gapVal+' ₴</div></div></div></div>'+
         '<div style="margin-top:8px;padding:10px;background:linear-gradient(135deg,rgba(16,185,129,0.06),rgba(0,240,255,0.04));border:1px solid '+(profColor==="var(--green)"?"rgba(16,185,129,0.2)":"rgba(239,68,68,0.2)")+';border-radius:var(--r-xs);text-align:center">'+
         '<div style="font-size:10px;color:var(--text3);margin-bottom:2px">ПРИБУТОК СЬОГОДНІ</div>'+
         '<div style="font-family:var(--font-display);font-size:20px;font-weight:800;color:'+profColor+'">'+profSign+(t.profit||0)+' ₴</div></div>';
