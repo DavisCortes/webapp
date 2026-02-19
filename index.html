@@ -1040,8 +1040,8 @@ App.modules.accountant=(function(){
   function merchantBadgeSm(){return '<span class="merchant-badge-sm" title="Верифікований мерчант">'+merchantSvg(12)+'</span>'}
   /* ── Exchange logos as inline SVG ── */
   function binanceLogo(s){s=s||18;return '<svg xmlns="http://www.w3.org/2000/svg" width="'+s+'" height="'+s+'" viewBox="0 0 126.61 126.61"><g fill="#f3ba2f"><path d="M38.73 53.2L63.31 28.62l24.58 24.6 14.3-14.31L63.31 0 24.43 38.88l14.3 14.32zM0 63.31l14.3-14.31 14.31 14.31-14.31 14.3L0 63.31zm38.73 10.1L63.31 97.99l24.58-24.58 14.31 14.29-.01.02L63.31 126.61 24.43 87.72l-.01-.01 14.31-14.3zM97.99 63.31l14.3-14.31 14.32 14.31-14.31 14.3-14.31-14.3z"/><path d="M77.83 63.3L63.31 48.78 52.59 59.5l-1.24 1.23-2.54 2.54-.02.04.02.02L63.31 77.83l14.52-14.52.01-.01h-.01z"/></g></svg>'}
-  function bybitLogo(s){s=s||18;return '<svg xmlns="http://www.w3.org/2000/svg" width="'+s+'" height="'+s+'" viewBox="0 0 200 200"><rect width="200" height="200" rx="30" fill="#f7a600"/><path d="M40 52h28.5c15.5 0 28 12.5 28 28s-12.5 28-28 28H54v28h28.5c15.5 0 28 12.5 28 28s-12.5 28-28 28H40V52z" fill="#fff"/><path d="M54 66v28h14.5c7.7 0 14-6.3 14-14s-6.3-14-14-14H54zm0 56v28h14.5c7.7 0 14-6.3 14-14s-6.3-14-14-14H54z" fill="#f7a600"/><rect x="120" y="52" width="16" height="148" rx="4" fill="#fff"/><rect x="146" y="80" width="16" height="120" rx="4" fill="#fff"/></svg>'}
-  function okxLogo(s){s=s||18;return '<svg xmlns="http://www.w3.org/2000/svg" width="'+s+'" height="'+s+'" viewBox="0 0 200 200"><rect width="200" height="200" rx="30" fill="#000"/><rect x="22" y="22" width="48" height="48" rx="8" fill="#fff"/><rect x="76" y="22" width="48" height="48" rx="8" fill="#fff"/><rect x="130" y="22" width="48" height="48" rx="8" fill="#fff"/><rect x="22" y="76" width="48" height="48" rx="8" fill="#fff"/><rect x="130" y="76" width="48" height="48" rx="8" fill="#fff"/><rect x="22" y="130" width="48" height="48" rx="8" fill="#fff"/><rect x="76" y="130" width="48" height="48" rx="8" fill="#fff"/><rect x="130" y="130" width="48" height="48" rx="8" fill="#fff"/></svg>'}
+  function bybitLogo(s){s=s||18;return '<svg xmlns="http://www.w3.org/2000/svg" width="'+s+'" height="'+s+'" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#F7A600"/><polygon points="10,10 20,10 20,20 10,20" fill="#fff"/><polygon points="10,21 25,21 25,31 10,31" fill="#fff"/><polygon points="20,10 26,10 26,20 20,15" fill="#fff"/><polygon points="25,21 31,21 31,31 25,25" fill="#fff"/></svg>'}
+  function okxLogo(s){s=s||18;return '<svg xmlns="http://www.w3.org/2000/svg" width="'+s+'" height="'+s+'" viewBox="0 0 40 40"><rect width="40" height="40" rx="8" fill="#000" stroke="#333" stroke-width="1"/><rect x="4" y="4" width="9" height="9" rx="2" fill="#fff"/><rect x="15.5" y="4" width="9" height="9" rx="2" fill="#fff"/><rect x="27" y="4" width="9" height="9" rx="2" fill="#fff"/><rect x="4" y="15.5" width="9" height="9" rx="2" fill="#fff"/><rect x="27" y="15.5" width="9" height="9" rx="2" fill="#fff"/><rect x="4" y="27" width="9" height="9" rx="2" fill="#fff"/><rect x="15.5" y="27" width="9" height="9" rx="2" fill="#fff"/><rect x="27" y="27" width="9" height="9" rx="2" fill="#fff"/></svg>'}
   // Current active exchange for detail view
   var _activeExchange=null;
   var _exchangeData={binance:{},bybit:{}};
@@ -1120,7 +1120,59 @@ App.modules.accountant=(function(){
         '<div style="width:36px;height:36px;border-radius:10px;background:var(--glass);display:flex;align-items:center;justify-content:center">'+okxLogo(22)+'</div>'+
         '<div><div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px">OKX P2P</div>'+
         '<div style="font-size:11px;color:var(--text3);margin-top:2px">Скоро буде доступно</div></div></div></div>';
+
+      // ─── Combined stats section ───
+      var hasAny=(bd.status&&bd.status.has_keys&&bd.status.connected)||(byd.status&&byd.status.has_keys&&byd.status.connected);
+      if(hasAny){
+        h+='<div class="g-card" style="border:1px solid rgba(0,240,255,0.15);background:linear-gradient(135deg,rgba(0,240,255,0.03),rgba(168,85,247,0.03))">'+
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'+
+          '<div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--neon),var(--purple));display:flex;align-items:center;justify-content:center">'+
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'+
+          '<div><div style="font-family:var(--font-display);font-size:13px;letter-spacing:1px;color:var(--neon)">ЗАГАЛЬНА СТАТИСТИКА</div>'+
+          '<div style="font-size:11px;color:var(--text3);margin-top:2px">Усі біржі разом</div></div></div>';
+        // Combined 30d stats
+        h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">'+
+          '<div style="padding:10px;background:var(--glass);border-radius:var(--r-xs);text-align:center">'+
+          '<div style="font-size:10px;color:var(--text3)">Купівля 30д</div>'+
+          '<div style="font-family:var(--font-display);font-size:15px;color:var(--neon)">'+totalBuy+'</div>'+
+          '<div style="font-size:10px;color:var(--text2)">'+totalBuyU.toFixed(1)+' $</div></div>'+
+          '<div style="padding:10px;background:var(--glass);border-radius:var(--r-xs);text-align:center">'+
+          '<div style="font-size:10px;color:var(--text3)">Продаж 30д</div>'+
+          '<div style="font-family:var(--font-display);font-size:15px;color:var(--purple)">'+totalSell+'</div>'+
+          '<div style="font-size:10px;color:var(--text2)">'+totalSellU.toFixed(1)+' $</div></div></div>';
+        // Action buttons
+        h+='<div class="g2" style="gap:8px">'+
+          '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.showOrders(\'combined\')"><i class="fas fa-list"></i> Угоди</button>'+
+          '<button class="btn btn-purple btn-sm btn-block" onclick="App.modules.accountant.calcProfit(\'combined\')"><i class="fas fa-calculator"></i> FIFO</button></div>'+
+          '<div class="g2" style="gap:8px;margin-top:8px">'+
+          '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.showSpreads()"><i class="fas fa-chart-line"></i> Спреди</button>'+
+          '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.showStats(\'combined\')"><i class="fas fa-chart-bar"></i> Статистика</button></div>';
+        // Chart
+        h+='<div style="margin-top:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
+          '<div style="font-family:var(--font-display);font-size:11px;letter-spacing:1px;color:var(--text2)">ГРАФІК ПРИБУТКУ</div>'+
+          '<div style="display:flex;gap:4px">'+
+          '<button class="btn btn-ghost" style="padding:3px 7px;font-size:9px" onclick="App.modules.accountant.loadCombinedChart(7)">7д</button>'+
+          '<button class="btn btn-ghost" style="padding:3px 7px;font-size:9px" onclick="App.modules.accountant.loadCombinedChart(14)">14д</button>'+
+          '<button class="btn btn-ghost" style="padding:3px 7px;font-size:9px;border-color:var(--neon);color:var(--neon)" onclick="App.modules.accountant.loadCombinedChart(30)">30д</button></div></div>'+
+          '<div id="combinedChartWrap" style="position:relative;height:180px"><canvas id="combinedChart"></canvas>'+
+          '<div id="combinedChartLoading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">'+
+          '<div class="spinner"></div></div></div></div>';
+        // Today section
+        h+='<div style="margin-top:14px"><div style="font-family:var(--font-display);font-size:11px;letter-spacing:1px;color:var(--text2);margin-bottom:10px">'+
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:5px">'+
+          '<circle cx="12" cy="12" r="10" stroke="var(--neon)" stroke-width="2" fill="none"/>'+
+          '<path d="M12 6v6l4 2" stroke="var(--neon)" stroke-width="2" stroke-linecap="round"/></svg>'+
+          'СЬОГОДНІ (усі біржі)</div><div id="combinedTodayStats">'+
+          '<div class="spinner" style="margin:10px auto"></div></div></div>';
+        h+='</div>';
+      }
+
       el.innerHTML=h;
+      // Load combined chart and today if section exists
+      if(hasAny){
+        this.loadCombinedChart(30);
+        this.loadCombinedToday();
+      }
     },
     _exchangeCard:function(exchange,data){
       var st=data.status||{};
@@ -1341,7 +1393,7 @@ App.modules.accountant=(function(){
     },
     showOrders:function(exchange){
       exchange=exchange||_activeExchange||'binance';
-      var exName=exchange==='binance'?'BINANCE':'BYBIT';
+      var exName=exchange==='binance'?'BINANCE':exchange==='bybit'?'BYBIT':'ЗАГАЛЬНІ';
       App.openModal('<div style="padding:10px"><h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px;text-align:center">'+exName+' УГОДИ</h3>'+
         '<div class="g2" style="gap:8px;margin-bottom:12px">'+
         '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.loadOrders(\'BUY\',\''+exchange+'\')">КУПІВЛЯ</button>'+
@@ -1354,15 +1406,18 @@ App.modules.accountant=(function(){
       var el=document.getElementById('ordersList');
       if(!el)return;
       el.innerHTML='<div class="spinner" style="margin:20px auto"></div>';
-      var endpoint,body;
-      if(exchange==='binance'){
+      var endpoint,body,method='POST';
+      if(exchange==='combined'){
+        endpoint='/api/combined/orders?user_id='+uid()+'&trade_type='+type+'&page=1&size=20';
+        body=null;method='GET';
+      }else if(exchange==='binance'){
         endpoint='/api/binance/orders';
         body={user_id:uid(),trade_type:type,page:1,rows:15};
       }else{
         endpoint='/api/bybit/orders';
         body={user_id:uid(),side:type==='BUY'?0:1,page:1,size:15};
       }
-      api(endpoint,'POST',body).then(function(r){
+      (body?api(endpoint,'POST',body):api(endpoint)).then(function(r){
         if(!r||!r.orders||!r.orders.length){el.innerHTML='<p style="text-align:center;color:var(--text3);padding:20px">Угод не знайдено</p>';return}
         var h='';
         for(var i=0;i<r.orders.length;i++){
@@ -1372,9 +1427,10 @@ App.modules.accountant=(function(){
           var total=o.totalPrice?parseFloat(o.totalPrice).toFixed(2):'—';
           var tt=o.tradeType||type;
           var stColor=o.orderStatus==='COMPLETED'?'var(--green)':o.orderStatus==='CANCELLED_BY_SYSTEM'?'var(--red)':'var(--gold)';
+          var exTag=o.exchange?'<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:var(--glass);color:var(--text3);margin-left:4px">'+o.exchange+'</span>':'';
           h+='<div style="padding:10px;border-bottom:1px solid var(--glass-border);font-size:12px">'+
             '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
-            '<span style="color:'+(tt==='BUY'?'var(--green)':'var(--purple)')+';font-weight:700">'+tt+'</span>'+
+            '<span style="color:'+(tt==='BUY'?'var(--green)':'var(--purple)')+';font-weight:700">'+tt+exTag+'</span>'+
             '<span style="color:var(--text3)">'+dt+'</span></div>'+
             '<div style="display:flex;justify-content:space-between">'+
             '<span>'+amt+' '+(o.asset||'USDT')+'</span>'+
@@ -1387,7 +1443,7 @@ App.modules.accountant=(function(){
     },
     calcProfit:function(exchange){
       exchange=exchange||_activeExchange||'binance';
-      var exName=exchange==='binance'?'BINANCE':'BYBIT';
+      var exName=exchange==='binance'?'BINANCE':exchange==='bybit'?'BYBIT':'ЗАГАЛЬНИЙ';
       App.openModal('<div style="text-align:center;padding:10px"><div style="font-size:40px;margin-bottom:10px">🧮</div>'+
         '<h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:10px">'+exName+' FIFO</h3>'+
         '<p style="font-size:13px;color:var(--text2);margin-bottom:14px">Аналіз угод методом FIFO</p>'+
@@ -1402,7 +1458,7 @@ App.modules.accountant=(function(){
       var el=document.getElementById('fifoResult');
       if(!el)return;
       el.innerHTML='<div class="spinner" style="margin:20px auto"></div><p style="font-size:11px;color:var(--text3)">Аналіз угод... може зайняти хвилину</p>';
-      var endpoint=exchange==='binance'?'/api/binance/profit':'/api/bybit/profit';
+      var endpoint=exchange==='combined'?'/api/combined/profit':exchange==='binance'?'/api/binance/profit':'/api/bybit/profit';
       api(endpoint,'POST',{user_id:uid(),days:days,fiat:'UAH',asset:'USDT'}).then(function(r){
         if(!r){el.innerHTML='<p style="color:var(--red)">Помилка</p>';return}
         var fifoColor=(r.net_profit||0)>=0?'var(--green)':'var(--red)';
@@ -1485,7 +1541,7 @@ App.modules.accountant=(function(){
     /* ── Extended Statistics ── */
     showStats:function(exchange){
       exchange=exchange||_activeExchange||'binance';
-      var exName=exchange==='binance'?'BINANCE':'BYBIT';
+      var exName=exchange==='binance'?'BINANCE':exchange==='bybit'?'BYBIT':'ЗАГАЛЬНА';
       App.openModal('<div style="padding:10px"><div style="text-align:center;margin-bottom:14px">'+
         '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" style="margin-bottom:6px">'+
         '<path d="M18 20V10M12 20V4M6 20v-6" stroke="var(--neon)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
@@ -1561,7 +1617,7 @@ App.modules.accountant=(function(){
       if(!from||!to||!el)return;
       el.innerHTML='<div class="spinner" style="margin:20px auto"></div><p style="font-size:11px;color:var(--text3);text-align:center">Розрахунок FIFO...</p>';
       var self=this;
-      var endpoint=exchange==='binance'?'/api/binance/profit':'/api/bybit/profit';
+      var endpoint=exchange==='combined'?'/api/combined/profit':exchange==='binance'?'/api/binance/profit':'/api/bybit/profit';
       api(endpoint,'POST',{user_id:uid(),fiat:'UAH',asset:'USDT',start_date:from,end_date:to}).then(function(r){
         if(!r){el.innerHTML='<p style="color:var(--red)">Помилка</p>';return}
         self._renderProfitResult(el,r,from+' — '+to);
@@ -1588,6 +1644,65 @@ App.modules.accountant=(function(){
         '<div style="text-align:center;margin-top:12px;padding:10px;background:linear-gradient(135deg,rgba(16,185,129,0.06),rgba(0,240,255,0.04));border:1px solid '+(fifoColor==='var(--green)'?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)')+';border-radius:var(--r-xs)">'+
         '<div style="font-size:10px;color:var(--text3)">FIFO ПРИБУТОК</div>'+
         '<div style="font-family:var(--font-display);font-size:20px;font-weight:800;color:'+fifoColor+'">'+profSign+(r.net_profit||0)+' ₴</div></div></div>';
+    },
+    /* ── Combined chart & today (overview page) ── */
+    loadCombinedChart:function(days){
+      var loading=document.getElementById('combinedChartLoading');
+      if(loading)loading.style.display='flex';
+      var self=this;
+      api('/api/combined/chart?user_id='+uid()+'&days='+days).then(function(r){
+        if(loading)loading.style.display='none';
+        if(!r||!r.days||!r.days.length){self._renderCombinedChartEmpty();return}
+        self._renderCombinedChart(r.days);
+      }).catch(function(){
+        if(loading)loading.style.display='none';
+        self._renderCombinedChartEmpty();
+      });
+    },
+    _renderCombinedChartEmpty:function(){
+      var ctx=document.getElementById('combinedChart');if(!ctx)return;
+      if(window._combinedChart)window._combinedChart.destroy();
+      window._combinedChart=new Chart(ctx,{type:'line',data:{labels:[''],datasets:[{label:'Profit',data:[0],borderColor:'#475569',borderWidth:1}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+          scales:{x:{display:false},y:{display:false}}}});
+    },
+    _renderCombinedChart:function(data){
+      var ctx=document.getElementById('combinedChart');if(!ctx)return;
+      if(window._combinedChart)window._combinedChart.destroy();
+      var labels=[],profits=[],volumes=[],colors=[];
+      for(var i=0;i<data.length;i++){
+        labels.push(data[i].label);
+        profits.push(data[i].profit);
+        volumes.push(data[i].volume_fiat);
+        colors.push(data[i].profit>=0?'rgba(16,185,129,0.7)':'rgba(239,68,68,0.7)');
+      }
+      window._combinedChart=new Chart(ctx,{type:'bar',data:{labels:labels,
+        datasets:[
+          {type:'line',label:'Прибуток ₴',data:profits,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.1)',
+            tension:0.4,fill:true,pointRadius:3,pointBackgroundColor:colors,borderWidth:2,yAxisID:'y',order:1},
+          {type:'bar',label:'Обсяг ₴',data:volumes,backgroundColor:'rgba(0,240,255,0.08)',borderColor:'rgba(0,240,255,0.2)',
+            borderWidth:1,borderRadius:3,yAxisID:'y1',order:2}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+          plugins:{legend:{labels:{color:'#94a3b8',font:{family:'Orbitron',size:9},boxWidth:12}},
+            tooltip:{backgroundColor:'rgba(10,10,30,0.95)',borderColor:'rgba(0,240,255,0.2)',borderWidth:1,
+              titleFont:{family:'Orbitron',size:10},bodyFont:{family:'Inter',size:11},
+              callbacks:{label:function(ctx2){return ctx2.dataset.label+': '+ctx2.parsed.y.toLocaleString()+' ₴'}}}},
+          scales:{x:{ticks:{color:'#475569',font:{family:'Orbitron',size:7},maxRotation:45},grid:{color:'rgba(255,255,255,0.03)'}},
+            y:{position:'left',ticks:{color:'#10b981',font:{family:'Orbitron',size:8},callback:function(v){return v+'₴'}},grid:{color:'rgba(255,255,255,0.03)'}},
+            y1:{position:'right',ticks:{color:'#475569',font:{size:7},callback:function(v){return ''}},grid:{display:false}}}}});
+    },
+    loadCombinedToday:function(){
+      var el=document.getElementById('combinedTodayStats');
+      if(!el)return;
+      el.innerHTML='<div class="spinner" style="margin:10px auto"></div>';
+      var self=this;
+      api('/api/combined/today?user_id='+uid()).then(function(t){
+        if(!t){el.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:10px">Немає даних</div>';return}
+        el.innerHTML=self._todayHtml(t);
+      }).catch(function(){
+        el.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:10px">Немає даних</div>';
+      });
     },
     /* ── Profit Chart ── */
     loadChart:function(days){
