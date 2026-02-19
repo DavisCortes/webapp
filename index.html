@@ -1086,7 +1086,7 @@ App.modules.accountant=(function(){
           var stColor=o.orderStatus===4?'var(--green)':o.orderStatus===6?'var(--red)':'var(--gold)';
           h+='<div style="padding:10px;border-bottom:1px solid var(--glass-border);font-size:12px">'+
             '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
-            '<span style="color:'+(type==='BUY'?'var(--green)':'var(--purple)');font-weight:700">'+type+'</span>'+
+            '<span style="color:'+(type==='BUY'?'var(--green)':'var(--purple)')+';font-weight:700">'+type+'</span>'+
             '<span style="color:var(--text3)">'+dt+'</span></div>'+
             '<div style="display:flex;justify-content:space-between">'+
             '<span>'+amt+' '+(o.asset||'USDT')+'</span>'+
