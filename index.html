@@ -240,6 +240,33 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 .exchange-card .ex-badge{margin-left:auto;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
 .ex-connected{background:rgba(16,185,129,0.1);color:var(--green);border:1px solid rgba(16,185,129,0.2)}
 .ex-disconnected{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2)}
+/* Merchant Badge */
+.merchant-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;
+  background:linear-gradient(135deg,rgba(251,191,36,0.15),rgba(245,158,11,0.08));
+  border:1px solid rgba(251,191,36,0.3);font-size:10px;font-weight:700;color:var(--gold);
+  font-family:var(--font-display);letter-spacing:0.5px;vertical-align:middle;
+  animation:merchantPulse 3s ease-in-out infinite}
+.merchant-badge svg{width:14px;height:14px;filter:drop-shadow(0 0 4px rgba(251,191,36,0.6))}
+@keyframes merchantPulse{0%,100%{box-shadow:0 0 8px rgba(251,191,36,0.1)}50%{box-shadow:0 0 16px rgba(251,191,36,0.3)}}
+.merchant-badge-sm{display:inline-flex;align-items:center;gap:2px;vertical-align:middle}
+.merchant-badge-sm svg{width:12px;height:12px;filter:drop-shadow(0 0 3px rgba(251,191,36,0.5))}
+/* Spread table */
+.spread-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.spread-tbl th{padding:6px 4px;text-align:center;color:var(--text3);font-size:10px;font-family:var(--font-display);
+  letter-spacing:0.5px;border-bottom:1px solid var(--glass-border)}
+.spread-tbl td{padding:6px 4px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.03)}
+.spread-tbl tr:hover td{background:var(--glass)}
+/* Date picker */
+.date-input{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-xs);
+  padding:8px 10px;color:var(--text);font-family:var(--font-body);font-size:12px;outline:none;
+  transition:var(--transition);width:100%}
+.date-input:focus{border-color:var(--neon);box-shadow:0 0 10px rgba(0,240,255,0.1)}
+/* Today stats */
+.today-stat{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--glass);
+  border-radius:var(--r-xs);margin-bottom:6px;font-size:12px}
+.today-stat .ts-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0}
+.today-stat .ts-label{color:var(--text3);font-size:10px}.today-stat .ts-val{font-weight:700;font-family:var(--font-display);font-size:13px}
 
 /* ═══ LEADERBOARD ═══ */
 .podium{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin:20px 0 16px}
@@ -990,8 +1017,20 @@ App.modules.ai=(function(){
    MODULE: ACCOUNTANT
    ═══════════════════════════════════════════════════════════════ */
 App.modules.accountant=(function(){
-  var chart=null,binStatus=null;
+  var chart=null,binStatus=null,_dashCache=null;
   function uid(){return App.userId||0}
+  /* ── Merchant badge SVG (animated verified shield) ── */
+  function merchantSvg(size){
+    size=size||16;
+    return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">'+
+      '<defs><linearGradient id="mg" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">'+
+      '<stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient>'+
+      '<filter id="mgl"><feDropShadow dx="0" dy="0" stdDeviation="1.5" flood-color="#fbbf24" flood-opacity="0.6"/></filter></defs>'+
+      '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" fill="url(#mg)" filter="url(#mgl)" opacity="0.9"/>'+
+      '<path d="M10 15.5l-3.5-3.5 1.41-1.41L10 12.67l5.59-5.59L17 8.5l-7 7z" fill="#1a1a2e" stroke="#1a1a2e" stroke-width="0.5"/></svg>'
+  }
+  function merchantBadge(){return '<span class="merchant-badge">'+merchantSvg(14)+' MERCHANT</span>'}
+  function merchantBadgeSm(){return '<span class="merchant-badge-sm" title="Верифікований мерчант">'+merchantSvg(12)+'</span>'}
   return{
     init:function(){},
     render:function(){
@@ -999,15 +1038,19 @@ App.modules.accountant=(function(){
       if(!el)return;
       el.innerHTML='<div class="g-card" style="text-align:center"><div class="spinner"></div><p style="color:var(--text2);margin-top:10px">Завантаження...</p></div>';
       if(!App.online){self.renderDisconnected(null);return}
-      // Check if user has keys
       api('/api/binance/keys/'+uid()).then(function(kr){
         if(!kr||!kr.has_keys){self.renderSetup();return}
         api('/api/binance/status?user_id='+uid()).then(function(st){
           binStatus=st;
           if(st&&st.connected){
-            Promise.all([api('/api/binance/dashboard?user_id='+uid()),api('/api/binance/price?asset=USDT&fiat=UAH')])
-              .then(function(results){self.renderDashboard(results[0],results[1],st)})
-              .catch(function(){self.renderDisconnected(st)});
+            Promise.all([
+              api('/api/binance/dashboard?user_id='+uid()),
+              api('/api/binance/avg-price'),
+              api('/api/binance/today?user_id='+uid())
+            ]).then(function(results){
+              _dashCache=results[0];
+              self.renderDashboard(results[0],results[1],st,results[2])
+            }).catch(function(){self.renderDisconnected(st)});
           }else{self.renderDisconnected(st)}
         });
       });
@@ -1057,15 +1100,20 @@ App.modules.accountant=(function(){
         '<p style="font-size:13px;color:var(--text2);margin-bottom:20px">'+(st?st.message||'Binance API не підключено':'API сервер недоступний')+'</p>'+
         '<button class="btn btn-neon" onclick="App.modules.accountant.renderSetup()"><i class="fas fa-key"></i> Налаштувати ключі</button></div>';
     },
-    renderDashboard:function(dash,price,st){
+    renderDashboard:function(dash,avgPrice,st,today){
       var el=document.getElementById('accountantContent');
       var nick=(dash&&dash.nickname)?dash.nickname:(st.nickname||'Трейдер');
-      var priceVal=(price&&price.price)?price.price:'—';
+      var isMerchant=dash&&dash.is_merchant;
+      var midPrice=(avgPrice&&avgPrice.avg_mid)?avgPrice.avg_mid:'—';
       var h='<div class="g-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
         '<div><div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px;color:var(--neon)">BINANCE P2P</div>'+
-        '<div style="font-size:13px;color:var(--text2);margin-top:2px">'+nick+'</div></div>'+
-        '<div style="text-align:right"><div style="font-size:11px;color:var(--text3)">USDT/UAH</div>'+
-        '<div style="font-family:var(--font-display);font-size:18px;color:var(--green)">₴'+priceVal+'</div></div></div>';
+        '<div style="font-size:13px;color:var(--text2);margin-top:2px">'+nick+' '+(isMerchant?merchantBadge():'')+'</div></div>'+
+        '<div style="text-align:right"><div style="font-size:10px;color:var(--text3)">USDT/UAH <span style="font-size:8px;opacity:0.6">(сер.)</span></div>'+
+        '<div style="font-family:var(--font-display);font-size:18px;color:var(--green)">₴'+midPrice+'</div>';
+      if(avgPrice&&avgPrice.avg_buy&&avgPrice.avg_sell){
+        h+='<div style="font-size:9px;color:var(--text3)">Куп: '+avgPrice.avg_buy+' / Прод: '+avgPrice.avg_sell+'</div>';
+      }
+      h+='</div></div>';
 
       if(dash&&dash.ok){
         var buy30=dash.buy_30d||{},sell30=dash.sell_30d||{};
@@ -1079,7 +1127,6 @@ App.modules.accountant=(function(){
           '<div style="font-family:var(--font-display);font-size:16px;color:var(--purple)">'+(sell30.total_count||0)+'</div>'+
           '<div style="font-size:11px;color:var(--text2)">'+(sell30.total_amount||0)+' USDT</div></div></div>';
       }
-
       h+='</div>';
 
       // Action buttons
@@ -1087,17 +1134,59 @@ App.modules.accountant=(function(){
         '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.showOrders()"><i class="fas fa-list"></i> Угоди</button>'+
         '<button class="btn btn-purple btn-sm btn-block" onclick="App.modules.accountant.calcProfit()"><i class="fas fa-calculator"></i> FIFO</button></div>'+
         '<div class="g2" style="gap:10px;margin-top:10px">'+
-        '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.showAds()"><i class="fas fa-search"></i> Оголошення</button>'+
+        '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.showSpreads()"><i class="fas fa-chart-line"></i> Аналіз спредів</button>'+
         '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.showStats()"><i class="fas fa-chart-bar"></i> Статистика</button></div>'+
         '<div style="margin-top:10px;text-align:center">'+
         '<button class="btn btn-ghost btn-sm" onclick="App.modules.accountant.resetKeys()" style="font-size:11px;padding:6px 12px;color:var(--text3)"><i class="fas fa-cog"></i> Змінити ключі</button></div></div>';
 
       // Profit chart
-      h+='<div class="g-card"><div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px;margin-bottom:14px">ГРАФІК ПРИБУТКУ</div>'+
-        '<canvas id="profitChart" height="200"></canvas></div>';
+      h+='<div class="g-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
+        '<div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px">ГРАФІК ПРИБУТКУ</div>'+
+        '<div style="display:flex;gap:4px">'+
+        '<button class="btn btn-ghost" style="padding:4px 8px;font-size:10px" onclick="App.modules.accountant.loadChart(7)">7д</button>'+
+        '<button class="btn btn-ghost" style="padding:4px 8px;font-size:10px" onclick="App.modules.accountant.loadChart(14)">14д</button>'+
+        '<button class="btn btn-ghost" style="padding:4px 8px;font-size:10px;border-color:var(--neon);color:var(--neon)" onclick="App.modules.accountant.loadChart(30)">30д</button></div></div>'+
+        '<div id="chartWrap" style="position:relative;height:200px"><canvas id="profitChart"></canvas>'+
+        '<div id="chartLoading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">'+
+        '<div class="spinner"></div></div></div></div>';
+
+      // Today stats section
+      h+='<div class="g-card"><div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px;margin-bottom:12px">'+
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:6px">'+
+        '<circle cx="12" cy="12" r="10" stroke="var(--neon)" stroke-width="2" fill="none"/>'+
+        '<path d="M12 6v6l4 2" stroke="var(--neon)" stroke-width="2" stroke-linecap="round"/></svg>'+
+        'СЬОГОДНІ</div><div id="todayStats">';
+      if(today){
+        h+=this._todayHtml(today);
+      }else{
+        h+='<div style="text-align:center;color:var(--text3);font-size:12px;padding:10px">Немає даних</div>';
+      }
+      h+='</div></div>';
 
       el.innerHTML=h;
-      this.renderChart();
+      this.loadChart(30);
+    },
+    _todayHtml:function(t){
+      var profColor=(t.profit||0)>=0?'var(--green)':'var(--red)';
+      var profSign=(t.profit||0)>=0?'+':'';
+      return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'+
+        '<div class="today-stat"><div class="ts-icon" style="background:rgba(0,240,255,0.1);color:var(--neon)">'+
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'+
+        '<div><div class="ts-label">Купівля</div><div class="ts-val">'+(t.buy_count||0)+'</div></div></div>'+
+        '<div class="today-stat"><div class="ts-icon" style="background:rgba(168,85,247,0.1);color:var(--purple)">'+
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'+
+        '<div><div class="ts-label">Продаж</div><div class="ts-val">'+(t.sell_count||0)+'</div></div></div>'+
+        '<div class="today-stat"><div class="ts-icon" style="background:rgba(0,240,255,0.06)">💵</div>'+
+        '<div><div class="ts-label">Обсяг $</div><div class="ts-val">'+(t.buy_crypto+t.sell_crypto).toFixed(1)+'</div></div></div>'+
+        '<div class="today-stat"><div class="ts-icon" style="background:rgba(16,185,129,0.06)">₴</div>'+
+        '<div><div class="ts-label">Обсяг ₴</div><div class="ts-val">'+(t.buy_fiat+t.sell_fiat).toFixed(0)+'</div></div></div>'+
+        '<div class="today-stat"><div class="ts-icon" style="background:rgba(0,240,255,0.06)">📊</div>'+
+        '<div><div class="ts-label">Сер. купівля</div><div class="ts-val">'+(t.avg_buy||'—')+'</div></div></div>'+
+        '<div class="today-stat"><div class="ts-icon" style="background:rgba(168,85,247,0.06)">📈</div>'+
+        '<div><div class="ts-label">Сер. продаж</div><div class="ts-val">'+(t.avg_sell||'—')+'</div></div></div></div>'+
+        '<div style="margin-top:8px;padding:10px;background:linear-gradient(135deg,rgba(16,185,129,0.06),rgba(0,240,255,0.04));border:1px solid '+(profColor==="var(--green)"?"rgba(16,185,129,0.2)":"rgba(239,68,68,0.2)")+';border-radius:var(--r-xs);text-align:center">'+
+        '<div style="font-size:10px;color:var(--text3);margin-bottom:2px">ПРИБУТОК СЬОГОДНІ</div>'+
+        '<div style="font-family:var(--font-display);font-size:20px;font-weight:800;color:'+profColor+'">'+profSign+(t.profit||0)+' ₴</div></div>';
     },
     resetKeys:function(){
       if(!confirm('Видалити збережені ключі Binance?'))return;
@@ -1140,7 +1229,7 @@ App.modules.accountant=(function(){
     calcProfit:function(){
       App.openModal('<div style="text-align:center;padding:10px"><div style="font-size:40px;margin-bottom:10px">🧮</div>'+
         '<h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:10px">FIFO КАЛЬКУЛЯТОР</h3>'+
-        '<p style="font-size:13px;color:var(--text2);margin-bottom:14px">AI аналізує ваші угоди методом FIFO</p>'+
+        '<p style="font-size:13px;color:var(--text2);margin-bottom:14px">Аналіз угод методом FIFO</p>'+
         '<div class="g2" style="gap:8px;margin-bottom:12px">'+
         '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.runFifo(7)">7 дн</button>'+
         '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.runFifo(30)">30 дн</button>'+
@@ -1173,64 +1262,203 @@ App.modules.accountant=(function(){
           '<div style="font-size:10px;color:var(--text3);text-align:center;margin-top:4px">Зіставлено '+(r.matched_crypto||0)+' '+(r.asset||'USDT')+' (продажі → найстаріші покупки)</div></div>';
       });
     },
-    showAds:function(){
-      App.openModal('<div style="padding:10px"><h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px;text-align:center">ОГОЛОШЕННЯ P2P</h3>'+
-        '<div class="g2" style="gap:8px;margin-bottom:12px">'+
-        '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.loadAds(\'BUY\')">КУПІВЛЯ</button>'+
-        '<button class="btn btn-purple btn-sm btn-block" onclick="App.modules.accountant.loadAds(\'SELL\')">ПРОДАЖ</button></div>'+
-        '<div id="adsList" style="max-height:400px;overflow-y:auto"><div class="spinner" style="margin:20px auto"></div></div></div>');
-      this.loadAds('BUY');
-    },
-    loadAds:function(type){
-      var el=document.getElementById('adsList');
-      if(!el)return;
-      el.innerHTML='<div class="spinner" style="margin:20px auto"></div>';
-      api('/api/binance/ads','POST',{asset:'USDT',fiat:'UAH',trade_type:type,page:1,rows:10}).then(function(r){
-        if(!r||!r.data||!r.data.length){el.innerHTML='<p style="text-align:center;color:var(--text3);padding:20px">Немає оголошень</p>';return}
-        var h='';
-        for(var i=0;i<r.data.length;i++){
-          var ad=r.data[i];
-          var adPrice=parseFloat(ad.price||0);
-          var adAmount=parseFloat(ad.surplusAmount||0);
-          var rate=parseFloat(ad.monthFinishRate||0)*100;
-          h+='<div style="padding:10px;border-bottom:1px solid var(--glass-border);font-size:12px">'+
-            '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
-            '<div><span style="font-weight:600">'+(ad.nickName||'—')+'</span>'+
-            '<span style="font-size:10px;color:var(--text3);margin-left:6px">'+(ad.monthOrderCount||0)+' угод</span></div>'+
-            '<span style="color:var(--green);font-family:var(--font-display);font-size:14px">'+adPrice.toFixed(2)+'</span></div>'+
-            '<div style="display:flex;justify-content:space-between;color:var(--text2)">'+
-            '<span>'+adAmount.toFixed(2)+' USDT</span>'+
-            '<span>'+(ad.minAmount||'—')+'–'+(ad.maxAmount||'—')+' UAH</span></div>'+
-            (ad.payMethods&&ad.payMethods.length?'<div style="font-size:10px;color:var(--text3);margin-top:3px">'+ad.payMethods.join(', ')+'</div>':'')+'</div>'
+    /* ── Spread Analysis ── */
+    showSpreads:function(){
+      App.openModal('<div style="padding:10px"><div style="text-align:center;margin-bottom:14px">'+
+        '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" style="margin-bottom:6px">'+
+        '<path d="M3 17l6-6 4 4 8-8" stroke="var(--neon)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'+
+        '<path d="M17 7h4v4" stroke="var(--neon)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
+        '<h3 style="font-family:var(--font-display);font-size:14px">АНАЛІЗ СПРЕДІВ</h3>'+
+        '<p style="font-size:11px;color:var(--text3);margin-top:4px">Середні спреди по лімітах (USDT/UAH)</p></div>'+
+        '<div id="spreadsContent"><div class="spinner" style="margin:20px auto"></div></div></div>');
+      api('/api/binance/spreads').then(function(r){
+        var el=document.getElementById('spreadsContent');
+        if(!r||!r.spreads){el.innerHTML='<p style="text-align:center;color:var(--text3)">Дані недоступні</p>';return}
+        var limits=r.limits||[];
+        var byLimit={};
+        for(var i=0;i<r.spreads.length;i++){
+          var s=r.spreads[i],lk=s.limit;
+          if(!byLimit[lk])byLimit[lk]={};
+          byLimit[lk][s.pay_type]=s;
         }
+        var h='<table class="spread-tbl"><thead><tr><th>Ліміт ₴</th><th>Тип</th><th>Купівля</th><th>Продаж</th><th>Спред</th></tr></thead><tbody>';
+        for(var j=0;j<limits.length;j++){
+          var lim=limits[j];
+          var types=['Картка','IBAN'];
+          for(var k=0;k<types.length;k++){
+            var pt=types[k];
+            var d=byLimit[lim]&&byLimit[lim][pt]?byLimit[lim][pt]:{};
+            var spColor=d.spread>0?'var(--green)':d.spread<0?'var(--red)':'var(--text3)';
+            var spSign=d.spread>0?'+':'';
+            h+='<tr>'+(k===0?'<td rowspan="2" style="font-weight:700;font-family:var(--font-display);font-size:12px;border-right:1px solid var(--glass-border)">'+lim.toLocaleString()+'</td>':'')+
+              '<td style="font-size:10px;color:'+(pt==='Картка'?'var(--neon)':'var(--purple)')+'">'+
+              '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:2px">'+
+              (pt==='Картка'
+                ?'<rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2" fill="none"/><line x1="2" y1="10" x2="22" y2="10" stroke="currentColor" stroke-width="2"/>'
+                :'<path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>')+
+              '</svg> '+pt+'</td>'+
+              '<td>'+(d.avg_buy||'—')+'</td>'+
+              '<td>'+(d.avg_sell||'—')+'</td>'+
+              '<td style="color:'+spColor+';font-weight:700;font-family:var(--font-display)">'+(d.spread!=null?spSign+d.spread:'—')+
+              (d.spread_pct!=null?' <span style="font-size:9px;font-weight:400">('+d.spread_pct+'%)</span>':'')+'</td></tr>';
+          }
+        }
+        h+='</tbody></table>';
+        h+='<div style="margin-top:10px;font-size:10px;color:var(--text3);text-align:center">'+
+          '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle"><circle cx="12" cy="12" r="10" stroke="var(--text3)" stroke-width="2" fill="none"/><path d="M12 8v4M12 16h.01" stroke="var(--text3)" stroke-width="2" stroke-linecap="round"/></svg>'+
+          ' Дані з P2P стакану Binance в реальному часі</div>';
         el.innerHTML=h;
       });
     },
+    /* ── Extended Statistics ── */
     showStats:function(){
-      App.openModal('<div style="text-align:center;padding:10px"><div style="font-size:40px;margin-bottom:10px">📈</div>'+
-        '<h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px">СТАТИСТИКА ОРДЕРІВ</h3>'+
-        '<div id="binStats"><div class="spinner" style="margin:20px auto"></div></div></div>');
-      api('/api/binance/stats?user_id='+uid()).then(function(r){
-        var el=document.getElementById('binStats');
-        if(!r){el.innerHTML='<p style="color:var(--text3)">Дані недоступні</p>';return}
+      App.openModal('<div style="padding:10px"><div style="text-align:center;margin-bottom:14px">'+
+        '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" style="margin-bottom:6px">'+
+        '<path d="M18 20V10M12 20V4M6 20v-6" stroke="var(--neon)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
+        '<h3 style="font-family:var(--font-display);font-size:14px">СТАТИСТИКА</h3></div>'+
+        '<!-- Tab buttons -->'+
+        '<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;justify-content:center">'+
+        '<button class="btn btn-neon btn-sm" onclick="App.modules.accountant.loadStatsTab(\'account\')" id="stTabAccount">Акаунт</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="App.modules.accountant.loadStatsTab(\'today\')" id="stTabToday">Сьогодні</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="App.modules.accountant.loadStatsTab(\'month\')" id="stTabMonth">Місяць</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="App.modules.accountant.loadStatsTab(\'period\')" id="stTabPeriod">Період</button></div>'+
+        '<div id="statsContent"><div class="spinner" style="margin:20px auto"></div></div></div>');
+      this.loadStatsTab('account');
+    },
+    loadStatsTab:function(tab){
+      var el=document.getElementById('statsContent');
+      if(!el)return;
+      // Update tab styles
+      var tabs=['account','today','month','period'];
+      for(var i=0;i<tabs.length;i++){
+        var btn=document.getElementById('stTab'+tabs[i].charAt(0).toUpperCase()+tabs[i].slice(1));
+        if(btn){btn.className=tabs[i]===tab?'btn btn-neon btn-sm':'btn btn-ghost btn-sm'}
+      }
+      el.innerHTML='<div class="spinner" style="margin:20px auto"></div>';
+      var self=this;
+      if(tab==='account'){
+        api('/api/binance/stats?user_id='+uid()).then(function(r){
+          if(!r){el.innerHTML='<p style="color:var(--text3)">Дані недоступні</p>';return}
+          var isMerch=r.isMerchant;
+          el.innerHTML=
+            '<div style="text-align:left;font-size:12px;padding:12px;background:var(--glass);border-radius:var(--r-sm)">'+
+            '<div style="margin-bottom:8px;display:flex;align-items:center;gap:6px"><span style="color:var(--text3)">Нікнейм:</span> <b>'+(r.nickname||'—')+'</b>'+(isMerch?(' '+merchantBadge()):'')+'</div>'+
+            '<div style="margin-bottom:6px"><span style="color:var(--text3)">Днів на Binance:</span> <b>'+(r.registerDays||'—')+'</b></div>'+
+            '<div style="margin-bottom:6px"><span style="color:var(--text3)">KYC:</span> <b>'+(r.kycPassed?'✅ Пройдено':'❌ Ні')+'</b></div>'+
+            '<div style="margin-bottom:6px"><span style="color:var(--text3)">Тип:</span> <b>'+(isMerch?'Мерчант':'Звичайний користувач')+'</b></div>'+
+            '<div style="margin-bottom:6px"><span style="color:var(--text3)">Всього угод (30д):</span> <b>'+(r.orderCount30d||0)+'</b></div>'+
+            '<div style="margin-bottom:6px"><span style="color:var(--text3)">Виконано (30д):</span> <b>'+(r.completedCount30d||0)+'</b></div>'+
+            '<div><span style="color:var(--text3)">Completion rate:</span> <b>'+(r.completionRate||0)+'%</b></div></div>';
+        });
+      }else if(tab==='today'){
+        api('/api/binance/today?user_id='+uid()).then(function(t){
+          if(!t){el.innerHTML='<p style="color:var(--text3)">Дані недоступні</p>';return}
+          el.innerHTML=self._todayHtml(t);
+        });
+      }else if(tab==='month'){
+        el.innerHTML='<div class="spinner" style="margin:20px auto"></div><p style="font-size:11px;color:var(--text3);text-align:center">Розрахунок FIFO за 30 днів...</p>';
+        api('/api/binance/profit','POST',{user_id:uid(),days:30,fiat:'UAH',asset:'USDT'}).then(function(r){
+          if(!r){el.innerHTML='<p style="color:var(--red)">Помилка</p>';return}
+          self._renderProfitResult(el,r,'30 днів');
+        });
+      }else if(tab==='period'){
+        var today=new Date().toISOString().split('T')[0];
+        var monthAgo=new Date(Date.now()-30*86400000).toISOString().split('T')[0];
         el.innerHTML=
-          '<div style="text-align:left;font-size:12px;padding:10px;background:var(--glass);border-radius:var(--r-sm)">'+
-          '<div style="margin-bottom:6px"><span style="color:var(--text3)">Нікнейм:</span> <b>'+(r.nickname||'—')+'</b></div>'+
-          '<div style="margin-bottom:6px"><span style="color:var(--text3)">Днів на Binance:</span> <b>'+(r.registerDays||'—')+'</b></div>'+
-          '<div style="margin-bottom:6px"><span style="color:var(--text3)">KYC:</span> <b>'+(r.kycPassed?'✅ Пройдено':'❌ Ні')+'</b></div>'+
-          '<div style="margin-bottom:6px"><span style="color:var(--text3)">Всього угод (30д):</span> <b>'+(r.orderCount30d||0)+'</b></div>'+
-          '<div style="margin-bottom:6px"><span style="color:var(--text3)">Виконано (30д):</span> <b>'+(r.completedCount30d||0)+'</b></div>'+
-          '<div><span style="color:var(--text3)">Completion rate:</span> <b>'+(r.completionRate||0)+'%</b></div></div>';
+          '<div style="padding:10px;background:var(--glass);border-radius:var(--r-sm);margin-bottom:12px">'+
+          '<div style="font-size:12px;color:var(--text2);margin-bottom:8px">Оберіть період:</div>'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'+
+          '<div><label style="font-size:10px;color:var(--text3);display:block;margin-bottom:3px">Від</label>'+
+          '<input type="date" id="statDateFrom" value="'+monthAgo+'" class="date-input"></div>'+
+          '<div><label style="font-size:10px;color:var(--text3);display:block;margin-bottom:3px">До</label>'+
+          '<input type="date" id="statDateTo" value="'+today+'" class="date-input"></div></div>'+
+          '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.runPeriodStats()">'+
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:4px">'+
+          '<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'+
+          'Розрахувати</button></div>'+
+          '<div id="periodResult"></div>';
+      }
+    },
+    runPeriodStats:function(){
+      var from=document.getElementById('statDateFrom').value;
+      var to=document.getElementById('statDateTo').value;
+      var el=document.getElementById('periodResult');
+      if(!from||!to||!el)return;
+      el.innerHTML='<div class="spinner" style="margin:20px auto"></div><p style="font-size:11px;color:var(--text3);text-align:center">Розрахунок FIFO...</p>';
+      var self=this;
+      api('/api/binance/profit','POST',{user_id:uid(),fiat:'UAH',asset:'USDT',start_date:from,end_date:to}).then(function(r){
+        if(!r){el.innerHTML='<p style="color:var(--red)">Помилка</p>';return}
+        self._renderProfitResult(el,r,from+' — '+to);
       });
     },
-    renderChart:function(){
+    _renderProfitResult:function(el,r,label){
+      var fifoColor=(r.net_profit||0)>=0?'var(--green)':'var(--red)';
+      var profSign=(r.net_profit||0)>=0?'+':'';
+      el.innerHTML=
+        '<div style="text-align:center;margin-bottom:10px;font-size:11px;color:var(--text3)">'+label+'</div>'+
+        '<div style="padding:14px;background:var(--glass);border-radius:var(--r-sm);font-size:12px">'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'+
+        '<div class="today-stat"><div class="ts-icon" style="background:rgba(0,240,255,0.08)">📥</div>'+
+        '<div><div class="ts-label">Куплено</div><div class="ts-val">'+(r.total_buy_crypto||0)+' $</div></div></div>'+
+        '<div class="today-stat"><div class="ts-icon" style="background:rgba(168,85,247,0.08)">📤</div>'+
+        '<div><div class="ts-label">Продано</div><div class="ts-val">'+(r.total_sell_crypto||0)+' $</div></div></div>'+
+        '<div class="today-stat"><div class="ts-icon" style="background:rgba(0,240,255,0.06)">🔢</div>'+
+        '<div><div class="ts-label">Угод</div><div class="ts-val">'+(r.total_orders||0)+'</div></div></div>'+
+        '<div class="today-stat"><div class="ts-icon" style="background:rgba(251,191,36,0.06)">📊</div>'+
+        '<div><div class="ts-label">Спред</div><div class="ts-val">'+(r.avg_spread||0)+' ₴</div></div></div></div>'+
+        '<div style="margin-bottom:6px"><span style="color:var(--text3)">Витрати:</span> <b>'+(r.total_buy_fiat||0)+' ₴</b></div>'+
+        '<div style="margin-bottom:6px"><span style="color:var(--text3)">Виручка:</span> <b>'+(r.total_sell_fiat||0)+' ₴</b></div>'+
+        '<div style="margin-bottom:6px"><span style="color:var(--text3)">Комісії:</span> <b>'+(r.total_commission||0)+' USDT</b></div>'+
+        '<div style="text-align:center;margin-top:12px;padding:10px;background:linear-gradient(135deg,rgba(16,185,129,0.06),rgba(0,240,255,0.04));border:1px solid '+(fifoColor==='var(--green)'?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)')+';border-radius:var(--r-xs)">'+
+        '<div style="font-size:10px;color:var(--text3)">FIFO ПРИБУТОК</div>'+
+        '<div style="font-family:var(--font-display);font-size:20px;font-weight:800;color:'+fifoColor+'">'+profSign+(r.net_profit||0)+' ₴</div></div></div>';
+    },
+    /* ── Profit Chart ── */
+    loadChart:function(days){
+      var loading=document.getElementById('chartLoading');
+      if(loading)loading.style.display='flex';
+      var self=this;
+      api('/api/binance/chart?user_id='+uid()+'&days='+days).then(function(r){
+        if(loading)loading.style.display='none';
+        if(!r||!r.days||!r.days.length){self.renderChartEmpty();return}
+        self.renderChart(r.days);
+      }).catch(function(){
+        if(loading)loading.style.display='none';
+        self.renderChartEmpty();
+      });
+    },
+    renderChartEmpty:function(){
       var ctx=document.getElementById('profitChart');if(!ctx)return;
       if(chart)chart.destroy();
-      chart=new Chart(ctx,{type:'line',data:{labels:['Пн','Вт','Ср','Чт','Пт','Сб','Нд'],
-        datasets:[{label:'Profit ($)',data:[0,0,0,0,0,0,0],borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.1)',
-          tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#10b981',borderWidth:2}]},
-        options:{responsive:true,plugins:{legend:{labels:{color:'#94a3b8',font:{family:'Orbitron',size:10}}}},
-          scales:{x:{ticks:{color:'#475569',font:{family:'Orbitron',size:9}}},y:{beginAtZero:true,ticks:{color:'#475569',font:{family:'Orbitron',size:9}}}}}});
+      chart=new Chart(ctx,{type:'line',data:{labels:[''],datasets:[{label:'Profit',data:[0],borderColor:'#475569',borderWidth:1}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+          scales:{x:{display:false},y:{display:false}}}});
+    },
+    renderChart:function(data){
+      var ctx=document.getElementById('profitChart');if(!ctx)return;
+      if(chart)chart.destroy();
+      var labels=[],profits=[],volumes=[],colors=[];
+      for(var i=0;i<data.length;i++){
+        labels.push(data[i].label);
+        profits.push(data[i].profit);
+        volumes.push(data[i].volume_fiat);
+        colors.push(data[i].profit>=0?'rgba(16,185,129,0.7)':'rgba(239,68,68,0.7)');
+      }
+      chart=new Chart(ctx,{type:'bar',data:{labels:labels,
+        datasets:[
+          {type:'line',label:'Прибуток ₴',data:profits,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.1)',
+            tension:0.4,fill:true,pointRadius:3,pointBackgroundColor:colors,borderWidth:2,yAxisID:'y',order:1},
+          {type:'bar',label:'Обсяг ₴',data:volumes,backgroundColor:'rgba(0,240,255,0.08)',borderColor:'rgba(0,240,255,0.2)',
+            borderWidth:1,borderRadius:3,yAxisID:'y1',order:2}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+          plugins:{legend:{labels:{color:'#94a3b8',font:{family:'Orbitron',size:9},boxWidth:12}},
+            tooltip:{backgroundColor:'rgba(10,10,30,0.95)',borderColor:'rgba(0,240,255,0.2)',borderWidth:1,
+              titleFont:{family:'Orbitron',size:11},bodyFont:{family:'Inter',size:12},
+              callbacks:{label:function(ctx2){return ctx2.dataset.label+': '+ctx2.parsed.y.toLocaleString()+' ₴'}}}},
+          scales:{x:{ticks:{color:'#475569',font:{family:'Orbitron',size:8},maxRotation:45},grid:{color:'rgba(255,255,255,0.03)'}},
+            y:{position:'left',ticks:{color:'#10b981',font:{family:'Orbitron',size:9},callback:function(v){return v+'₴'}},grid:{color:'rgba(255,255,255,0.03)'}},
+            y1:{position:'right',ticks:{color:'#475569',font:{size:8},callback:function(v){return ''}},grid:{display:false}}}}});
     }
   };
 })();
