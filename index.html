@@ -1038,6 +1038,13 @@ App.modules.accountant=(function(){
   }
   function merchantBadge(){return '<span class="merchant-badge">'+merchantSvg(14)+' MERCHANT</span>'}
   function merchantBadgeSm(){return '<span class="merchant-badge-sm" title="Верифікований мерчант">'+merchantSvg(12)+'</span>'}
+  /* ── Exchange logos as inline SVG ── */
+  function binanceLogo(s){s=s||18;return '<svg xmlns="http://www.w3.org/2000/svg" width="'+s+'" height="'+s+'" viewBox="0 0 126.61 126.61"><g fill="#f3ba2f"><path d="M38.73 53.2L63.31 28.62l24.58 24.6 14.3-14.31L63.31 0 24.43 38.88l14.3 14.32zM0 63.31l14.3-14.31 14.31 14.31-14.31 14.3L0 63.31zm38.73 10.1L63.31 97.99l24.58-24.58 14.31 14.29-.01.02L63.31 126.61 24.43 87.72l-.01-.01 14.31-14.3zM97.99 63.31l14.3-14.31 14.32 14.31-14.31 14.3-14.31-14.3z"/><path d="M77.83 63.3L63.31 48.78 52.59 59.5l-1.24 1.23-2.54 2.54-.02.04.02.02L63.31 77.83l14.52-14.52.01-.01h-.01z"/></g></svg>'}
+  function bybitLogo(s){s=s||18;return '<svg xmlns="http://www.w3.org/2000/svg" width="'+s+'" height="'+s+'" viewBox="0 0 200 200"><rect width="200" height="200" rx="30" fill="#f7a600"/><path d="M40 52h28.5c15.5 0 28 12.5 28 28s-12.5 28-28 28H54v28h28.5c15.5 0 28 12.5 28 28s-12.5 28-28 28H40V52z" fill="#fff"/><path d="M54 66v28h14.5c7.7 0 14-6.3 14-14s-6.3-14-14-14H54zm0 56v28h14.5c7.7 0 14-6.3 14-14s-6.3-14-14-14H54z" fill="#f7a600"/><rect x="120" y="52" width="16" height="148" rx="4" fill="#fff"/><rect x="146" y="80" width="16" height="120" rx="4" fill="#fff"/></svg>'}
+  function okxLogo(s){s=s||18;return '<svg xmlns="http://www.w3.org/2000/svg" width="'+s+'" height="'+s+'" viewBox="0 0 200 200"><rect width="200" height="200" rx="30" fill="#000"/><rect x="22" y="22" width="48" height="48" rx="8" fill="#fff"/><rect x="76" y="22" width="48" height="48" rx="8" fill="#fff"/><rect x="130" y="22" width="48" height="48" rx="8" fill="#fff"/><rect x="22" y="76" width="48" height="48" rx="8" fill="#fff"/><rect x="130" y="76" width="48" height="48" rx="8" fill="#fff"/><rect x="22" y="130" width="48" height="48" rx="8" fill="#fff"/><rect x="76" y="130" width="48" height="48" rx="8" fill="#fff"/><rect x="130" y="130" width="48" height="48" rx="8" fill="#fff"/></svg>'}
+  // Current active exchange for detail view
+  var _activeExchange=null;
+  var _exchangeData={binance:{},bybit:{}};
   return{
     init:function(){},
     render:function(){
@@ -1045,76 +1052,194 @@ App.modules.accountant=(function(){
       if(!el)return;
       el.innerHTML='<div class="g-card" style="text-align:center"><div class="spinner"></div><p style="color:var(--text2);margin-top:10px">Завантаження...</p></div>';
       if(!App.online){self.renderDisconnected(null);return}
-      api('/api/binance/keys/'+uid()).then(function(kr){
-        if(!kr||!kr.has_keys){self.renderSetup();return}
-        api('/api/binance/status?user_id='+uid()).then(function(st){
-          binStatus=st;
-          if(st&&st.connected){
-            Promise.all([
-              api('/api/binance/dashboard?user_id='+uid()),
-              api('/api/binance/avg-price'),
-              api('/api/binance/today?user_id='+uid())
-            ]).then(function(results){
-              _dashCache=results[0];
-              self.renderDashboard(results[0],results[1],st,results[2])
-            }).catch(function(){self.renderDisconnected(st)});
-          }else{self.renderDisconnected(st)}
-        });
-      });
+      // Fetch status of all exchanges
+      api('/api/exchanges/status?user_id='+uid()).then(function(ex){
+        _exchangeData.binance.status=ex.binance;
+        _exchangeData.bybit.status=ex.bybit;
+        // Load dashboards for connected exchanges in parallel
+        var promises=[];
+        if(ex.binance.has_keys&&ex.binance.connected){
+          promises.push(Promise.all([
+            api('/api/binance/dashboard?user_id='+uid()),
+            api('/api/binance/today?user_id='+uid())
+          ]).then(function(r){_exchangeData.binance.dash=r[0];_exchangeData.binance.today=r[1]}));
+        }
+        if(ex.bybit.has_keys&&ex.bybit.connected){
+          promises.push(Promise.all([
+            api('/api/bybit/dashboard?user_id='+uid()),
+            api('/api/bybit/today?user_id='+uid())
+          ]).then(function(r){_exchangeData.bybit.dash=r[0];_exchangeData.bybit.today=r[1]}));
+        }
+        // Also fetch avg price
+        promises.push(api('/api/binance/avg-price').then(function(r){_exchangeData.avgPrice=r}).catch(function(){}));
+        Promise.all(promises).then(function(){
+          self.renderOverview();
+        }).catch(function(){self.renderOverview()});
+      }).catch(function(){self.renderDisconnected(null)});
     },
-    renderSetup:function(){
+    renderOverview:function(){
+      var el=document.getElementById('accountantContent');
+      var bd=_exchangeData.binance,byd=_exchangeData.bybit,avg=_exchangeData.avgPrice||{};
+      var midPrice=avg.avg_mid||'—';
+      // Header
+      var h='<div class="g-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
+        '<div><div style="font-family:var(--font-display);font-size:13px;letter-spacing:1px;color:var(--neon)">P2P БУХГАЛТЕР</div>'+
+        '<div style="font-size:11px;color:var(--text3);margin-top:2px">Мультибіржова аналітика</div></div>'+
+        '<div style="text-align:right"><div style="font-size:10px;color:var(--text3)">USDT/UAH</div>'+
+        '<div style="font-family:var(--font-display);font-size:18px;color:var(--green)">₴'+midPrice+'</div></div></div>';
+      // Combined stats from both exchanges
+      var totalBuy=0,totalSell=0,totalBuyU=0,totalSellU=0;
+      if(bd.dash&&bd.dash.ok){
+        totalBuy+=(bd.dash.buy_30d||{}).total_count||0;
+        totalSell+=(bd.dash.sell_30d||{}).total_count||0;
+        totalBuyU+=(bd.dash.buy_30d||{}).total_amount||0;
+        totalSellU+=(bd.dash.sell_30d||{}).total_amount||0;
+      }
+      if(byd.dash&&byd.dash.ok){
+        totalBuy+=(byd.dash.buy_30d||{}).total_count||0;
+        totalSell+=(byd.dash.sell_30d||{}).total_count||0;
+        totalBuyU+=(byd.dash.buy_30d||{}).total_amount||0;
+        totalSellU+=(byd.dash.sell_30d||{}).total_amount||0;
+      }
+      h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'+
+        '<div style="padding:12px;background:var(--glass);border-radius:var(--r-sm);text-align:center">'+
+        '<div style="font-size:11px;color:var(--text3)">КУПІВЛЯ 30д</div>'+
+        '<div style="font-family:var(--font-display);font-size:16px;color:var(--neon)">'+totalBuy+'</div>'+
+        '<div style="font-size:11px;color:var(--text2)">'+totalBuyU.toFixed(1)+' USDT</div></div>'+
+        '<div style="padding:12px;background:var(--glass);border-radius:var(--r-sm);text-align:center">'+
+        '<div style="font-size:11px;color:var(--text3)">ПРОДАЖ 30д</div>'+
+        '<div style="font-family:var(--font-display);font-size:16px;color:var(--purple)">'+totalSell+'</div>'+
+        '<div style="font-size:11px;color:var(--text2)">'+totalSellU.toFixed(1)+' USDT</div></div></div></div>';
+      // Exchange cards
+      h+=this._exchangeCard('binance',bd);
+      h+=this._exchangeCard('bybit',byd);
+      // OKX Coming Soon card
+      h+='<div class="g-card" style="opacity:0.5;position:relative;overflow:hidden">'+
+        '<div style="position:absolute;top:10px;right:10px;background:linear-gradient(135deg,var(--gold),#f59e0b);color:#1a1a2e;font-size:9px;font-family:var(--font-display);padding:3px 8px;border-radius:10px;font-weight:700;letter-spacing:0.5px">SOON</div>'+
+        '<div style="display:flex;align-items:center;gap:10px">'+
+        '<div style="width:36px;height:36px;border-radius:10px;background:var(--glass);display:flex;align-items:center;justify-content:center">'+okxLogo(22)+'</div>'+
+        '<div><div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px">OKX P2P</div>'+
+        '<div style="font-size:11px;color:var(--text3);margin-top:2px">Скоро буде доступно</div></div></div></div>';
+      el.innerHTML=h;
+    },
+    _exchangeCard:function(exchange,data){
+      var st=data.status||{};
+      var name=exchange==='binance'?'BINANCE P2P':'BYBIT P2P';
+      var logo=exchange==='binance'?binanceLogo(22):bybitLogo(22);
+      var accentColor=exchange==='binance'?'#F0B90B':'#f7a600';
+      var h='<div class="g-card">';
+      h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'+
+        '<div style="width:36px;height:36px;border-radius:10px;background:var(--glass);display:flex;align-items:center;justify-content:center">'+logo+'</div>'+
+        '<div style="flex:1"><div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px">'+name+'</div>';
+      if(!st.has_keys){
+        // No keys — placeholder
+        h+='<div style="font-size:11px;color:var(--text3);margin-top:2px">Ключі не додано</div></div></div>'+
+          '<div style="padding:16px;background:linear-gradient(135deg,rgba(0,240,255,0.03),rgba(168,85,247,0.03));border:1px dashed var(--glass-border);border-radius:var(--r-sm);text-align:center">'+
+          '<div style="font-size:11px;color:var(--text3);margin-bottom:10px">Для аналітики додайте ключ</div>'+
+          '<button class="btn btn-ghost btn-sm" onclick="App.modules.accountant.setupExchange(\''+exchange+'\')"><i class="fas fa-key"></i> Додати ключ '+name+'</button></div></div>';
+        return h;
+      }
+      // Has keys
+      var connected=st.connected;
+      var nick=st.nickname||'Трейдер';
+      var isMerchant=data.dash&&data.dash.is_merchant;
+      h+='<div style="font-size:11px;color:var(--text2);margin-top:2px">'+nick+' '+(isMerchant?merchantBadge():'')+'</div></div>';
+      // Status indicator
+      h+='<div style="font-size:10px;color:'+(connected?'var(--green)':'var(--red)')+'">● '+(connected?'Підключено':'Помилка з\'єднання')+'</div></div>';
+      if(connected&&data.dash&&data.dash.ok){
+        var buy30=data.dash.buy_30d||{},sell30=data.dash.sell_30d||{};
+        h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">'+
+          '<div style="padding:8px;background:var(--glass);border-radius:var(--r-xs);text-align:center">'+
+          '<div style="font-size:10px;color:var(--text3)">Купівля</div>'+
+          '<div style="font-family:var(--font-display);font-size:14px;color:var(--neon)">'+(buy30.total_count||0)+'</div>'+
+          '<div style="font-size:10px;color:var(--text2)">'+(buy30.total_amount||0)+' $</div></div>'+
+          '<div style="padding:8px;background:var(--glass);border-radius:var(--r-xs);text-align:center">'+
+          '<div style="font-size:10px;color:var(--text3)">Продаж</div>'+
+          '<div style="font-family:var(--font-display);font-size:14px;color:var(--purple)">'+(sell30.total_count||0)+'</div>'+
+          '<div style="font-size:10px;color:var(--text2)">'+(sell30.total_amount||0)+' $</div></div></div>';
+      }
+      h+='<div style="display:flex;gap:8px">';
+      if(connected){
+        h+='<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.showExchange(\''+exchange+'\')"><i class="fas fa-chart-bar"></i> Перейти</button>';
+      }
+      h+='<button class="btn btn-ghost btn-sm" onclick="App.modules.accountant.setupExchange(\''+exchange+'\')" style="padding:6px 10px" title="Змінити ключі"><i class="fas fa-cog"></i></button></div></div>';
+      return h;
+    },
+    setupExchange:function(exchange){
+      var name=exchange==='binance'?'BINANCE':'BYBIT';
       var el=document.getElementById('accountantContent');
       el.innerHTML=
         '<div class="g-card" style="text-align:center;padding:30px">'+
         '<div style="font-size:50px;margin-bottom:14px">🔑</div>'+
-        '<h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:10px">НАЛАШТУВАННЯ BINANCE</h3>'+
-        '<p style="font-size:13px;color:var(--text2);margin-bottom:20px">Додайте ваші API ключі Binance щоб бачити свої угоди та аналітику</p>'+
+        '<h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:10px">НАЛАШТУВАННЯ '+name+'</h3>'+
+        '<p style="font-size:13px;color:var(--text2);margin-bottom:20px">Додайте ваші API ключі '+name+' щоб бачити свої угоди та аналітику</p>'+
         '<div style="text-align:left;margin-bottom:12px">'+
         '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">API Key</label>'+
-        '<input id="binApiKey" type="text" placeholder="Ваш Binance API Key" style="width:100%;padding:10px 12px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-xs);color:var(--text);font-size:13px;outline:none"></div>'+
+        '<input id="exApiKey" type="text" placeholder="Ваш '+name+' API Key" style="width:100%;padding:10px 12px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-xs);color:var(--text);font-size:13px;outline:none"></div>'+
         '<div style="text-align:left;margin-bottom:16px">'+
         '<label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Secret Key</label>'+
-        '<input id="binSecretKey" type="password" placeholder="Ваш Binance Secret Key" style="width:100%;padding:10px 12px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-xs);color:var(--text);font-size:13px;outline:none"></div>'+
-        '<div id="binKeyError" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none"></div>'+
-        '<button class="btn btn-neon btn-block" onclick="App.modules.accountant.saveKeys()"><i class="fas fa-save"></i> Зберегти ключі</button>'+
+        '<input id="exSecretKey" type="password" placeholder="Ваш '+name+' Secret Key" style="width:100%;padding:10px 12px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-xs);color:var(--text);font-size:13px;outline:none"></div>'+
+        '<div id="exKeyError" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none"></div>'+
+        '<button class="btn btn-neon btn-block" onclick="App.modules.accountant.saveExchangeKeys(\''+exchange+'\')"><i class="fas fa-save"></i> Зберегти ключі</button>'+
+        '<button class="btn btn-ghost btn-block" style="margin-top:8px" onclick="App.modules.accountant.render()"><i class="fas fa-arrow-left"></i> Назад</button>'+
         '<div style="margin-top:14px;padding:12px;background:var(--glass);border-radius:var(--r-xs);font-size:11px;color:var(--text3);text-align:left">'+
         '<div style="font-weight:600;margin-bottom:6px;color:var(--gold)">⚠️ Як отримати ключі:</div>'+
-        '<div>1. Binance → API Management</div>'+
-        '<div>2. Create API → введіть назву</div>'+
-        '<div>3. Увімкніть: <b>Enable Reading</b></div>'+
-        '<div>4. Скопіюйте API Key та Secret Key</div>'+
+        (exchange==='binance'?
+        '<div>1. Binance → API Management</div><div>2. Create API → введіть назву</div><div>3. Увімкніть: <b>Enable Reading</b></div><div>4. Скопіюйте API Key та Secret Key</div>':
+        '<div>1. Bybit → API → Create New Key</div><div>2. Тип: System-generated API Keys</div><div>3. Дозволи: <b>Read-Only</b></div><div>4. Скопіюйте API Key та Secret Key</div>')+
         '<div style="margin-top:6px;color:var(--red)">НЕ вмикайте виведення та торгівлю!</div></div></div>';
     },
-    saveKeys:function(){
-      var ak=document.getElementById('binApiKey').value.trim();
-      var sk=document.getElementById('binSecretKey').value.trim();
-      var errEl=document.getElementById('binKeyError');
+    saveExchangeKeys:function(exchange){
+      var ak=document.getElementById('exApiKey').value.trim();
+      var sk=document.getElementById('exSecretKey').value.trim();
+      var errEl=document.getElementById('exKeyError');
       if(!ak||!sk){errEl.textContent='Заповніть обидва поля';errEl.style.display='block';return}
       errEl.style.display='none';
       var el=document.getElementById('accountantContent');
       el.innerHTML='<div class="g-card" style="text-align:center"><div class="spinner"></div><p style="color:var(--text2);margin-top:10px">Перевірка ключів...</p></div>';
-      api('/api/binance/keys','POST',{user_id:uid(),api_key:ak,secret_key:sk}).then(function(r){
+      var endpoint=exchange==='binance'?'/api/binance/keys':'/api/bybit/keys';
+      api(endpoint,'POST',{user_id:uid(),api_key:ak,secret_key:sk}).then(function(r){
         if(r&&r.ok){App.toast('Ключі збережено! Нікнейм: '+(r.nickname||''),'success');App.modules.accountant.render()}
-        else{App.toast('Помилка збереження ключів','error');App.modules.accountant.renderSetup()}
-      }).catch(function(e){App.toast(e.message||'Помилка','error');App.modules.accountant.renderSetup()});
+        else{App.toast('Помилка збереження ключів','error');App.modules.accountant.setupExchange(exchange)}
+      }).catch(function(e){App.toast(e.message||'Помилка','error');App.modules.accountant.setupExchange(exchange)});
     },
+    renderSetup:function(){this.setupExchange('binance')},
+    saveKeys:function(){this.saveExchangeKeys('binance')},
     renderDisconnected:function(st){
       var el=document.getElementById('accountantContent');
       el.innerHTML=
         '<div class="g-card" style="text-align:center;padding:30px">'+
         '<div style="font-size:50px;margin-bottom:14px">📊</div>'+
         '<h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:10px">P2P БУХГАЛТЕР</h3>'+
-        '<p style="font-size:13px;color:var(--text2);margin-bottom:20px">'+(st?st.message||'Binance API не підключено':'API сервер недоступний')+'</p>'+
-        '<button class="btn btn-neon" onclick="App.modules.accountant.renderSetup()"><i class="fas fa-key"></i> Налаштувати ключі</button></div>';
+        '<p style="font-size:13px;color:var(--text2);margin-bottom:20px">'+(st?st.message||'API не підключено':'API сервер недоступний')+'</p>'+
+        '<button class="btn btn-neon" onclick="App.modules.accountant.render()"><i class="fas fa-sync"></i> Спробувати знову</button></div>';
     },
-    renderDashboard:function(dash,avgPrice,st,today){
+    /* ── Exchange detail view ── */
+    showExchange:function(exchange){
+      _activeExchange=exchange;
+      var self=this,el=document.getElementById('accountantContent');
+      el.innerHTML='<div class="g-card" style="text-align:center"><div class="spinner"></div><p style="color:var(--text2);margin-top:10px">Завантаження...</p></div>';
+      var data=exchange==='binance'?_exchangeData.binance:_exchangeData.bybit;
+      var dash=data.dash||{};
+      var st=data.status||{};
+      var today=data.today||null;
+      var avg=_exchangeData.avgPrice||{};
+      self.renderDashboard(dash,avg,st,today,exchange);
+    },
+    renderDashboard:function(dash,avgPrice,st,today,exchange){
+      exchange=exchange||_activeExchange||'binance';
       var el=document.getElementById('accountantContent');
       var nick=(dash&&dash.nickname)?dash.nickname:(st.nickname||'Трейдер');
       var isMerchant=dash&&dash.is_merchant;
       var midPrice=(avgPrice&&avgPrice.avg_mid)?avgPrice.avg_mid:'—';
+      var exName=exchange==='binance'?'BINANCE P2P':'BYBIT P2P';
+      var exLogo=exchange==='binance'?binanceLogo(20):bybitLogo(20);
+      var apiPrefix=exchange==='binance'?'/api/binance':'/api/bybit';
       var h='<div class="g-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
-        '<div><div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px;color:var(--neon)">BINANCE P2P</div>'+
-        '<div style="font-size:13px;color:var(--text2);margin-top:2px">'+nick+' '+(isMerchant?merchantBadge():'')+'</div></div>'+
+        '<div style="display:flex;align-items:center;gap:8px">'+
+        '<button class="btn btn-ghost" style="padding:4px 8px;font-size:12px" onclick="App.modules.accountant.render()"><i class="fas fa-arrow-left"></i></button>'+
+        '<div>'+exLogo+' <span style="font-family:var(--font-display);font-size:12px;letter-spacing:1px;color:var(--neon)">'+exName+'</span>'+
+        '<div style="font-size:13px;color:var(--text2);margin-top:2px">'+nick+' '+(isMerchant?merchantBadge():'')+'</div></div></div>'+
         '<div style="text-align:right"><div style="font-size:10px;color:var(--text3)">USDT/UAH <span style="font-size:8px;opacity:0.6">(сер.)</span></div>'+
         '<div style="font-family:var(--font-display);font-size:18px;color:var(--green)">₴'+midPrice+'</div>';
       if(avgPrice&&avgPrice.avg_buy&&avgPrice.avg_sell){
@@ -1138,13 +1263,15 @@ App.modules.accountant=(function(){
 
       // Action buttons
       h+='<div class="g-card"><div class="g2" style="gap:10px">'+
-        '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.showOrders()"><i class="fas fa-list"></i> Угоди</button>'+
-        '<button class="btn btn-purple btn-sm btn-block" onclick="App.modules.accountant.calcProfit()"><i class="fas fa-calculator"></i> FIFO</button></div>'+
-        '<div class="g2" style="gap:10px;margin-top:10px">'+
-        '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.showSpreads()"><i class="fas fa-chart-line"></i> Аналіз спредів</button>'+
-        '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.showStats()"><i class="fas fa-chart-bar"></i> Статистика</button></div>'+
+        '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.showOrders(\''+exchange+'\')"><i class="fas fa-list"></i> Угоди</button>'+
+        '<button class="btn btn-purple btn-sm btn-block" onclick="App.modules.accountant.calcProfit(\''+exchange+'\')"><i class="fas fa-calculator"></i> FIFO</button></div>'+
+        '<div class="g2" style="gap:10px;margin-top:10px">';
+      if(exchange==='binance'){
+        h+='<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.showSpreads()"><i class="fas fa-chart-line"></i> Аналіз спредів</button>';
+      }
+      h+='<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.showStats(\''+exchange+'\')"><i class="fas fa-chart-bar"></i> Статистика</button></div>'+
         '<div style="margin-top:10px;text-align:center">'+
-        '<button class="btn btn-ghost btn-sm" onclick="App.modules.accountant.resetKeys()" style="font-size:11px;padding:6px 12px;color:var(--text3)"><i class="fas fa-cog"></i> Змінити ключі</button></div></div>';
+        '<button class="btn btn-ghost btn-sm" onclick="App.modules.accountant.resetKeys(\''+exchange+'\')" style="font-size:11px;padding:6px 12px;color:var(--text3)"><i class="fas fa-cog"></i> Змінити ключі</button></div></div>';
 
       // Profit chart
       h+='<div class="g-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
@@ -1205,34 +1332,49 @@ App.modules.accountant=(function(){
         '<div style="font-size:10px;color:var(--text3);margin-bottom:2px">ПРИБУТОК СЬОГОДНІ</div>'+
         '<div style="font-family:var(--font-display);font-size:20px;font-weight:800;color:'+profColor+'">'+profSign+(t.profit||0)+' ₴</div></div>';
     },
-    resetKeys:function(){
-      if(!confirm('Видалити збережені ключі Binance?'))return;
-      api('/api/binance/keys/'+uid(),'DELETE').then(function(){App.toast('Ключі видалено','info');App.modules.accountant.render()});
+    resetKeys:function(exchange){
+      exchange=exchange||_activeExchange||'binance';
+      var name=exchange==='binance'?'Binance':'Bybit';
+      if(!confirm('Видалити збережені ключі '+name+'?'))return;
+      var endpoint=exchange==='binance'?'/api/binance/keys/':'/api/bybit/keys/';
+      api(endpoint+uid(),'DELETE').then(function(){App.toast('Ключі '+name+' видалено','info');_activeExchange=null;App.modules.accountant.render()});
     },
-    showOrders:function(){
-      App.openModal('<div style="padding:10px"><h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px;text-align:center">ІСТОРІЯ УГОД</h3>'+
+    showOrders:function(exchange){
+      exchange=exchange||_activeExchange||'binance';
+      var exName=exchange==='binance'?'BINANCE':'BYBIT';
+      App.openModal('<div style="padding:10px"><h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px;text-align:center">'+exName+' УГОДИ</h3>'+
         '<div class="g2" style="gap:8px;margin-bottom:12px">'+
-        '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.loadOrders(\'BUY\')">КУПІВЛЯ</button>'+
-        '<button class="btn btn-purple btn-sm btn-block" onclick="App.modules.accountant.loadOrders(\'SELL\')">ПРОДАЖ</button></div>'+
+        '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.loadOrders(\'BUY\',\''+exchange+'\')">КУПІВЛЯ</button>'+
+        '<button class="btn btn-purple btn-sm btn-block" onclick="App.modules.accountant.loadOrders(\'SELL\',\''+exchange+'\')">ПРОДАЖ</button></div>'+
         '<div id="ordersList" style="max-height:400px;overflow-y:auto"><div class="spinner" style="margin:20px auto"></div></div></div>');
-      this.loadOrders('BUY');
+      this.loadOrders('BUY',exchange);
     },
-    loadOrders:function(type){
+    loadOrders:function(type,exchange){
+      exchange=exchange||_activeExchange||'binance';
       var el=document.getElementById('ordersList');
       if(!el)return;
       el.innerHTML='<div class="spinner" style="margin:20px auto"></div>';
-      api('/api/binance/orders','POST',{user_id:uid(),trade_type:type,page:1,rows:15}).then(function(r){
+      var endpoint,body;
+      if(exchange==='binance'){
+        endpoint='/api/binance/orders';
+        body={user_id:uid(),trade_type:type,page:1,rows:15};
+      }else{
+        endpoint='/api/bybit/orders';
+        body={user_id:uid(),side:type==='BUY'?0:1,page:1,size:15};
+      }
+      api(endpoint,'POST',body).then(function(r){
         if(!r||!r.orders||!r.orders.length){el.innerHTML='<p style="text-align:center;color:var(--text3);padding:20px">Угод не знайдено</p>';return}
         var h='';
         for(var i=0;i<r.orders.length;i++){
-          var o=r.orders[i],dt=o.createTime?new Date(o.createTime).toLocaleDateString('uk-UA'):'—';
+          var o=r.orders[i],dt=o.createTime?new Date(typeof o.createTime==='number'?o.createTime:parseInt(o.createTime)).toLocaleDateString('uk-UA'):'—';
           var amt=o.amount?parseFloat(o.amount).toFixed(2):'—';
           var pr=o.unitPrice?parseFloat(o.unitPrice).toFixed(2):'—';
           var total=o.totalPrice?parseFloat(o.totalPrice).toFixed(2):'—';
+          var tt=o.tradeType||type;
           var stColor=o.orderStatus==='COMPLETED'?'var(--green)':o.orderStatus==='CANCELLED_BY_SYSTEM'?'var(--red)':'var(--gold)';
           h+='<div style="padding:10px;border-bottom:1px solid var(--glass-border);font-size:12px">'+
             '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
-            '<span style="color:'+(type==='BUY'?'var(--green)':'var(--purple)')+';font-weight:700">'+type+'</span>'+
+            '<span style="color:'+(tt==='BUY'?'var(--green)':'var(--purple)')+';font-weight:700">'+tt+'</span>'+
             '<span style="color:var(--text3)">'+dt+'</span></div>'+
             '<div style="display:flex;justify-content:space-between">'+
             '<span>'+amt+' '+(o.asset||'USDT')+'</span>'+
@@ -1243,21 +1385,25 @@ App.modules.accountant=(function(){
         el.innerHTML=h;
       });
     },
-    calcProfit:function(){
+    calcProfit:function(exchange){
+      exchange=exchange||_activeExchange||'binance';
+      var exName=exchange==='binance'?'BINANCE':'BYBIT';
       App.openModal('<div style="text-align:center;padding:10px"><div style="font-size:40px;margin-bottom:10px">🧮</div>'+
-        '<h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:10px">FIFO КАЛЬКУЛЯТОР</h3>'+
+        '<h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:10px">'+exName+' FIFO</h3>'+
         '<p style="font-size:13px;color:var(--text2);margin-bottom:14px">Аналіз угод методом FIFO</p>'+
         '<div class="g2" style="gap:8px;margin-bottom:12px">'+
-        '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.runFifo(7)">7 дн</button>'+
-        '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.runFifo(30)">30 дн</button>'+
-        '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.runFifo(90)">90 дн</button></div>'+
+        '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.runFifo(7,\''+exchange+'\')">7 дн</button>'+
+        '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.runFifo(30,\''+exchange+'\')">30 дн</button>'+
+        '<button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.accountant.runFifo(90,\''+exchange+'\')">90 дн</button></div>'+
         '<div id="fifoResult"></div></div>');
     },
-    runFifo:function(days){
+    runFifo:function(days,exchange){
+      exchange=exchange||_activeExchange||'binance';
       var el=document.getElementById('fifoResult');
       if(!el)return;
       el.innerHTML='<div class="spinner" style="margin:20px auto"></div><p style="font-size:11px;color:var(--text3)">Аналіз угод... може зайняти хвилину</p>';
-      api('/api/binance/profit','POST',{user_id:uid(),days:days,fiat:'UAH',asset:'USDT'}).then(function(r){
+      var endpoint=exchange==='binance'?'/api/binance/profit':'/api/bybit/profit';
+      api(endpoint,'POST',{user_id:uid(),days:days,fiat:'UAH',asset:'USDT'}).then(function(r){
         if(!r){el.innerHTML='<p style="color:var(--red)">Помилка</p>';return}
         var fifoColor=(r.net_profit||0)>=0?'var(--green)':'var(--red)';
         var pair=(r.asset||'USDT')+'/'+(r.fiat||'UAH');
@@ -1279,7 +1425,7 @@ App.modules.accountant=(function(){
           '<div style="font-size:10px;color:var(--text3);text-align:center;margin-top:4px">Зіставлено '+(r.matched_crypto||0)+' '+(r.asset||'USDT')+' (продажі → найстаріші покупки)</div></div>';
       });
     },
-    /* ── Spread Analysis ── */
+    /* ── Spread Analysis (Binance only) ── */
     showSpreads:function(){
       App.openModal('<div style="padding:6px"><div style="text-align:center;margin-bottom:10px">'+
         '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" style="margin-bottom:4px">'+
@@ -1296,7 +1442,6 @@ App.modules.accountant=(function(){
     loadSpreads:function(tab){
       var el=document.getElementById('spreadsContent');
       if(!el)return;
-      // Update tab highlight
       var mBtn=document.getElementById('spTabMerchant');
       var uBtn=document.getElementById('spTabMaker');
       if(mBtn)mBtn.className=tab==='merchant'?'btn btn-neon btn-sm':'btn btn-ghost btn-sm';
@@ -1338,32 +1483,34 @@ App.modules.accountant=(function(){
       });
     },
     /* ── Extended Statistics ── */
-    showStats:function(){
+    showStats:function(exchange){
+      exchange=exchange||_activeExchange||'binance';
+      var exName=exchange==='binance'?'BINANCE':'BYBIT';
       App.openModal('<div style="padding:10px"><div style="text-align:center;margin-bottom:14px">'+
         '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" style="margin-bottom:6px">'+
         '<path d="M18 20V10M12 20V4M6 20v-6" stroke="var(--neon)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
-        '<h3 style="font-family:var(--font-display);font-size:14px">СТАТИСТИКА</h3></div>'+
-        '<!-- Tab buttons -->'+
+        '<h3 style="font-family:var(--font-display);font-size:14px">'+exName+' СТАТИСТИКА</h3></div>'+
         '<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;justify-content:center">'+
-        '<button class="btn btn-neon btn-sm" onclick="App.modules.accountant.loadStatsTab(\'account\')" id="stTabAccount">Акаунт</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="App.modules.accountant.loadStatsTab(\'today\')" id="stTabToday">Сьогодні</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="App.modules.accountant.loadStatsTab(\'month\')" id="stTabMonth">Місяць</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="App.modules.accountant.loadStatsTab(\'period\')" id="stTabPeriod">Період</button></div>'+
+        (exchange==='binance'?'<button class="btn btn-neon btn-sm" onclick="App.modules.accountant.loadStatsTab(\'account\',\''+exchange+'\')" id="stTabAccount">Акаунт</button>':'')+
+        '<button class="btn '+(exchange==='binance'?'btn-ghost':'btn-neon')+' btn-sm" onclick="App.modules.accountant.loadStatsTab(\'today\',\''+exchange+'\')" id="stTabToday">Сьогодні</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="App.modules.accountant.loadStatsTab(\'month\',\''+exchange+'\')" id="stTabMonth">Місяць</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="App.modules.accountant.loadStatsTab(\'period\',\''+exchange+'\')" id="stTabPeriod">Період</button></div>'+
         '<div id="statsContent"><div class="spinner" style="margin:20px auto"></div></div></div>');
-      this.loadStatsTab('account');
+      this.loadStatsTab(exchange==='binance'?'account':'today',exchange);
     },
-    loadStatsTab:function(tab){
+    loadStatsTab:function(tab,exchange){
+      exchange=exchange||_activeExchange||'binance';
       var el=document.getElementById('statsContent');
       if(!el)return;
-      // Update tab styles
-      var tabs=['account','today','month','period'];
+      var tabs=exchange==='binance'?['account','today','month','period']:['today','month','period'];
       for(var i=0;i<tabs.length;i++){
         var btn=document.getElementById('stTab'+tabs[i].charAt(0).toUpperCase()+tabs[i].slice(1));
         if(btn){btn.className=tabs[i]===tab?'btn btn-neon btn-sm':'btn btn-ghost btn-sm'}
       }
       el.innerHTML='<div class="spinner" style="margin:20px auto"></div>';
       var self=this;
-      if(tab==='account'){
+      var apiPrefix=exchange==='binance'?'/api/binance':'/api/bybit';
+      if(tab==='account'&&exchange==='binance'){
         api('/api/binance/stats?user_id='+uid()).then(function(r){
           if(!r){el.innerHTML='<p style="color:var(--text3)">Дані недоступні</p>';return}
           var isMerch=r.isMerchant;
@@ -1378,13 +1525,13 @@ App.modules.accountant=(function(){
             '<div><span style="color:var(--text3)">Completion rate:</span> <b>'+(r.completionRate||0)+'%</b></div></div>';
         });
       }else if(tab==='today'){
-        api('/api/binance/today?user_id='+uid()).then(function(t){
+        api(apiPrefix+'/today?user_id='+uid()).then(function(t){
           if(!t){el.innerHTML='<p style="color:var(--text3)">Дані недоступні</p>';return}
           el.innerHTML=self._todayHtml(t);
         });
       }else if(tab==='month'){
         el.innerHTML='<div class="spinner" style="margin:20px auto"></div><p style="font-size:11px;color:var(--text3);text-align:center">Розрахунок FIFO за 30 днів...</p>';
-        api('/api/binance/profit','POST',{user_id:uid(),days:30,fiat:'UAH',asset:'USDT'}).then(function(r){
+        api(apiPrefix+'/profit','POST',{user_id:uid(),days:30,fiat:'UAH',asset:'USDT'}).then(function(r){
           if(!r){el.innerHTML='<p style="color:var(--red)">Помилка</p>';return}
           self._renderProfitResult(el,r,'30 днів');
         });
@@ -1399,21 +1546,23 @@ App.modules.accountant=(function(){
           '<input type="date" id="statDateFrom" value="'+monthAgo+'" class="date-input"></div>'+
           '<div><label style="font-size:10px;color:var(--text3);display:block;margin-bottom:3px">До</label>'+
           '<input type="date" id="statDateTo" value="'+today+'" class="date-input"></div></div>'+
-          '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.runPeriodStats()">'+
+          '<button class="btn btn-neon btn-sm btn-block" onclick="App.modules.accountant.runPeriodStats(\''+exchange+'\')">'+
           '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:4px">'+
           '<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'+
           'Розрахувати</button></div>'+
           '<div id="periodResult"></div>';
       }
     },
-    runPeriodStats:function(){
+    runPeriodStats:function(exchange){
+      exchange=exchange||_activeExchange||'binance';
       var from=document.getElementById('statDateFrom').value;
       var to=document.getElementById('statDateTo').value;
       var el=document.getElementById('periodResult');
       if(!from||!to||!el)return;
       el.innerHTML='<div class="spinner" style="margin:20px auto"></div><p style="font-size:11px;color:var(--text3);text-align:center">Розрахунок FIFO...</p>';
       var self=this;
-      api('/api/binance/profit','POST',{user_id:uid(),fiat:'UAH',asset:'USDT',start_date:from,end_date:to}).then(function(r){
+      var endpoint=exchange==='binance'?'/api/binance/profit':'/api/bybit/profit';
+      api(endpoint,'POST',{user_id:uid(),fiat:'UAH',asset:'USDT',start_date:from,end_date:to}).then(function(r){
         if(!r){el.innerHTML='<p style="color:var(--red)">Помилка</p>';return}
         self._renderProfitResult(el,r,from+' — '+to);
       });
@@ -1445,7 +1594,9 @@ App.modules.accountant=(function(){
       var loading=document.getElementById('chartLoading');
       if(loading)loading.style.display='flex';
       var self=this;
-      api('/api/binance/chart?user_id='+uid()+'&days='+days).then(function(r){
+      var exchange=_activeExchange||'binance';
+      var endpoint=exchange==='binance'?'/api/binance/chart':'/api/bybit/chart';
+      api(endpoint+'?user_id='+uid()+'&days='+days).then(function(r){
         if(loading)loading.style.display='none';
         if(!r||!r.days||!r.days.length){self.renderChartEmpty();return}
         self.renderChart(r.days);
