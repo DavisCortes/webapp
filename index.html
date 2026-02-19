@@ -707,7 +707,7 @@ const API=(function(){var h=location.hostname;
   return'http://'+h+':8000'})();
 
 function api(ep,method,body){
-  method=method||'GET';var o={method:method,headers:{'Content-Type':'application/json'}};
+  method=method||'GET';var o={method:method,headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'}};
   if(body)o.body=JSON.stringify(body);
   return fetch(API+ep,o).then(function(r){if(!r.ok)return r.json().catch(function(){return{detail:r.statusText}}).then(function(e){throw new Error(e.detail||r.statusText)});return r.json()}).catch(function(e){console.warn('API:',ep,e.message);return null})}
 
