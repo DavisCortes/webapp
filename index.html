@@ -1558,7 +1558,7 @@ App.modules.leaderboard=(function(){
         var t3=[];if(lb[1])t3.push(lb[1]);if(lb[0])t3.push(lb[0]);if(lb[2])t3.push(lb[2]);
         var pc=['pod-2','pod-1','pod-3'],medals=['🥈','🥇','🥉'],ph='';
         for(var i=0;i<t3.length;i++){var u=t3[i];
-          ph+='<div class="pod '+pc[i]+'"><div class="medal">'+medals[i]+'</div><img src="'+avatarUrl(u.first_name,64,u.photo_url)+'" alt=""><div class="p-name">'+(u.first_name||'?')+'</div><div class="p-xp">'+(u.xp||0)+' XP</div></div>'}}
+          ph+='<div class="pod '+pc[i]+'"><div class="medal">'+medals[i]+'</div><img src="'+avatarUrl(u.first_name,64,u.photo_url)+'" alt=""><div class="p-name">'+(u.first_name||'?')+'</div><div class="p-xp">'+(u.xp||0)+' XP</div></div>'}
         document.getElementById('lbPodium').innerHTML=ph;
         var lh='';for(var j=3;j<lb.length;j++){var u2=lb[j],me=u2.user_id===App.userId;
           lh+='<div class="lb-row'+(me?' me':'')+'"><div class="lb-pos">'+u2.position+'</div><img src="'+avatarUrl(u2.first_name,48,u2.photo_url)+'"><div class="lb-info"><div class="lb-name">'+(u2.first_name||'?')+'</div><div class="lb-rank">'+(u2.rank||rankOf(u2.level||1))+'</div></div><div class="lb-xp">'+(u2.xp||0)+'</div></div>'}
