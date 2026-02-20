@@ -295,9 +295,18 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 .ach:hover{border-color:var(--purple);transform:translateY(-2px)}
 .ach.earned{border-color:var(--neon);box-shadow:0 0 20px rgba(0,240,255,0.1)}
 .ach.earned::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,240,255,0.05),transparent)}
-.ach.locked{opacity:.35;filter:grayscale(.8)}
+.ach.locked{opacity:.55;filter:none}
 .ach .emoji{font-size:30px;margin-bottom:6px;display:block}
+.ach .ach-badge{display:inline-block;margin-bottom:6px;line-height:0}
 .ach .a-title{font-size:10px;color:var(--text2);line-height:1.3}
+
+/* ═══ ACH BADGE ANIMATIONS ═══ */
+@keyframes achPulse{0%,100%{filter:drop-shadow(0 0 3px var(--ach-glow,#00d4ff))}50%{filter:drop-shadow(0 0 10px var(--ach-glow,#00d4ff)) brightness(1.1)}}
+@keyframes achGlitch{0%,88%,100%{transform:translate(0,0)}90%{transform:translate(-2px,1px) skewX(-2deg)}93%{transform:translate(2px,-1px) skewX(2deg)}96%{transform:translate(-1px,-1px)}}
+@keyframes achFireGlow{0%,100%{filter:drop-shadow(0 0 4px var(--ach-glow,#ff3030)) brightness(1)}25%{filter:drop-shadow(0 0 12px var(--ach-glow,#ff3030)) brightness(1.15)}50%{filter:drop-shadow(0 0 6px var(--ach-glow,#ff5500)) brightness(1.05)}75%{filter:drop-shadow(0 0 14px var(--ach-glow,#ff3030)) brightness(1.1)}}
+.ach-pulse{--ach-glow:#00d4ff;animation:achPulse 2s ease-in-out infinite}
+.ach-glitch{--ach-glow:#c080ff;animation:achGlitch 3s steps(1,end) infinite}
+.ach-fire{--ach-glow:#ff3030;animation:achFireGlow 1.5s ease-in-out infinite,achGlitch 4s steps(1,end) infinite}
 
 /* ═══ FAQ ═══ */
 .faq{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-sm);margin-bottom:8px;overflow:hidden}
@@ -795,6 +804,119 @@ function getRankInfo(level) {
   }
   return info;
 }
+
+/* ───── ACHIEVEMENT BADGE SVG ───── */
+function achBadgeSVG(cat, lvl, total, earned, sz) {
+  sz = sz || 48;
+  var uid = 'ab_' + cat + '_' + lvl + '_' + Math.random().toString(36).substr(2,4);
+  var tier;
+  if (total <= 1) tier = lvl > 0 ? 4 : 1;
+  else { var p = (lvl - 1) / (total - 1);
+    tier = p >= 1 ? 7 : p >= 0.84 ? 6 : p >= 0.67 ? 5 : p >= 0.5 ? 4 : p >= 0.34 ? 3 : p >= 0.17 ? 2 : 1; }
+  var TC = [null,
+    {a:'#4a505c',b:'#36393f',s:'#6b7280',g:null,n:null,c:''},
+    {a:'#788898',b:'#5a6a7a',s:'#a0b0c0',g:null,n:'#b0c0d0',c:''},
+    {a:'#90a8bc',b:'#7090a8',s:'#c0d4e4',g:'rgba(150,175,200,0.2)',n:'#c8d8e8',c:''},
+    {a:'#c09820',b:'#987018',s:'#e8c830',g:'rgba(200,168,32,0.3)',n:'#ffd740',c:''},
+    {a:'#1878cc',b:'#1058a0',s:'#38a8f0',g:'rgba(24,120,204,0.4)',n:'#00d4ff',c:'ach-pulse'},
+    {a:'#7c30d0',b:'#5c20a8',s:'#a858f0',g:'rgba(124,48,208,0.4)',n:'#c080ff',c:'ach-glitch'},
+    {a:'#cc2424',b:'#981818',s:'#f05050',g:'rgba(204,36,36,0.5)',n:'#ff3030',c:'ach-fire'}
+  ];
+  var t = TC[tier], fl, fa, sk = t.s, nc = t.n || t.s;
+  var svg = '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">';
+  svg += '<defs><linearGradient id="'+uid+'g" x1="0" y1="0" x2=".8" y2="1">';
+  svg += '<stop offset="0%" stop-color="'+t.a+'"/><stop offset="100%" stop-color="'+t.b+'"/></linearGradient>';
+  if (t.g) svg += '<filter id="'+uid+'f"><feDropShadow dx="0" dy="0" stdDeviation="2.5" flood-color="'+(t.n||t.a)+'" flood-opacity="0.5"/></filter>';
+  svg += '</defs>';
+  fl = 'url(#'+uid+'g)';
+  fa = t.g ? ' filter="url(#'+uid+'f)"' : '';
+  /* Outer energy ring tier 5+ */
+  if (tier >= 5) {
+    var da = tier >= 6 ? '2,3' : '4,2';
+    svg += '<circle cx="24" cy="24" r="23" fill="none" stroke="'+nc+'" stroke-width="0.8" stroke-dasharray="'+da+'" opacity="0.4"/>';
+  }
+  /* Main shape per category */
+  var S = {
+    trades: '<path d="M24 5L40 14V30C40 39 24 46 24 46S8 39 8 30V14Z" fill="'+fl+'" stroke="'+sk+'" stroke-width="1.5" stroke-linejoin="round"'+fa+'/>'
+      +'<path d="M18 23L24 17L30 23M19 29L24 25L29 29" fill="none" stroke="'+sk+'" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>',
+    volume: '<path d="M22 5L22 28M26 5L26 28" stroke="'+sk+'" stroke-width="2.5" stroke-linecap="round"/>'
+      +'<path d="M22 5L24 2L26 5" fill="'+fl+'" stroke="'+sk+'" stroke-width="1"/>'
+      +'<rect x="14" y="28" width="20" height="3.5" rx="1" fill="'+fl+'" stroke="'+sk+'" stroke-width="1"'+fa+'/>'
+      +'<rect x="20" y="32" width="8" height="7" rx="1" fill="'+fl+'" stroke="'+sk+'" stroke-width="1"/>'
+      +'<circle cx="24" cy="43" r="2.8" fill="'+fl+'" stroke="'+sk+'" stroke-width="1"/>',
+    profit: '<path d="M7 37L7 19L15 27L24 11L33 27L41 19L41 37Z" fill="'+fl+'" stroke="'+sk+'" stroke-width="1.5" stroke-linejoin="round"'+fa+'/>'
+      +'<circle cx="15" cy="33" r="2" fill="'+t.b+'" stroke="'+sk+'" stroke-width="0.8"/>'
+      +'<circle cx="24" cy="31" r="2.5" fill="'+t.b+'" stroke="'+sk+'" stroke-width="0.8"/>'
+      +'<circle cx="33" cy="33" r="2" fill="'+t.b+'" stroke="'+sk+'" stroke-width="0.8"/>',
+    lessons: '<rect x="8" y="8" width="32" height="26" rx="3" fill="'+fl+'" stroke="'+sk+'" stroke-width="1.5"'+fa+'/>'
+      +'<rect x="11" y="11" width="26" height="20" rx="1.5" fill="'+t.b+'" opacity="0.5"/>'
+      +'<path d="M15 19L20 23L15 27" fill="none" stroke="'+sk+'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+      +'<line x1="22" y1="27" x2="30" y2="27" stroke="'+sk+'" stroke-width="1.5" stroke-linecap="round"/>'
+      +'<rect x="18" y="36" width="12" height="4" rx="1" fill="'+fl+'" stroke="'+sk+'" stroke-width="0.8"/>',
+    quizzes: '<path d="M15 40V31C8 27 7 18 11 11C14 5 20 4 24 4S34 5 37 11C41 18 40 27 33 31V40Z" fill="'+fl+'" stroke="'+sk+'" stroke-width="1.5"'+fa+'/>'
+      +'<circle cx="18" cy="19" r="3.5" fill="'+t.b+'"/><circle cx="18" cy="19" r="1.5" fill="'+(tier>=5?nc:sk)+'"/>'
+      +'<circle cx="30" cy="19" r="3.5" fill="'+t.b+'"/><circle cx="30" cy="19" r="1.5" fill="'+(tier>=5?nc:sk)+'"/>'
+      +'<path d="M22 27L24 30L26 27" fill="none" stroke="'+sk+'" stroke-width="1" stroke-linecap="round"/>'
+      +'<path d="M18 40V36M22 40V35M24 40V34M26 40V35M30 40V36" stroke="'+sk+'" stroke-width="1.2"/>',
+    task_streak: '<path d="M24 2C32 12 28 18 28 22C36 15 38 26 34 34C38 40 30 47 24 47S10 40 14 34C10 26 12 15 20 22C20 18 16 12 24 2Z" fill="'+fl+'" stroke="'+sk+'" stroke-width="1.5"'+fa+'/>'
+      +(tier>=3?'<path d="M24 14C28 20 26 24 26 27C30 23 32 29 29 35C32 39 27 44 24 44S16 39 19 35C16 29 18 23 22 27C22 24 20 20 24 14Z" fill="'+t.b+'" opacity="0.4"/>':''),
+    trade_streak: '<path d="M30 3L14 23H22L12 45L38 21H28Z" fill="'+fl+'" stroke="'+sk+'" stroke-width="1.5" stroke-linejoin="round"'+fa+'/>',
+    referrals: '<path d="M24 20L18 14C12 9 5 5 5 5C7 13 13 18 19 22L24 26Z" fill="'+fl+'" stroke="'+sk+'" stroke-width="1"'+fa+'/>'
+      +'<path d="M24 20L30 14C36 9 43 5 43 5C41 13 35 18 29 22L24 26Z" fill="'+fl+'" stroke="'+sk+'" stroke-width="1"/>'
+      +'<path d="M22 26L24 44L26 26Z" fill="'+fl+'" stroke="'+sk+'" stroke-width="1"/>'
+      +(tier>=3?'<circle cx="24" cy="20" r="3" fill="'+t.b+'" stroke="'+sk+'" stroke-width="0.8"/>':''),
+    special: '<polygon points="24,4 29,18 44,18 32,27 36,42 24,34 12,42 16,27 4,18 19,18" fill="'+fl+'" stroke="'+sk+'" stroke-width="1.5"'+fa+'/>'
+  };
+  svg += S[cat] || S.special;
+  /* Tier 2-3: stars */
+  if (tier >= 2 && tier <= 3)
+    svg += '<path d="M40 6L41 8L43 9L41 10L40 12L39 10L37 9L39 8Z" fill="'+nc+'" opacity="0.85"/>';
+  if (tier === 3)
+    svg += '<path d="M8 6L9 8L11 9L9 10L8 12L7 10L5 9L7 8Z" fill="'+nc+'" opacity="0.85"/>';
+  /* Tier 4+: crown */
+  if (tier >= 4)
+    svg += '<path d="M16 2L18 5L21 1L24 6L27 1L30 5L32 2" fill="none" stroke="'+nc+'" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>';
+  /* Tier 5: lightning accents */
+  if (tier === 5) {
+    svg += '<path d="M6 17L4 21L6 21L3 27" fill="none" stroke="'+nc+'" stroke-width="1" stroke-linecap="round" opacity="0.7"/>';
+    svg += '<path d="M42 17L44 21L42 21L45 27" fill="none" stroke="'+nc+'" stroke-width="1" stroke-linecap="round" opacity="0.7"/>';
+  }
+  /* Tier 6-7: skull accent */
+  if (tier >= 6) {
+    svg += '<ellipse cx="24" cy="45" rx="4.5" ry="2.5" fill="'+t.b+'" stroke="'+nc+'" stroke-width="0.8"/>';
+    svg += '<circle cx="22" cy="44.5" r="1" fill="'+nc+'"/><circle cx="26" cy="44.5" r="1" fill="'+nc+'"/>';
+  }
+  /* Tier 7: fire particles */
+  if (tier >= 7) {
+    var fp = [[7,14],[41,14],[5,28],[43,28],[9,42],[39,42]];
+    for (var i = 0; i < fp.length; i++) {
+      var d = (0.7 + i * 0.18).toFixed(2);
+      svg += '<circle cx="'+fp[i][0]+'" cy="'+fp[i][1]+'" r="1.5" fill="'+nc+'">'
+        +'<animate attributeName="opacity" values="0.9;0.1;0.9" dur="'+d+'s" repeatCount="indefinite"/>'
+        +'<animate attributeName="r" values="1.5;0.4;1.5" dur="'+d+'s" repeatCount="indefinite"/></circle>';
+    }
+  }
+  /* Lock overlay */
+  if (!earned) {
+    svg += '<rect x="0" y="0" width="48" height="48" fill="rgba(8,8,14,0.58)" rx="3"/>';
+    svg += '<rect x="19" y="26" width="10" height="8" rx="2" fill="#2a2f3a" stroke="#5a6070" stroke-width="1"/>';
+    svg += '<path d="M21 26V23C21 19.5 27 19.5 27 23V26" fill="none" stroke="#5a6070" stroke-width="1.2" stroke-linecap="round"/>';
+    svg += '<circle cx="24" cy="30.5" r="1.2" fill="#5a6070"/>';
+  }
+  svg += '</svg>';
+  var cls = 'ach-badge' + (earned && t.c ? ' ' + t.c : '');
+  return '<span class="' + cls + '">' + svg + '</span>';
+}
+
+function specialAchTier(xp) {
+  if (xp >= 3000) return 7;
+  if (xp >= 1500) return 6;
+  if (xp >= 500) return 5;
+  if (xp >= 200) return 4;
+  if (xp >= 100) return 3;
+  return 2;
+}
+
 const MAT1="Матеріали Курс 1:\n\n1. Підтримка (30 хв – 6 год, 7 днів)\n2. Методичка: Описание объявлений\n3. Методичка: Як подати апеляцію";
 const MAT2="Матеріали Курс 2:\n\n1. Чат підтримки (5–30 хв, 14 днів)\n2. Pro-бот аналітики (14 днів)\n3. Созвон в неділю\n4. Методичка по банкам\n5. Призначення платежів\n6. Емулятор\n7. Пошук клієнтів";
 const TOTAL=10;const ADMINS=[728309625,584189889];
@@ -973,13 +1095,18 @@ var App={
   /* ─── ACHIEVEMENT POPUP ─── */
   showAchievementPopup:function(achKey){
     var a=ALL_ACHS[achKey]||ACHIEVEMENTS[achKey];if(!a)return;
+    var cat=a.category||'special',lvl=a.level||1,total=1;
+    if(LEVELED_ACHS[cat])total=LEVELED_ACHS[cat].levels.length;
+    else if(a.xp)total=7;
+    var t2=cat==='special'?specialAchTier(a.xp||0):0;
+    var badge=achBadgeSVG(cat,cat==='special'?t2:lvl,cat==='special'?7:total,true,80);
     var overlay=document.createElement('div');
-    overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:9998;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);animation:fadeIn 0.3s ease';
-    overlay.innerHTML='<div style="font-size:64px;animation:bounce 0.5s ease">'+a.icon+'</div>'
+    overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:9998;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);animation:fadeIn 0.3s ease';
+    overlay.innerHTML='<div style="animation:bounce 0.5s ease">'+badge+'</div>'
       +'<div style="font-family:Orbitron,sans-serif;font-size:16px;color:#10b981;margin-top:12px;letter-spacing:2px">НОВЕ ДОСЯГНЕННЯ!</div>'
-      +'<div style="font-family:Orbitron,sans-serif;font-size:20px;color:white;margin-top:8px;font-weight:700">'+a.title+'</div>'
-      +'<div style="font-size:13px;color:#94a3b8;margin-top:6px">'+a.desc+'</div>'
-      +(a.xp?'<div style="font-size:16px;color:#00f0ff;margin-top:10px">✨ +'+a.xp+' XP</div>':'');
+      +'<div style="font-family:Orbitron,sans-serif;font-size:20px;color:white;margin-top:8px;font-weight:700">'+(a.title||a.name)+'</div>'
+      +'<div style="font-size:13px;color:#94a3b8;margin-top:6px">'+(a.desc||'')+'</div>'
+      +(a.xp?'<div style="font-size:16px;color:#00f0ff;margin-top:10px">⚡ +'+a.xp+' XP</div>':'');
     overlay.onclick=function(){overlay.style.animation='fadeOut 0.3s ease forwards';setTimeout(function(){overlay.remove()},300)};
     document.body.appendChild(overlay);
     if(typeof confetti==='function')confetti({particleCount:80,spread:100,origin:{y:0.5},colors:['#00f0ff','#a855f7','#10b981','#f59e0b']});
@@ -1930,20 +2057,23 @@ App.modules.profile=(function(){
         '<div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px;margin-bottom:10px">ПРОГРЕС</div>'+
         '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12px"><span>Basic</span><span>'+s.c1.length+'/'+TOTAL+'</span></div><div class="xp-bar" style="margin-top:4px"><div class="fill" style="width:'+(s.c1.length/TOTAL*100)+'%"></div></div></div>'+
         '<div><div style="display:flex;justify-content:space-between;font-size:12px"><span>Pro</span><span>'+s.c2.length+'/'+TOTAL+'</span></div><div class="xp-bar" style="margin-top:4px"><div class="fill" style="width:'+(s.c2.length/TOTAL*100)+'%;background:linear-gradient(90deg,var(--purple),var(--pink))"></div></div></div>';
-      // achs - show recent earned + some locked
+      // achs - show recent earned + some locked (SVG badges)
       var ah='';var shownCount=0;
-      // First show earned ones
       for(var i=0;i<s.achs.length&&shownCount<6;i++){
         var k=s.achs[i],a=ALL_ACHS[k]||ACHIEVEMENTS[k];
-        if(a){ah+='<div class="ach earned" onclick="App.modules.achievements.show(\''+k+'\')"><span class="emoji">'+a.icon+'</span><div class="a-title">'+(a.name||a.title)+'</div></div>';shownCount++}
+        if(a){var pCat=a.category||'special',pLvl=a.level||1,pTot=1;
+          if(LEVELED_ACHS[pCat])pTot=LEVELED_ACHS[pCat].levels.length;
+          var pT=pCat==='special'?specialAchTier(a.xp||0):pLvl;
+          var pTT=pCat==='special'?7:pTot;
+          ah+='<div class="ach earned" onclick="App.modules.achievements.show(\''+k+'\')">'+achBadgeSVG(pCat,pT,pTT,true,36)+'<div class="a-title">'+(a.name||a.title)+'</div></div>';shownCount++}
       }
-      // Fill remaining with locked special or first leveled
       if(shownCount<6){
         var extraKeys=Object.keys(SPECIAL_ACHS).length?Object.keys(SPECIAL_ACHS):Object.keys(ACHIEVEMENTS);
         for(var j=0;j<extraKeys.length&&shownCount<6;j++){
           var ek=extraKeys[j];if(s.achs.indexOf(ek)>=0)continue;
           var ea=SPECIAL_ACHS[ek]||ACHIEVEMENTS[ek];
-          if(ea){ah+='<div class="ach locked" onclick="App.modules.achievements.show(\''+ek+'\')"><span class="emoji">'+ea.icon+'</span><div class="a-title">'+(ea.name||ea.title)+'</div></div>';shownCount++}
+          if(ea){var sTier=specialAchTier(ea.xp||0);
+            ah+='<div class="ach locked" onclick="App.modules.achievements.show(\''+ek+'\')">'+achBadgeSVG('special',sTier,7,false,36)+'<div class="a-title">'+(ea.name||ea.title)+'</div></div>';shownCount++}
         }
       }
       document.getElementById('profAchs').innerHTML=ah;
@@ -2000,7 +2130,10 @@ App.modules.leaderboard=(function(){
    ═══════════════════════════════════════════════════════════════ */
 App.modules.achievements=(function(){
   var activeTab='leveled';
-  function catIcon(key){var icons={trades:'💰',volume:'📊',profit:'💎',lessons:'📚',quizzes:'🧠',task_streak:'📝',trade_streak:'📈',referrals:'👥'};return icons[key]||'🏅'}
+  function catBadge(catKey,earnedInCat,total,sz){
+    var lvl=Math.max(earnedInCat,1);
+    return achBadgeSVG(catKey,lvl,total,earnedInCat>0,sz||32);
+  }
   return{
     init:function(){},
     renderAll:function(){
@@ -2008,8 +2141,8 @@ App.modules.achievements=(function(){
       var totalAll=Object.keys(ALL_ACHS).length||Object.keys(ACHIEVEMENTS).length;
       document.getElementById('achCount').textContent=earned+'/'+totalAll;
       var h='<div style="display:flex;gap:8px;margin-bottom:14px">'
-        +'<button class="btn btn-sm '+(activeTab==='leveled'?'btn-neon':'btn-ghost')+'" onclick="App.modules.achievements.setTab(\'leveled\')" style="flex:1">📊 Рівневі</button>'
-        +'<button class="btn btn-sm '+(activeTab==='special'?'btn-neon':'btn-ghost')+'" onclick="App.modules.achievements.setTab(\'special\')" style="flex:1">⭐ Спеціальні</button>'
+        +'<button class="btn btn-sm '+(activeTab==='leveled'?'btn-neon':'btn-ghost')+'" onclick="App.modules.achievements.setTab(\'leveled\')" style="flex:1">'+achBadgeSVG('trades',4,7,true,16)+' Рівневі</button>'
+        +'<button class="btn btn-sm '+(activeTab==='special'?'btn-neon':'btn-ghost')+'" onclick="App.modules.achievements.setTab(\'special\')" style="flex:1">'+achBadgeSVG('special',4,7,true,16)+' Спеціальні</button>'
         +'</div>';
       if(activeTab==='leveled') h+=this.renderLeveled();
       else h+=this.renderSpecial();
@@ -2022,7 +2155,6 @@ App.modules.achievements=(function(){
       for(var catKey in LEVELED_ACHS){
         var cat=LEVELED_ACHS[catKey];
         var levels=cat.levels||[];
-        // Find current progress
         var earnedInCat=0;var nextLevel=null;
         for(var i=0;i<levels.length;i++){
           var lk=catKey+'_lv'+(i+1);
@@ -2032,13 +2164,13 @@ App.modules.achievements=(function(){
         var pctCat=levels.length>0?Math.round(earnedInCat/levels.length*100):0;
         h+='<div class="g-card" style="margin-bottom:10px;cursor:pointer" onclick="App.modules.achievements.showCategory(\''+catKey+'\')">'
           +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
-          +'<span style="font-size:24px">'+catIcon(catKey)+'</span>'
+          +catBadge(catKey,earnedInCat,levels.length,36)
           +'<div style="flex:1"><div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px">'+cat.name.toUpperCase()+'</div>'
           +'<div style="font-size:11px;color:var(--text3)">'+earnedInCat+'/'+levels.length+' рівнів</div></div>'
           +'<span style="font-size:11px;color:var(--neon)">'+pctCat+'%</span></div>'
           +'<div class="xp-bar" style="height:6px"><div class="fill" style="width:'+pctCat+'%;transition:width 0.5s ease"></div></div>';
         if(nextLevel){
-          h+='<div style="font-size:11px;color:var(--text2);margin-top:6px">Наступний: <b>'+nextLevel.name+'</b> ('+nextLevel.threshold+')</div>';
+          h+='<div style="font-size:11px;color:var(--text2);margin-top:6px">Наступний: <b>'+nextLevel.name+'</b> ('+nextLevel.threshold.toLocaleString()+')</div>';
         }else if(earnedInCat===levels.length&&levels.length>0){
           h+='<div style="font-size:11px;color:var(--green);margin-top:6px">✓ Всі рівні пройдено!</div>';
         }
@@ -2048,41 +2180,52 @@ App.modules.achievements=(function(){
     },
     renderSpecial:function(){
       if(!SPECIAL_ACHS||!Object.keys(SPECIAL_ACHS).length){
-        // Fallback to old ACHIEVEMENTS
         var ks=Object.keys(ACHIEVEMENTS),h2='';
         for(var i=0;i<ks.length;i++){var k=ks[i],a=ACHIEVEMENTS[k],e=App.state.achs.indexOf(k)>=0;
-          h2+='<div class="ach'+(e?' earned':' locked')+'" onclick="App.modules.achievements.show(\''+k+'\')"><span class="emoji">'+a.icon+'</span><div class="a-title">'+a.title+'</div></div>'}
+          h2+='<div class="ach'+(e?' earned':' locked')+'" onclick="App.modules.achievements.show(\''+k+'\')">'+achBadgeSVG('special',specialAchTier(a.xp||0),7,e,36)+'<div class="a-title">'+a.title+'</div></div>'}
         return h2;
       }
-      var h='';
+      var h='<div class="ach-grid">';
       for(var sk in SPECIAL_ACHS){
         var sa=SPECIAL_ACHS[sk],e2=App.state.achs.indexOf(sk)>=0;
+        var sTier=specialAchTier(sa.xp||0);
         h+='<div class="ach'+(e2?' earned':' locked')+'" onclick="App.modules.achievements.show(\''+sk+'\')">'
-          +'<span class="emoji">'+sa.icon+'</span><div class="a-title">'+sa.name+'</div></div>';
+          +achBadgeSVG('special',sTier,7,e2,36)+'<div class="a-title">'+sa.name+'</div></div>';
       }
+      h+='</div>';
       return h;
     },
     showCategory:function(catKey){
       var cat=LEVELED_ACHS[catKey];if(!cat)return;
       var levels=cat.levels||[];
-      var h='<div style="padding:10px"><div style="text-align:center;margin-bottom:16px"><span style="font-size:36px">'+catIcon(catKey)+'</span>'
-        +'<h3 style="font-family:var(--font-display);font-size:16px;margin-top:8px">'+cat.name.toUpperCase()+'</h3></div>';
+      var h='<div style="padding:10px"><div style="text-align:center;margin-bottom:16px">'
+        +achBadgeSVG(catKey,Math.ceil(levels.length/2),levels.length,true,56)
+        +'<h3 style="font-family:var(--font-display);font-size:16px;margin-top:10px">'+cat.name.toUpperCase()+'</h3></div>';
       for(var i=0;i<levels.length;i++){
         var lv=levels[i],lk=catKey+'_lv'+(i+1);
         var earned=App.state.achs.indexOf(lk)>=0;
-        h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--glass-border);opacity:'+(earned?'1':'0.5')+'">'
-          +'<span style="font-size:20px">'+(earned?lv.icon||'✅':'🔒')+'</span>'
-          +'<div style="flex:1"><div style="font-size:13px;font-weight:600">'+lv.name+'</div>'
-          +'<div style="font-size:11px;color:var(--text3)">Поріг: '+lv.threshold.toLocaleString()+' • +'+lv.xp+' XP</div></div>'
-          +'<span style="font-size:12px;color:'+(earned?'var(--green)':'var(--text3)')+'">'+(earned?'✓':'—')+'</span></div>';
+        h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--glass-border)">'
+          +achBadgeSVG(catKey,i+1,levels.length,earned,32)
+          +'<div style="flex:1"><div style="font-size:13px;font-weight:600;color:'+(earned?'var(--text)':'var(--text3)')+'">'+lv.name+'</div>'
+          +'<div style="font-size:11px;color:var(--text3)">Поріг: '+lv.threshold.toLocaleString()+' \u2022 +'+lv.xp+' XP</div></div>'
+          +'<span style="font-family:var(--font-display);font-size:11px;color:'+(earned?'var(--green)':'var(--text3)')+'">'+(earned?'\u2713':'LV'+(i+1))+'</span></div>';
       }
       h+='</div>';
       App.openModal(h);
     },
     show:function(k){var a=ALL_ACHS[k]||SPECIAL_ACHS[k]||ACHIEVEMENTS[k];if(!a)return;var e=App.state.achs.indexOf(k)>=0;
       var name=a.name||a.title||k;var desc=a.desc||a.condition||'';
-      App.openModal('<div style="text-align:center;padding:10px"><div style="font-size:50px;margin-bottom:10px'+(e?'':';filter:grayscale(1);opacity:.4')+'">'+a.icon+'</div><h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:6px">'+name+'</h3><p style="font-size:13px;color:var(--text2)">'+desc+'</p>'+(a.xp?'<div style="margin-top:8px;font-size:12px;color:var(--neon)">+'+a.xp+' XP</div>':'')+'<div style="margin-top:12px;font-size:12px;font-family:var(--font-display);color:'+(e?'var(--green)':'var(--text3)')+'">'+
-        (e?'✓ ОТРИМАНО':'🔒 ЗАБЛОКОВАНО')+'</div></div>')},
+      var cat=a.category||'special',lvl=a.level||1,total=1;
+      if(LEVELED_ACHS[cat])total=LEVELED_ACHS[cat].levels.length;
+      var badgeTier=cat==='special'?specialAchTier(a.xp||0):lvl;
+      var badgeTotal=cat==='special'?7:total;
+      App.openModal('<div style="text-align:center;padding:10px">'
+        +'<div style="margin-bottom:10px">'+achBadgeSVG(cat,badgeTier,badgeTotal,e,64)+'</div>'
+        +'<h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:6px">'+name+'</h3>'
+        +'<p style="font-size:13px;color:var(--text2)">'+desc+'</p>'
+        +(a.xp?'<div style="margin-top:8px;font-size:12px;color:var(--neon)">+'+a.xp+' XP</div>':'')
+        +'<div style="margin-top:12px;font-size:12px;font-family:var(--font-display);color:'+(e?'var(--green)':'var(--text3)')+'">'+
+        (e?'\u2713 ОТРИМАНО':'\uD83D\uDD12 ЗАБЛОКОВАНО')+'</div></div>')},
     earn:function(k){if(App.state.achs.indexOf(k)>=0)return;App.state.achs.push(k);
       App.showAchievementPopup(k)}
   };
