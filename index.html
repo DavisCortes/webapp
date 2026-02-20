@@ -30,13 +30,15 @@
   --font-display:'Orbitron',monospace;--font-body:'Inter',sans-serif;
   --r:16px;--r-sm:10px;--r-xs:6px;
   --nav-h:68px;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);
+  --tg-safe-t:0px;--tg-content-t:0px;
+  --top-inset:max(var(--safe-t), var(--tg-safe-t));
   --transition:all .25s cubic-bezier(.4,0,.2,1);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{-webkit-tap-highlight-color:transparent;scroll-behavior:smooth}
 body{font-family:var(--font-body);background:var(--bg);color:var(--text);
   min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;
-  padding-top:var(--safe-t);padding-bottom:calc(var(--nav-h) + var(--safe-b) + 16px)}
+  padding-top:var(--top-inset);padding-bottom:calc(var(--nav-h) + var(--safe-b) + 16px)}
 
 /* ═══ BG CANVAS ═══ */
 #bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none}
@@ -56,7 +58,8 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 @keyframes scanDown{from{top:-2px}to{top:100vh}}
 
 /* ═══ APP CONTAINER ═══ */
-.app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:12px 14px 20px}
+.app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:12px 14px 20px;
+  padding-top:calc(var(--tg-content-t) + 6px)}
 
 /* ═══ PAGES ═══ */
 .page{display:none;opacity:0;transform:translateY(12px)}.page.active{display:block;animation:pageIn .35s ease forwards}
@@ -185,7 +188,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 .quiz-explain{background:rgba(168,85,247,0.08);border:1px solid var(--purple);border-radius:var(--r-sm);padding:14px;margin-top:12px;font-size:13px;color:var(--text2);display:none}
 
 /* ═══ AI CHAT ═══ */
-.ai-container{display:flex;flex-direction:column;height:calc(100vh - var(--nav-h) - 60px)}
+.ai-container{display:flex;flex-direction:column;height:calc(100vh - var(--nav-h) - var(--safe-b) - var(--top-inset) - 60px)}
 .ai-msgs{flex:1;overflow-y:auto;padding:8px 0;display:flex;flex-direction:column;gap:12px}
 .ai-bubble{max-width:88%;padding:13px 16px;border-radius:var(--r-sm);font-size:14px;line-height:1.65;animation:pageIn .3s ease forwards}
 .ai-bubble.user{align-self:flex-end;background:linear-gradient(135deg,var(--purple),#7c3aed);
@@ -357,7 +360,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 .al-item .al-badge{font-size:10px;padding:3px 10px;border-radius:12px;font-weight:600}
 
 /* ═══ TOAST ═══ */
-.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--surface);
+.toast{position:fixed;top:calc(var(--top-inset) + 12px);left:50%;transform:translateX(-50%);background:var(--surface);
   backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:var(--r-sm);
   padding:12px 22px;font-size:14px;font-weight:600;z-index:1000;
   box-shadow:0 8px 40px rgba(0,0,0,.5);animation:toastIn .4s ease;max-width:90%}
@@ -380,7 +383,8 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 
 /* ═══ MODAL ═══ */
 .modal-overlay{position:fixed;inset:0;background:rgba(6,6,18,0.85);backdrop-filter:blur(8px);z-index:500;
-  display:none;align-items:center;justify-content:center;padding:20px}
+  display:none;align-items:center;justify-content:center;
+  padding:20px;padding-top:calc(var(--top-inset) + 20px);padding-bottom:calc(var(--safe-b) + 20px)}
 .modal-overlay.show{display:flex}
 .modal-box{background:var(--surface);backdrop-filter:blur(30px);border:1px solid var(--glass-border);
   border-radius:var(--r);padding:28px;max-width:400px;width:100%;position:relative;animation:pageIn .3s ease forwards;
@@ -388,9 +392,9 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 .modal-close{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer}
 
 /* ═══ BOTTOM NAV ═══ */
-.nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:rgba(6,6,18,0.95);
+.nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + var(--safe-b));background:rgba(6,6,18,0.95);
   backdrop-filter:blur(20px);border-top:1px solid var(--glass-border);display:flex;
-  justify-content:space-around;align-items:center;z-index:100;padding-bottom:var(--safe-b)}
+  justify-content:space-around;align-items:flex-start;z-index:100;padding-top:6px;padding-bottom:var(--safe-b)}
 .nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;cursor:pointer;
   color:var(--text3);transition:var(--transition);position:relative;font-size:10px;min-width:52px}
 .nav-btn i{font-size:20px;transition:var(--transition)}
@@ -952,7 +956,18 @@ var App={
   init:function(){
     var self=this;
     self.tg=window.Telegram&&Telegram.WebApp?Telegram.WebApp:null;
-    if(self.tg){self.tg.ready();self.tg.expand();self.tg.disableVerticalSwipes();if(self.tg.requestFullscreen)self.tg.requestFullscreen();self.tg.BackButton.onClick(function(){self.back()})}
+    if(self.tg){self.tg.ready();self.tg.expand();self.tg.disableVerticalSwipes();
+      if(self.tg.requestFullscreen)try{self.tg.requestFullscreen()}catch(e){}
+      /* Apply Telegram safe area insets as CSS vars */
+      function applySafeAreas(){
+        var r=document.documentElement.style;
+        if(self.tg.safeAreaInset){r.setProperty('--tg-safe-t',self.tg.safeAreaInset.top+'px')}
+        if(self.tg.contentSafeAreaInset){r.setProperty('--tg-content-t',self.tg.contentSafeAreaInset.top+'px')}
+      }
+      applySafeAreas();
+      self.tg.onEvent('safeAreaChanged',applySafeAreas);
+      self.tg.onEvent('contentSafeAreaChanged',applySafeAreas);
+      self.tg.BackButton.onClick(function(){self.back()})}
     self.user=self.tg&&self.tg.initDataUnsafe?self.tg.initDataUnsafe.user:null;
     self.userId=self.user?self.user.id:0;
     self.initBg();
