@@ -123,12 +123,15 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 .user-row .xp-info{font-size:11px;color:var(--text2);margin-top:3px}
 
 /* ═══ STATS GRID ═══ */
-.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
-.stat-box{text-align:center;padding:14px 6px;background:var(--glass);border:1px solid var(--glass-border);
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0}
+.stat-box{text-align:center;padding:10px 4px;background:var(--glass);border:1px solid var(--glass-border);
   border-radius:var(--r-sm);transition:var(--transition)}
 .stat-box:hover{border-color:var(--neon-dim);box-shadow:0 0 15px rgba(0,240,255,0.05)}
-.stat-val{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--neon)}
-.stat-label{font-size:10px;color:var(--text3);margin-top:3px;text-transform:uppercase;letter-spacing:1px}
+.stat-val{font-family:var(--font-display);font-size:14px;font-weight:800;color:var(--neon)}
+.stat-label{font-size:8px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:0.5px}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
+@keyframes bounce{0%{transform:scale(0.3)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
 
 /* ═══ COURSE CARD ═══ */
 .course-card{cursor:pointer;padding:20px;position:relative}
@@ -579,9 +582,9 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
   <div class="back" onclick="App.go('profile')"><i class="fas fa-arrow-left"></i> Профіль</div>
   <div class="page-header" style="margin-bottom:4px">
     <div class="icon-box" style="color:var(--green)">🏅</div>
-    <div><h2>ДОСЯГНЕННЯ</h2><div class="sub" id="achCount">0/17</div></div>
+    <div><h2>ДОСЯГНЕННЯ</h2><div class="sub" id="achCount">0/0</div></div>
   </div>
-  <div id="achGrid" class="ach-grid"></div>
+  <div id="achGrid"></div>
 </div>
 
 <!-- ========== SETTINGS ========== -->
@@ -678,6 +681,16 @@ const QUIZZES={
 9:[{q:"Навіщо емулятор?",o:["Для ігор","Кілька банків з одного ПК","Для хакінгу","Для відео"],c:1,e:"Емулятор — кілька банківських додатків на одному ПК."}],
 10:[{q:"Як рахувати прибуток?",o:["На око","Excel/Sheets з полями","Не потрібно","За курсом біржі"],c:1,e:"Таблиці дозволяють бачити реальний прибуток і знаходити помилки."}]
 };
+/* ═══ NEW ACHIEVEMENT SYSTEM ═══ */
+var LEVELED_ACHS={};var SPECIAL_ACHS={};var ALL_ACHS={};
+var RANK_TIERS=[];
+function loadAchData(){
+  api('/api/config/achievements').then(function(d){
+    if(d){LEVELED_ACHS=d.leveled||{};SPECIAL_ACHS=d.special||{};ALL_ACHS=d.flat||ACHIEVEMENTS}
+  });
+  api('/api/config/ranks').then(function(d){if(d)RANK_TIERS=d});
+}
+
 const ACHIEVEMENTS={
 first_step:{icon:"🏅",title:"Перший крок",desc:"Переглянув перший урок"},
 halfway:{icon:"⭐",title:"Половина шляху",desc:"50% курсу"},
@@ -710,6 +723,78 @@ const CHALLENGES=[{id:"lesson",text:"Переглянь 1 урок",xp:20,type:"
 {id:"tip",text:"Прочитай пораду",xp:10,type:"tip",n:1},{id:"profile",text:"Переглянь профіль",xp:10,type:"profile",n:1}];
 const RANKS=[[1,"🌱 Новачок"],[3,"📖 Учень"],[5,"🎓 Студент"],[8,"🔥 Досвідчений"],[12,"🚀 Просунутий"],
 [16,"⚡ Майстер"],[20,"🏆 Експерт"],[25,"👑 Легенда"]];
+
+/* ───── SVG RANK BADGE ───── */
+var RANK_STYLES={
+  grey_shield:{primary:'#6b7280',secondary:'#4b5563',border:'#9ca3af',text:'#f3f4f6',glow:false},
+  shield_1stripe:{primary:'#6b7280',secondary:'#374151',border:'#a8a29e',text:'#e5e7eb',glow:false},
+  silver_outline:{primary:'#94a3b8',secondary:'#64748b',border:'#cbd5e1',text:'#f1f5f9',glow:false},
+  silver_2stripes:{primary:'#94a3b8',secondary:'#475569',border:'#e2e8f0',text:'#f8fafc',glow:false},
+  silver_star:{primary:'#a8b8cc',secondary:'#64748b',border:'#e2e8f0',text:'#ffffff',glow:true},
+  gold_outline:{primary:'#d97706',secondary:'#b45309',border:'#fbbf24',text:'#fffbeb',glow:false},
+  gold_1stripe:{primary:'#f59e0b',secondary:'#d97706',border:'#fcd34d',text:'#ffffff',glow:false},
+  gold_2stripes:{primary:'#f59e0b',secondary:'#b45309',border:'#fde68a',text:'#ffffff',glow:true},
+  gold_star:{primary:'#eab308',secondary:'#ca8a04',border:'#fef08a',text:'#ffffff',glow:true},
+  gold_3stripes:{primary:'#fbbf24',secondary:'#d97706',border:'#fef3c7',text:'#ffffff',glow:true},
+  dark_gold_outline:{primary:'#b45309',secondary:'#92400e',border:'#d97706',text:'#fef3c7',glow:false},
+  dark_gold_star:{primary:'#92400e',secondary:'#78350f',border:'#f59e0b',text:'#fef3c7',glow:true},
+  dark_gold_2stars:{primary:'#78350f',secondary:'#451a03',border:'#fbbf24',text:'#fef3c7',glow:true},
+  dark_gold_crown:{primary:'#92400e',secondary:'#451a03',border:'#f59e0b',text:'#ffffff',glow:true},
+  platinum_outline:{primary:'#7dd3fc',secondary:'#38bdf8',border:'#bae6fd',text:'#ffffff',glow:false},
+  platinum_star:{primary:'#38bdf8',secondary:'#0284c7',border:'#7dd3fc',text:'#ffffff',glow:true},
+  platinum_2stars:{primary:'#0ea5e9',secondary:'#0369a1',border:'#38bdf8',text:'#ffffff',glow:true},
+  platinum_crown:{primary:'#0284c7',secondary:'#075985',border:'#7dd3fc',text:'#f0f9ff',glow:true},
+  platinum_wings:{primary:'#06b6d4',secondary:'#0e7490',border:'#67e8f9',text:'#ffffff',glow:true},
+  black_outline:{primary:'#1e1b4b',secondary:'#0f0b3c',border:'#6366f1',text:'#e0e7ff',glow:true},
+  black_star:{primary:'#312e81',secondary:'#1e1b4b',border:'#818cf8',text:'#e0e7ff',glow:true},
+  black_2stars:{primary:'#3730a3',secondary:'#1e1b4b',border:'#a5b4fc',text:'#ffffff',glow:true},
+  black_crown:{primary:'#1e1b4b',secondary:'#0c0a2e',border:'#c4b5fd',text:'#f5f3ff',glow:true},
+  black_wings:{primary:'#0c0a2e',secondary:'#050316',border:'#a78bfa',text:'#f5f3ff',glow:true},
+  transcendent:{primary:'#831843',secondary:'#500724',border:'#f472b6',text:'#fdf2f8',glow:true}
+};
+
+function rankBadgeSVG(rankInfo, size) {
+  size = size || 32;
+  if (!rankInfo) return '';
+  var styleKey = typeof rankInfo.style === 'string' ? rankInfo.style : '';
+  var s = RANK_STYLES[styleKey] || (typeof rankInfo.style === 'object' ? rankInfo.style : RANK_STYLES.grey_shield);
+  var id = rankInfo.id || 1;
+  var cx = size / 2, r = size / 2 - 2;
+  var svg = '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle">';
+  svg += '<defs><linearGradient id="rg_'+id+'_'+size+'" x1="0" y1="0" x2="1" y2="1">';
+  svg += '<stop offset="0%" stop-color="'+s.primary+'"/><stop offset="100%" stop-color="'+s.secondary+'"/>';
+  svg += '</linearGradient>';
+  if (s.glow) svg += '<filter id="gl_'+id+'_'+size+'"><feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="'+s.primary+'" flood-opacity="0.6"/></filter>';
+  svg += '</defs>';
+  var filterAttr = s.glow ? ' filter="url(#gl_'+id+'_'+size+')"' : '';
+  svg += '<circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="url(#rg_'+id+'_'+size+')" stroke="'+s.border+'" stroke-width="1.5"'+filterAttr+'/>';
+  // Stage stars
+  var stage = rankInfo.stage || 1;
+  if (stage >= 2) {
+    var numDots = Math.min(stage - 1, 5);
+    for (var i = 0; i < numDots; i++) {
+      var angle = -90 + i * (360 / numDots);
+      var rad = angle * Math.PI / 180;
+      var sx = cx + (r - 4) * Math.cos(rad);
+      var sy = cx + (r - 4) * Math.sin(rad);
+      svg += '<circle cx="'+sx.toFixed(1)+'" cy="'+sy.toFixed(1)+'" r="1.5" fill="'+s.border+'" opacity="0.8"/>';
+    }
+  }
+  // Center letter
+  var letter = (rankInfo.name || '?').charAt(0).toUpperCase();
+  svg += '<text x="'+cx+'" y="'+(cx + size * 0.12)+'" text-anchor="middle" font-size="'+(size * 0.38)+'" font-family="Orbitron,sans-serif" font-weight="700" fill="'+s.text+'">'+letter+'</text>';
+  svg += '</svg>';
+  return svg;
+}
+
+function getRankInfo(level) {
+  if (RANK_TIERS.length === 0) return {id:1,name:'Новачок',stage:1,style:'grey_shield'};
+  var info = RANK_TIERS[0];
+  for (var i = 0; i < RANK_TIERS.length; i++) {
+    if (level >= RANK_TIERS[i].min) info = RANK_TIERS[i];
+  }
+  return info;
+}
 const MAT1="Матеріали Курс 1:\n\n1. Підтримка (30 хв – 6 год, 7 днів)\n2. Методичка: Описание объявлений\n3. Методичка: Як подати апеляцію";
 const MAT2="Матеріали Курс 2:\n\n1. Чат підтримки (5–30 хв, 14 днів)\n2. Pro-бот аналітики (14 днів)\n3. Созвон в неділю\n4. Методичка по банкам\n5. Призначення платежів\n6. Емулятор\n7. Пошук клієнтів";
 const TOTAL=10;const ADMINS=[728309625,584189889];
@@ -717,7 +802,7 @@ const TOTAL=10;const ADMINS=[728309625,584189889];
 /* ───── API ───── */
 const API=(function(){var h=location.hostname;
   if(h.indexOf('ngrok')>=0)return location.origin;
-  if(h==='daviscortes.github.io')return'https://fd19-2a02-ab04-2ec6-3f00-dda9-5656-8b3f-3407.ngrok-free.app';
+  if(h==='daviscortes.github.io')return'https://51bd-2a02-ab04-2ec6-3f00-2495-fc8-87a8-8ff6.ngrok-free.app';
   if(h==='localhost'||h==='127.0.0.1')return'http://'+h+':8000';
   return location.origin})();
 
@@ -738,7 +823,8 @@ function avatarUrl(n,s,photo){if(photo)return photo;return'https://ui-avatars.co
    ═══════════════════════════════════════════════════════════════ */
 var App={
   tg:null,user:null,userId:null,online:false,chart:null,profitChart:null,
-  state:{c1:[],c2:[],xp:0,streak:0,qOk:0,qTot:0,achs:[],plan:'none',refCount:0,level:1,rank:'🌱 Новачок',pos:0},
+  state:{c1:[],c2:[],xp:0,streak:0,qOk:0,qTot:0,achs:[],plan:'none',refCount:0,level:1,rank:'🌱 Новачок',pos:0,
+    visitStreak:0,tradeStreak:0,taskStreak:0,totalTrades:0,totalEarnings:0,refActive:0,rankInfo:null,exchangesUsed:[]},
 
   /* ─── INIT ─── */
   init:function(){
@@ -748,6 +834,7 @@ var App={
     self.user=self.tg&&self.tg.initDataUnsafe?self.tg.initDataUnsafe.user:null;
     self.userId=self.user?self.user.id:0;
     self.initBg();
+    loadAchData();
     var loaded=false;
     function hideLoading(){if(loaded)return;loaded=true;document.getElementById('loadingScreen').classList.add('hide');setTimeout(function(){document.getElementById('loadingScreen').style.display='none'},600)}
     setTimeout(function(){if(!loaded){console.warn('Loading timeout, forcing hide');self.renderHome();hideLoading()}},5000);
@@ -766,13 +853,30 @@ var App={
     if(photoUrl){api('/api/user/'+self.userId+'/sync','POST',{photo_url:photoUrl,first_name:self.user.first_name||'',username:self.user.username||''})}
     return api('/api/user/'+self.userId).then(function(d){
       if(d){self.online=true;
-        self.state.xp=d.xp||0;self.state.streak=d.streak_days||0;
+        self.state.xp=d.xp||0;self.state.streak=d.visit_streak||d.streak_days||0;
         self.state.c1=d.c1_viewed||[];self.state.c2=d.c2_viewed||[];
         self.state.achs=d.achievements||[];self.state.level=d.level||1;
         self.state.rank=d.rank||'🌱 Новачок';self.state.pos=d.position||0;
         self.state.plan=d.plan||'none';self.state.refCount=d.referral_count||0;
         self.state.photoUrl=d.photo_url||'';
-        if(d.quiz_stats){self.state.qOk=d.quiz_stats.correct||0;self.state.qTot=d.quiz_stats.total||0}}
+        self.state.visitStreak=d.visit_streak||d.streak_days||0;
+        self.state.tradeStreak=d.trade_streak||0;
+        self.state.taskStreak=d.task_streak||0;
+        self.state.totalTrades=d.total_trades||0;
+        self.state.totalEarnings=d.total_earnings_uah||0;
+        self.state.refActive=d.referral_count_active||d.referral_count||0;
+        self.state.rankInfo=d.rank_info||null;
+        self.state.exchangesUsed=d.exchanges_used||[];
+        if(d.quiz_stats){self.state.qOk=d.quiz_stats.correct||0;self.state.qTot=d.quiz_stats.total||0}
+        // Daily visit
+        api('/api/user/'+self.userId+'/visit','POST').then(function(v){
+          if(v&&v.is_new_day){
+            self.state.visitStreak=v.streak;self.state.streak=v.streak;
+            self.state.xp+=v.xp_earned;
+            self.showStreakFire(v.streak,v.xp_earned);
+          }
+        });
+      }
     });
   },
 
@@ -804,7 +908,8 @@ var App={
     var u=document.getElementById('homeUser');
     var myPhoto=App.user&&App.user.photo_url?App.user.photo_url:(App.state.photoUrl||'');
     u.querySelector('.avatar').src=avatarUrl(name,128,myPhoto);u.querySelector('.name').textContent=name;
-    u.querySelector('.rank').textContent=rankOf(l)+' • Lv.'+l;
+    var ri=getRankInfo(l);
+    u.querySelector('.rank').innerHTML=rankBadgeSVG(ri,22)+' '+rankOf(l)+' • Lv.'+l;
     u.querySelector('.xp-info').textContent=s.xp+' XP • '+p.cur+'/'+p.need;
     u.querySelector('.fill').style.width=pct+'%';
     var c1p=Math.round(s.c1.length/TOTAL*100),c2p=Math.round(s.c2.length/TOTAL*100);
@@ -848,6 +953,38 @@ var App={
     if(ch.type!==type)return;var k='ch_'+ch.id,cur=parseInt(sessionStorage.getItem(k)||'0');
     if(cur>=ch.n)return;cur++;sessionStorage.setItem(k,cur);
     if(cur>=ch.n){this.state.xp+=ch.xp;this.toast('+'+ch.xp+' XP за місію!','info')}},
+
+  /* ─── STREAK FIRE ANIMATION ─── */
+  showStreakFire:function(streak, xpEarned){
+    var overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);animation:fadeIn 0.3s ease';
+    var fireCount=Math.min(streak,10);var fires='';for(var i=0;i<fireCount;i++)fires+='🔥';
+    overlay.innerHTML='<div style="font-size:60px;animation:pulse 0.6s ease infinite alternate">'+fires+'</div>'
+      +'<div style="font-family:Orbitron,sans-serif;font-size:28px;font-weight:700;color:#f59e0b;margin-top:16px;text-shadow:0 0 20px rgba(245,158,11,0.5)">'+streak+' ДНІВ</div>'
+      +'<div style="font-family:Orbitron,sans-serif;font-size:14px;color:#94a3b8;margin-top:8px">СЕРІЯ ВІДВІДУВАНЬ</div>'
+      +'<div style="font-size:18px;color:#00f0ff;margin-top:12px;font-weight:600">✨ +'+xpEarned+' XP</div>'
+      +(streak%10===0&&streak>0?'<div style="font-size:14px;color:#a855f7;margin-top:6px">🎁 Бонус за '+streak+'-й день!</div>':'');
+    overlay.onclick=function(){overlay.style.animation='fadeOut 0.3s ease forwards';setTimeout(function(){overlay.remove()},300)};
+    document.body.appendChild(overlay);
+    if(typeof confetti==='function')confetti({particleCount:50,spread:80,origin:{y:0.5},colors:['#f59e0b','#ef4444','#ff6b35']});
+    setTimeout(function(){if(overlay.parentNode)overlay.click()},3500);
+  },
+
+  /* ─── ACHIEVEMENT POPUP ─── */
+  showAchievementPopup:function(achKey){
+    var a=ALL_ACHS[achKey]||ACHIEVEMENTS[achKey];if(!a)return;
+    var overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:9998;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);animation:fadeIn 0.3s ease';
+    overlay.innerHTML='<div style="font-size:64px;animation:bounce 0.5s ease">'+a.icon+'</div>'
+      +'<div style="font-family:Orbitron,sans-serif;font-size:16px;color:#10b981;margin-top:12px;letter-spacing:2px">НОВЕ ДОСЯГНЕННЯ!</div>'
+      +'<div style="font-family:Orbitron,sans-serif;font-size:20px;color:white;margin-top:8px;font-weight:700">'+a.title+'</div>'
+      +'<div style="font-size:13px;color:#94a3b8;margin-top:6px">'+a.desc+'</div>'
+      +(a.xp?'<div style="font-size:16px;color:#00f0ff;margin-top:10px">✨ +'+a.xp+' XP</div>':'');
+    overlay.onclick=function(){overlay.style.animation='fadeOut 0.3s ease forwards';setTimeout(function(){overlay.remove()},300)};
+    document.body.appendChild(overlay);
+    if(typeof confetti==='function')confetti({particleCount:80,spread:100,origin:{y:0.5},colors:['#00f0ff','#a855f7','#10b981','#f59e0b']});
+    setTimeout(function(){if(overlay.parentNode)overlay.click()},4000);
+  },
 
   /* ─── BG PARTICLES ─── */
   initBg:function(){
@@ -1040,7 +1177,7 @@ App.modules.accountant=(function(){
   function merchantBadgeSm(){return '<span class="merchant-badge-sm" title="Верифікований мерчант">'+merchantSvg(12)+'</span>'}
   /* ── Exchange logos as inline SVG ── */
   function binanceLogo(s){s=s||18;return '<svg xmlns="http://www.w3.org/2000/svg" width="'+s+'" height="'+s+'" viewBox="0 0 126.61 126.61"><g fill="#f3ba2f"><path d="M38.73 53.2L63.31 28.62l24.58 24.6 14.3-14.31L63.31 0 24.43 38.88l14.3 14.32zM0 63.31l14.3-14.31 14.31 14.31-14.31 14.3L0 63.31zm38.73 10.1L63.31 97.99l24.58-24.58 14.31 14.29-.01.02L63.31 126.61 24.43 87.72l-.01-.01 14.31-14.3zM97.99 63.31l14.3-14.31 14.32 14.31-14.31 14.3-14.31-14.3z"/><path d="M77.83 63.3L63.31 48.78 52.59 59.5l-1.24 1.23-2.54 2.54-.02.04.02.02L63.31 77.83l14.52-14.52.01-.01h-.01z"/></g></svg>'}
-  function bybitLogo(s){s=s||18;return '<img src="data:image/png;base64,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" width="'+s+'" height="'+s+'" style="border-radius:4px" alt="Bybit"/>'}
+  function bybitLogo(s){s=s||18;return '<img src="data:image/png;base64,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" width="'+s+'" height="'+s+'" style="border-radius:4px" alt="Bybit"/>'}
   function okxLogo(s){s=s||18;return '<svg xmlns="http://www.w3.org/2000/svg" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="#fff"><path d="M7.15 8.685C7.18 8.705 7.2 8.745 7.2 8.785L7.2 15.225C7.2 15.265 7.18 15.305 7.15 15.325C7.121 15.355 7.082 15.372 7.04 15.375L0.16 15.375C0.118 15.372 0.079 15.355 0.05 15.325C0.02 15.3 0.002 15.264 0 15.225L0 8.785C0 8.745 0.02 8.705 0.05 8.685C0.079 8.655 0.118 8.638 0.16 8.635L7.04 8.635C7.08 8.635 7.12 8.655 7.15 8.685ZM4.8 11.035C4.798 10.996 4.78 10.96 4.75 10.935C4.721 10.905 4.682 10.887 4.64 10.885L2.56 10.885C2.52 10.885 2.481 10.899 2.45 10.925C2.42 10.95 2.402 10.986 2.4 11.025L2.4 12.975C2.4 13.015 2.42 13.055 2.45 13.075C2.48 13.115 2.52 13.125 2.56 13.125L4.64 13.125C4.68 13.125 4.72 13.115 4.75 13.085C4.78 13.06 4.798 13.024 4.8 12.985L4.8 11.035ZM21.6 11.035L21.6 12.975C21.6 13.065 21.53 13.125 21.44 13.125L19.36 13.125C19.27 13.125 19.2 13.065 19.2 12.975L19.2 11.035C19.2 10.955 19.27 10.885 19.36 10.885L21.44 10.885C21.53 10.885 21.6 10.945 21.6 11.035ZM19.2 8.785L19.2 10.735C19.2 10.815 19.13 10.885 19.04 10.885L16.96 10.885C16.87 10.885 16.8 10.815 16.8 10.735L16.8 8.785C16.8 8.705 16.87 8.635 16.96 8.635L19.04 8.635C19.13 8.635 19.2 8.705 19.2 8.785ZM24 8.785L24 10.735C24 10.815 23.93 10.885 23.84 10.885L21.76 10.885C21.67 10.885 21.6 10.815 21.6 10.735L21.6 8.785C21.6 8.705 21.67 8.635 21.76 8.635L23.84 8.635C23.93 8.635 24 8.705 24 8.785ZM19.2 13.285L19.2 15.225C19.2 15.305 19.13 15.375 19.04 15.375L16.96 15.375C16.87 15.375 16.8 15.305 16.8 15.225L16.8 13.275C16.8 13.195 16.87 13.125 16.96 13.125L19.04 13.125C19.13 13.125 19.2 13.195 19.2 13.275L19.2 13.285ZM24 13.285L24 15.225C24 15.305 23.93 15.375 23.84 15.375L21.76 15.375C21.67 15.375 21.6 15.305 21.6 15.225L21.6 13.275C21.6 13.195 21.67 13.125 21.76 13.125L23.84 13.125C23.93 13.125 24 13.195 24 13.275L24 13.285ZM15.6 8.785L15.6 10.735C15.6 10.815 15.53 10.885 15.44 10.885L13.36 10.885C13.27 10.885 13.2 10.815 13.2 10.735L13.2 8.785C13.2 8.705 13.27 8.635 13.36 8.635L15.44 8.635C15.53 8.635 15.6 8.705 15.6 8.785ZM15.6 13.285L15.6 15.225C15.6 15.305 15.53 15.375 15.44 15.375L13.36 15.375C13.27 15.375 13.2 15.305 13.2 15.225L13.2 13.275C13.2 13.195 13.27 13.125 13.36 13.125L15.44 13.125C15.53 13.125 15.6 13.195 15.6 13.275L15.6 13.285ZM13.2 12.985C13.195 13.069 13.125 13.135 13.04 13.135L10.8 13.135L10.8 15.215C10.8 15.255 10.78 15.295 10.75 15.325C10.719 15.351 10.68 15.365 10.64 15.365L8.56 15.365C8.516 15.368 8.473 15.353 8.44 15.325C8.414 15.298 8.399 15.262 8.4 15.225L8.4 8.775C8.4 8.735 8.41 8.695 8.44 8.675C8.472 8.643 8.515 8.625 8.56 8.625L10.64 8.625C10.68 8.625 10.72 8.645 10.75 8.675C10.78 8.695 10.8 8.735 10.8 8.775L10.8 10.875L13.04 10.875C13.08 10.875 13.12 10.885 13.15 10.915C13.18 10.945 13.2 10.985 13.2 11.015L13.2 12.965L13.2 12.985Z"/></svg>'}
   // Current active exchange for detail view
   var _activeExchange=null;
@@ -1769,25 +1906,46 @@ App.modules.profile=(function(){
       var myPhoto=App.user&&App.user.photo_url?App.user.photo_url:(App.state.photoUrl||'');
       document.getElementById('profAvatar').src=avatarUrl(name,160,myPhoto);
       document.getElementById('profName').textContent=name;
-      document.getElementById('profRank').textContent=rankOf(l)+' • Lv.'+l;
+      var ri=getRankInfo(l);
+      document.getElementById('profRank').innerHTML=rankBadgeSVG(ri,28)+' '+rankOf(l)+' • Lv.'+l;
       var planBadge=document.getElementById('profPlan');
       if(s.plan==='pro'){planBadge.textContent='PRO';planBadge.className='plan-badge tag-pro'}
       else if(s.plan==='basic'){planBadge.textContent='BASIC';planBadge.className='plan-badge tag-basic'}
       else{planBadge.textContent='FREE';planBadge.className='plan-badge';planBadge.style.cssText='background:var(--glass);color:var(--text3);border:1px solid var(--glass-border)'}
       document.getElementById('profXpFill').style.width=pct+'%';
       document.getElementById('profXpText').textContent=s.xp+' XP • '+p.cur+'/'+p.need+' → Lv.'+(l+1);
+      // Stats grid with streaks and trade data
+      var fireV='🔥'.repeat(Math.min(s.visitStreak,5));
+      var fireT='⚡'.repeat(Math.min(s.tradeStreak,3));
       document.getElementById('profStats').innerHTML=
-        '<div class="stat-box"><div class="stat-val">'+s.streak+'</div><div class="stat-label">STREAK</div></div>'+
-        '<div class="stat-box"><div class="stat-val">'+s.qOk+'</div><div class="stat-label">QUIZ</div></div>'+
-        '<div class="stat-box"><div class="stat-val">'+(s.pos||'—')+'</div><div class="stat-label">RANK</div></div>';
+        '<div class="stat-box"><div class="stat-val">'+fireV+(s.visitStreak||0)+'</div><div class="stat-label">ВІДВІДУВАННЯ</div></div>'+
+        '<div class="stat-box"><div class="stat-val">'+fireT+(s.tradeStreak||0)+'</div><div class="stat-label">УГОДИ</div></div>'+
+        '<div class="stat-box"><div class="stat-val">'+(s.taskStreak||0)+'</div><div class="stat-label">ЗАВДАННЯ</div></div>'+
+        '<div class="stat-box"><div class="stat-val">'+(s.totalTrades||0)+'</div><div class="stat-label">ВСЬОГО УГОД</div></div>'+
+        '<div class="stat-box"><div class="stat-val">'+(s.totalEarnings?Math.round(s.totalEarnings).toLocaleString()+'₴':'—')+'</div><div class="stat-label">ЗАРОБІТОК</div></div>'+
+        '<div class="stat-box"><div class="stat-val">'+(s.pos||'—')+'</div><div class="stat-label">RANK</div></div>'+
+        '<div class="stat-box"><div class="stat-val">'+(s.qOk||0)+'</div><div class="stat-label">QUIZ</div></div>'+
+        '<div class="stat-box"><div class="stat-val">'+(s.refActive||0)+'</div><div class="stat-label">РЕФЕРАЛИ</div></div>';
       document.getElementById('profCourses').innerHTML=
         '<div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px;margin-bottom:10px">ПРОГРЕС</div>'+
         '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12px"><span>Basic</span><span>'+s.c1.length+'/'+TOTAL+'</span></div><div class="xp-bar" style="margin-top:4px"><div class="fill" style="width:'+(s.c1.length/TOTAL*100)+'%"></div></div></div>'+
         '<div><div style="display:flex;justify-content:space-between;font-size:12px"><span>Pro</span><span>'+s.c2.length+'/'+TOTAL+'</span></div><div class="xp-bar" style="margin-top:4px"><div class="fill" style="width:'+(s.c2.length/TOTAL*100)+'%;background:linear-gradient(90deg,var(--purple),var(--pink))"></div></div></div>';
-      // achs
-      var ks=Object.keys(ACHIEVEMENTS),ah='';
-      for(var i=0;i<Math.min(6,ks.length);i++){var k=ks[i],a=ACHIEVEMENTS[k],e=s.achs.indexOf(k)>=0;
-        ah+='<div class="ach'+(e?' earned':' locked')+'" onclick="App.modules.achievements.show(\''+k+'\')"><span class="emoji">'+a.icon+'</span><div class="a-title">'+a.title+'</div></div>'}
+      // achs - show recent earned + some locked
+      var ah='';var shownCount=0;
+      // First show earned ones
+      for(var i=0;i<s.achs.length&&shownCount<6;i++){
+        var k=s.achs[i],a=ALL_ACHS[k]||ACHIEVEMENTS[k];
+        if(a){ah+='<div class="ach earned" onclick="App.modules.achievements.show(\''+k+'\')"><span class="emoji">'+a.icon+'</span><div class="a-title">'+(a.name||a.title)+'</div></div>';shownCount++}
+      }
+      // Fill remaining with locked special or first leveled
+      if(shownCount<6){
+        var extraKeys=Object.keys(SPECIAL_ACHS).length?Object.keys(SPECIAL_ACHS):Object.keys(ACHIEVEMENTS);
+        for(var j=0;j<extraKeys.length&&shownCount<6;j++){
+          var ek=extraKeys[j];if(s.achs.indexOf(ek)>=0)continue;
+          var ea=SPECIAL_ACHS[ek]||ACHIEVEMENTS[ek];
+          if(ea){ah+='<div class="ach locked" onclick="App.modules.achievements.show(\''+ek+'\')"><span class="emoji">'+ea.icon+'</span><div class="a-title">'+(ea.name||ea.title)+'</div></div>';shownCount++}
+        }
+      }
       document.getElementById('profAchs').innerHTML=ah;
       this.renderChart();App.incChallenge('profile');
     },
@@ -1824,10 +1982,12 @@ App.modules.leaderboard=(function(){
         var t3=[];if(lb[1])t3.push(lb[1]);if(lb[0])t3.push(lb[0]);if(lb[2])t3.push(lb[2]);
         var pc=['pod-2','pod-1','pod-3'],medals=['🥈','🥇','🥉'],ph='';
         for(var i=0;i<t3.length;i++){var u=t3[i];
-          ph+='<div class="pod '+pc[i]+'"><div class="medal">'+medals[i]+'</div><img src="'+avatarUrl(u.first_name,64,u.photo_url)+'" alt=""><div class="p-name">'+(u.first_name||'?')+'</div><div class="p-xp">'+(u.xp||0)+' XP</div></div>'}
+          var ri=u.rank_info||getRankInfo(u.level||1);
+          ph+='<div class="pod '+pc[i]+'"><div class="medal">'+medals[i]+'</div><img src="'+avatarUrl(u.first_name,64,u.photo_url)+'" alt=""><div class="p-name">'+(u.first_name||'?')+'</div><div class="p-xp" style="display:flex;align-items:center;gap:4px;justify-content:center">'+rankBadgeSVG(ri,18)+' '+(u.xp||0)+' XP</div></div>'}
         document.getElementById('lbPodium').innerHTML=ph;
         var lh='';for(var j=3;j<lb.length;j++){var u2=lb[j],me=u2.user_id===App.userId;
-          lh+='<div class="lb-row'+(me?' me':'')+'"><div class="lb-pos">'+u2.position+'</div><img src="'+avatarUrl(u2.first_name,48,u2.photo_url)+'"><div class="lb-info"><div class="lb-name">'+(u2.first_name||'?')+'</div><div class="lb-rank">'+(u2.rank||rankOf(u2.level||1))+'</div></div><div class="lb-xp">'+(u2.xp||0)+'</div></div>'}
+          var ri2=u2.rank_info||getRankInfo(u2.level||1);
+          lh+='<div class="lb-row'+(me?' me':'')+'"><div class="lb-pos">'+u2.position+'</div><img src="'+avatarUrl(u2.first_name,48,u2.photo_url)+'"><div class="lb-info"><div class="lb-name">'+(u2.first_name||'?')+'</div><div class="lb-rank" style="display:flex;align-items:center;gap:4px">'+rankBadgeSVG(ri2,16)+' '+(u2.rank||rankOf(u2.level||1))+'</div></div><div class="lb-xp">'+(u2.xp||0)+'</div></div>'}
         document.getElementById('lbList').innerHTML=lh;
       };
       if(App.online)api('/api/leaderboard?limit=20').then(doRender);else doRender(null);
@@ -1839,17 +1999,92 @@ App.modules.leaderboard=(function(){
    MODULE: ACHIEVEMENTS
    ═══════════════════════════════════════════════════════════════ */
 App.modules.achievements=(function(){
+  var activeTab='leveled';
+  function catIcon(key){var icons={trades:'💰',volume:'📊',profit:'💎',lessons:'📚',quizzes:'🧠',task_streak:'📝',trade_streak:'📈',referrals:'👥'};return icons[key]||'🏅'}
   return{
     init:function(){},
-    renderAll:function(){var ks=Object.keys(ACHIEVEMENTS),h='',earned=0;
-      for(var i=0;i<ks.length;i++){var k=ks[i],a=ACHIEVEMENTS[k],e=App.state.achs.indexOf(k)>=0;if(e)earned++;
-        h+='<div class="ach'+(e?' earned':' locked')+'" onclick="App.modules.achievements.show(\''+k+'\')"><span class="emoji">'+a.icon+'</span><div class="a-title">'+a.title+'</div></div>'}
-      document.getElementById('achGrid').innerHTML=h;document.getElementById('achCount').textContent=earned+'/'+ks.length},
-    show:function(k){var a=ACHIEVEMENTS[k];if(!a)return;var e=App.state.achs.indexOf(k)>=0;
-      App.openModal('<div style="text-align:center;padding:10px"><div style="font-size:50px;margin-bottom:10px'+(e?'':';filter:grayscale(1);opacity:.4')+'">'+a.icon+'</div><h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:6px">'+a.title+'</h3><p style="font-size:13px;color:var(--text2)">'+a.desc+'</p><div style="margin-top:12px;font-size:12px;font-family:var(--font-display);color:'+(e?'var(--green)':'var(--text3)')+'">'+
+    renderAll:function(){
+      var earned=App.state.achs.length;
+      var totalAll=Object.keys(ALL_ACHS).length||Object.keys(ACHIEVEMENTS).length;
+      document.getElementById('achCount').textContent=earned+'/'+totalAll;
+      var h='<div style="display:flex;gap:8px;margin-bottom:14px">'
+        +'<button class="btn btn-sm '+(activeTab==='leveled'?'btn-neon':'btn-ghost')+'" onclick="App.modules.achievements.setTab(\'leveled\')" style="flex:1">📊 Рівневі</button>'
+        +'<button class="btn btn-sm '+(activeTab==='special'?'btn-neon':'btn-ghost')+'" onclick="App.modules.achievements.setTab(\'special\')" style="flex:1">⭐ Спеціальні</button>'
+        +'</div>';
+      if(activeTab==='leveled') h+=this.renderLeveled();
+      else h+=this.renderSpecial();
+      document.getElementById('achGrid').innerHTML=h;
+    },
+    setTab:function(t){activeTab=t;this.renderAll()},
+    renderLeveled:function(){
+      if(!LEVELED_ACHS||!Object.keys(LEVELED_ACHS).length) return '<div style="text-align:center;color:var(--text3);padding:20px">Завантаження...</div>';
+      var h='';
+      for(var catKey in LEVELED_ACHS){
+        var cat=LEVELED_ACHS[catKey];
+        var levels=cat.levels||[];
+        // Find current progress
+        var earnedInCat=0;var nextLevel=null;
+        for(var i=0;i<levels.length;i++){
+          var lk=catKey+'_lv'+(i+1);
+          if(App.state.achs.indexOf(lk)>=0)earnedInCat++;
+          else if(!nextLevel)nextLevel=levels[i];
+        }
+        var pctCat=levels.length>0?Math.round(earnedInCat/levels.length*100):0;
+        h+='<div class="g-card" style="margin-bottom:10px;cursor:pointer" onclick="App.modules.achievements.showCategory(\''+catKey+'\')">'
+          +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+          +'<span style="font-size:24px">'+catIcon(catKey)+'</span>'
+          +'<div style="flex:1"><div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px">'+cat.name.toUpperCase()+'</div>'
+          +'<div style="font-size:11px;color:var(--text3)">'+earnedInCat+'/'+levels.length+' рівнів</div></div>'
+          +'<span style="font-size:11px;color:var(--neon)">'+pctCat+'%</span></div>'
+          +'<div class="xp-bar" style="height:6px"><div class="fill" style="width:'+pctCat+'%;transition:width 0.5s ease"></div></div>';
+        if(nextLevel){
+          h+='<div style="font-size:11px;color:var(--text2);margin-top:6px">Наступний: <b>'+nextLevel.name+'</b> ('+nextLevel.threshold+')</div>';
+        }else if(earnedInCat===levels.length&&levels.length>0){
+          h+='<div style="font-size:11px;color:var(--green);margin-top:6px">✓ Всі рівні пройдено!</div>';
+        }
+        h+='</div>';
+      }
+      return h;
+    },
+    renderSpecial:function(){
+      if(!SPECIAL_ACHS||!Object.keys(SPECIAL_ACHS).length){
+        // Fallback to old ACHIEVEMENTS
+        var ks=Object.keys(ACHIEVEMENTS),h2='';
+        for(var i=0;i<ks.length;i++){var k=ks[i],a=ACHIEVEMENTS[k],e=App.state.achs.indexOf(k)>=0;
+          h2+='<div class="ach'+(e?' earned':' locked')+'" onclick="App.modules.achievements.show(\''+k+'\')"><span class="emoji">'+a.icon+'</span><div class="a-title">'+a.title+'</div></div>'}
+        return h2;
+      }
+      var h='';
+      for(var sk in SPECIAL_ACHS){
+        var sa=SPECIAL_ACHS[sk],e2=App.state.achs.indexOf(sk)>=0;
+        h+='<div class="ach'+(e2?' earned':' locked')+'" onclick="App.modules.achievements.show(\''+sk+'\')">'
+          +'<span class="emoji">'+sa.icon+'</span><div class="a-title">'+sa.name+'</div></div>';
+      }
+      return h;
+    },
+    showCategory:function(catKey){
+      var cat=LEVELED_ACHS[catKey];if(!cat)return;
+      var levels=cat.levels||[];
+      var h='<div style="padding:10px"><div style="text-align:center;margin-bottom:16px"><span style="font-size:36px">'+catIcon(catKey)+'</span>'
+        +'<h3 style="font-family:var(--font-display);font-size:16px;margin-top:8px">'+cat.name.toUpperCase()+'</h3></div>';
+      for(var i=0;i<levels.length;i++){
+        var lv=levels[i],lk=catKey+'_lv'+(i+1);
+        var earned=App.state.achs.indexOf(lk)>=0;
+        h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--glass-border);opacity:'+(earned?'1':'0.5')+'">'
+          +'<span style="font-size:20px">'+(earned?lv.icon||'✅':'🔒')+'</span>'
+          +'<div style="flex:1"><div style="font-size:13px;font-weight:600">'+lv.name+'</div>'
+          +'<div style="font-size:11px;color:var(--text3)">Поріг: '+lv.threshold.toLocaleString()+' • +'+lv.xp+' XP</div></div>'
+          +'<span style="font-size:12px;color:'+(earned?'var(--green)':'var(--text3)')+'">'+(earned?'✓':'—')+'</span></div>';
+      }
+      h+='</div>';
+      App.openModal(h);
+    },
+    show:function(k){var a=ALL_ACHS[k]||SPECIAL_ACHS[k]||ACHIEVEMENTS[k];if(!a)return;var e=App.state.achs.indexOf(k)>=0;
+      var name=a.name||a.title||k;var desc=a.desc||a.condition||'';
+      App.openModal('<div style="text-align:center;padding:10px"><div style="font-size:50px;margin-bottom:10px'+(e?'':';filter:grayscale(1);opacity:.4')+'">'+a.icon+'</div><h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:6px">'+name+'</h3><p style="font-size:13px;color:var(--text2)">'+desc+'</p>'+(a.xp?'<div style="margin-top:8px;font-size:12px;color:var(--neon)">+'+a.xp+' XP</div>':'')+'<div style="margin-top:12px;font-size:12px;font-family:var(--font-display);color:'+(e?'var(--green)':'var(--text3)')+'">'+
         (e?'✓ ОТРИМАНО':'🔒 ЗАБЛОКОВАНО')+'</div></div>')},
-    earn:function(k){if(App.state.achs.indexOf(k)>=0)return;App.state.achs.push(k);var a=ACHIEVEMENTS[k];
-      App.toast(a.icon+' '+a.title+'!','info');if(typeof confetti==='function')confetti({particleCount:60,spread:80,origin:{y:0.6}})}
+    earn:function(k){if(App.state.achs.indexOf(k)>=0)return;App.state.achs.push(k);
+      App.showAchievementPopup(k)}
   };
 })();
 
@@ -1872,7 +2107,7 @@ App.modules.settings=(function(){
     init:function(){},
     render:function(){
       var t=document.getElementById('notifToggle');t.classList.add('on');
-      document.getElementById('refCount').textContent=App.state.refCount;
+      document.getElementById('refCount').textContent=App.state.refActive||App.state.refCount;
       document.getElementById('refLink').value='https://t.me/SmilskiyBot?start=ref_'+App.userId;
       if(App.online)api('/api/settings?user_id='+App.userId).then(function(s){if(s)t.classList.toggle('on',s.notifications_enabled)});
     },
