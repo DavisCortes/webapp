@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Smilskiy P2P Academy</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -29,14 +29,14 @@
   --text:#e2e8f0;--text2:#94a3b8;--text3:#475569;
   --font-display:'Orbitron',monospace;--font-body:'Inter',sans-serif;
   --r:16px;--r-sm:10px;--r-xs:6px;
-  --nav-h:68px;--safe-b:env(safe-area-inset-bottom,0px);
+  --nav-h:68px;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);
   --transition:all .25s cubic-bezier(.4,0,.2,1);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{-webkit-tap-highlight-color:transparent;scroll-behavior:smooth}
 body{font-family:var(--font-body);background:var(--bg);color:var(--text);
   min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;
-  padding-bottom:calc(var(--nav-h) + var(--safe-b) + 16px)}
+  padding-top:var(--safe-t);padding-bottom:calc(var(--nav-h) + var(--safe-b) + 16px)}
 
 /* ═══ BG CANVAS ═══ */
 #bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none}
@@ -952,7 +952,7 @@ var App={
   init:function(){
     var self=this;
     self.tg=window.Telegram&&Telegram.WebApp?Telegram.WebApp:null;
-    if(self.tg){self.tg.ready();self.tg.expand();self.tg.BackButton.onClick(function(){self.back()})}
+    if(self.tg){self.tg.ready();self.tg.expand();self.tg.disableVerticalSwipes();if(self.tg.requestFullscreen)self.tg.requestFullscreen();self.tg.BackButton.onClick(function(){self.back()})}
     self.user=self.tg&&self.tg.initDataUnsafe?self.tg.initDataUnsafe.user:null;
     self.userId=self.user?self.user.id:0;
     self.initBg();
