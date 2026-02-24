@@ -435,8 +435,9 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 /* ═══ ONBOARDING / GUIDED TOUR ═══ */
 .onb-overlay{position:fixed;inset:0;z-index:10000;pointer-events:none;opacity:0;transition:opacity .35s ease}
 .onb-overlay.active{pointer-events:auto;opacity:1}
-.onb-backdrop{position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.5);opacity:0;transition:opacity .35s ease}
+.onb-backdrop{position:fixed;inset:0;z-index:10001;opacity:0;transition:opacity .35s ease}
 .onb-backdrop.show{opacity:1}
+.onb-backdrop.dim{background:rgba(0,0,0,.5)}
 .onb-spotlight{position:fixed;z-index:10002;border-radius:var(--r);
   box-shadow:0 0 0 9999px rgba(0,0,0,.5),0 0 24px 4px var(--neon-glow);
   transition:left .4s ease,top .4s ease,width .4s ease,height .4s ease,opacity .3s ease;
@@ -2561,6 +2562,7 @@ var Onboarding=(function(){
       spot.style.height=(rect.height+pad*2)+'px';
       spot.style.borderRadius=getComputedStyle(el).borderRadius||'12px';
       spot.classList.add('show');
+      overlay.querySelector('.onb-backdrop').classList.remove('dim');
 
       /* Tooltip sizing */
       var tw=Math.min(300,vw-24);
@@ -2657,6 +2659,7 @@ var Onboarding=(function(){
   /* ── CENTER STEP (welcome/finish) ── */
   function centerStep(step){
     spot.classList.remove('show');
+    overlay.querySelector('.onb-backdrop').classList.add('dim');
     var tw=Math.min(300,window.innerWidth-24);
     tip.className='onb-tooltip centered';
     tip.style.width=tw+'px';
