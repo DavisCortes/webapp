@@ -2494,27 +2494,37 @@ var Onboarding=(function(){
     spotlight.style.width=(rect.width+pad*2)+'px';
     spotlight.style.height=(rect.height+pad*2)+'px';
     spotlight.style.borderRadius=getComputedStyle(el).borderRadius||'var(--r)';
-    /* Tooltip position */
-    var pos=step.position||'bottom';
+    /* Tooltip position — auto-flip if not enough space */
+    var viewH=window.innerHeight;
     var tw=Math.min(320,window.innerWidth-40);
+    var tooltipEstH=180; /* estimated tooltip height */
+    var pos=step.position||'bottom';
+    var spaceBelow=viewH-rect.bottom-pad;
+    var spaceAbove=rect.top-pad;
+    /* Auto-flip: if preferred position has no room, try the other */
+    if(pos==='bottom'&&spaceBelow<tooltipEstH+20&&spaceAbove>spaceBelow){pos='top'}
+    else if(pos==='top'&&spaceAbove<tooltipEstH+20&&spaceBelow>spaceAbove){pos='bottom'}
     var tl=Math.max(20,rect.left+rect.width/2-tw/2);
     if(tl+tw>window.innerWidth-20)tl=window.innerWidth-20-tw;
     tooltip.style.width=tw+'px';
     tooltip.style.left=tl+'px';
-    var arrowHtml='<div class="onb-tooltip-arrow '+(pos==='bottom'?'top':'bottom')+'" style="left:'+Math.max(20,Math.min(tw-20,rect.left+rect.width/2-tl))+'px;margin-left:-6px"></div>';
+    var arrowLeft=Math.max(20,Math.min(tw-20,rect.left+rect.width/2-tl));
+    var arrowHtml='<div class="onb-tooltip-arrow '+(pos==='bottom'?'top':'bottom')+'" style="left:'+arrowLeft+'px;margin-left:-6px"></div>';
     if(pos==='bottom'){
       tooltip.style.top=(rect.bottom+pad+14)+'px';
       tooltip.style.bottom='auto';
     }else{
-      var tooltipH=tooltip.offsetHeight||160;
-      tooltip.style.top=Math.max(10,(rect.top-pad-14-tooltipH))+'px';
-      tooltip.style.bottom='auto';
+      tooltip.style.top='auto';
+      tooltip.style.bottom=(viewH-rect.top+pad+14)+'px';
     }
-    /* Scroll element into view if needed */
-    var viewH=window.innerHeight;
-    if(rect.top<80||rect.bottom>viewH-80){
-      el.scrollIntoView({behavior:'smooth',block:'center'});
-      setTimeout(function(){positionElements(step)},350);
+    /* Scroll: ensure both element AND tooltip area are visible */
+    var tooltipTop=pos==='bottom'?(rect.bottom+pad+14):(rect.top-pad-14-tooltipEstH);
+    var visibleTop=Math.min(rect.top,tooltipTop);
+    var visibleBottom=pos==='bottom'?(rect.bottom+pad+14+tooltipEstH):rect.bottom;
+    if(visibleTop<10||visibleBottom>viewH-10){
+      var scrollTarget=pos==='bottom'?'start':'center';
+      el.scrollIntoView({behavior:'smooth',block:scrollTarget});
+      setTimeout(function(){positionElements(step)},400);
       return;
     }
     renderTooltip(step,arrowHtml);
