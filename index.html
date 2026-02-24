@@ -431,6 +431,59 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 .loading-logo{font-family:var(--font-display);font-size:28px;font-weight:900;
   background:linear-gradient(135deg,var(--neon),var(--purple));-webkit-background-clip:text;
   -webkit-text-fill-color:transparent;margin-bottom:20px;animation:pulse 1.5s ease-in-out infinite}
+
+/* ═══ ONBOARDING / GUIDED TOUR ═══ */
+.onb-overlay{position:fixed;inset:0;z-index:10000;pointer-events:none;transition:opacity .4s ease}
+.onb-overlay.active{pointer-events:auto}
+.onb-backdrop{position:fixed;inset:0;z-index:10001;transition:opacity .4s ease;opacity:0}
+.onb-backdrop.show{opacity:1}
+.onb-spotlight{position:absolute;z-index:10002;border-radius:var(--r);box-shadow:0 0 0 9999px rgba(0,0,0,0.82),0 0 30px 4px var(--neon-glow);transition:all .45s cubic-bezier(.4,0,.2,1);pointer-events:none}
+.onb-spotlight::before{content:'';position:absolute;inset:-3px;border-radius:inherit;border:2px solid var(--neon);opacity:.7;animation:onbPulse 2s ease-in-out infinite}
+@keyframes onbPulse{0%,100%{opacity:.7;box-shadow:0 0 8px var(--neon-glow)}50%{opacity:1;box-shadow:0 0 20px var(--neon-glow)}}
+.onb-tooltip{position:absolute;z-index:10003;background:var(--surface);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--neon-dim);border-radius:var(--r);padding:20px;max-width:320px;width:calc(100vw - 40px);
+  box-shadow:0 8px 40px rgba(0,0,0,.5),0 0 20px var(--neon-glow);transition:all .4s cubic-bezier(.4,0,.2,1);opacity:0;transform:translateY(12px)}
+.onb-tooltip.show{opacity:1;transform:translateY(0)}
+.onb-tooltip::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--neon),transparent)}
+.onb-tooltip-arrow{position:absolute;width:12px;height:12px;background:var(--surface);
+  border:1px solid var(--neon-dim);transform:rotate(45deg);z-index:-1}
+.onb-tooltip-arrow.top{top:-7px;left:50%;margin-left:-6px;border-right:none;border-bottom:none}
+.onb-tooltip-arrow.bottom{bottom:-7px;left:50%;margin-left:-6px;border-left:none;border-top:none}
+.onb-title{font-family:var(--font-display);font-size:15px;font-weight:700;letter-spacing:1px;
+  background:linear-gradient(135deg,var(--neon),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.onb-desc{font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:16px}
+.onb-progress{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.onb-dots{display:flex;gap:5px;flex:1}
+.onb-dot{width:8px;height:8px;border-radius:50%;background:var(--glass);border:1px solid var(--glass-border);transition:all .3s ease}
+.onb-dot.active{background:var(--neon);border-color:var(--neon);box-shadow:0 0 8px var(--neon-glow)}
+.onb-dot.done{background:var(--green);border-color:var(--green)}
+.onb-step-text{font-size:10px;color:var(--text3);font-family:var(--font-display);letter-spacing:1px;white-space:nowrap}
+.onb-actions{display:flex;gap:8px;justify-content:flex-end}
+.onb-btn{padding:9px 18px;border-radius:var(--r-xs);font-family:var(--font-body);font-weight:600;font-size:13px;
+  cursor:pointer;border:none;transition:var(--transition)}
+.onb-btn:active{transform:scale(.96)}
+.onb-btn-skip{background:var(--glass2);border:1px solid var(--glass-border);color:var(--text2)}
+.onb-btn-skip:hover{border-color:var(--text3);color:var(--text)}
+.onb-btn-next{background:linear-gradient(135deg,var(--neon),#0099ff);color:#000;font-weight:700;
+  box-shadow:0 0 15px var(--neon-glow)}
+.onb-btn-next:hover{box-shadow:0 0 25px var(--neon-glow)}
+.onb-btn-prev{background:var(--glass);border:1px solid var(--glass-border);color:var(--text2)}
+.onb-btn-prev:hover{border-color:var(--neon-dim);color:var(--neon)}
+/* FAQ Button */
+.faq-btn{position:fixed;top:calc(var(--top-inset) + var(--tg-content-t) + 8px);right:14px;z-index:200;
+  width:38px;height:38px;border-radius:50%;background:var(--surface);border:1px solid var(--glass-border);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:var(--neon);font-size:16px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--transition);
+  box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.faq-btn:hover{border-color:var(--neon);box-shadow:0 0 15px var(--neon-glow);transform:scale(1.08)}
+.faq-btn:active{transform:scale(.95)}
+/* Onboarding welcome/finish */
+.onb-welcome{text-align:center;padding:10px 0}
+.onb-welcome-icon{font-size:48px;margin-bottom:12px;animation:bounce .6s ease}
+.onb-welcome-title{font-family:var(--font-display);font-size:20px;font-weight:800;letter-spacing:1px;
+  background:linear-gradient(135deg,var(--neon),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.onb-welcome-sub{font-size:13px;color:var(--text2);line-height:1.6}
 </style>
 </head>
 <body>
@@ -449,6 +502,9 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 <div class="bg-glow bg-glow-2"></div>
 <div class="bg-glow bg-glow-3"></div>
 <div class="scan-line"></div>
+
+<!-- FAQ / RESTART GUIDE BUTTON -->
+<button class="faq-btn" id="faqBtn" onclick="Onboarding.start()" title="Гайд по додатку"><i class="fas fa-question"></i></button>
 
 <div class="app">
 
@@ -983,6 +1039,8 @@ var App={
       self.tg.BackButton.onClick(function(){self.back()})}
     self.user=self.tg&&self.tg.initDataUnsafe?self.tg.initDataUnsafe.user:null;
     self.userId=self.user?self.user.id:0;
+    // Restore cached state for offline/instant render
+    try{var cached=localStorage.getItem('smilskiy_state');if(cached){var cs=JSON.parse(cached);for(var ck in cs){if(cs.hasOwnProperty(ck))self.state[ck]=cs[ck]}}}catch(e){}
     self.initBg();
     loadAchData();
     var loaded=false;
@@ -992,7 +1050,11 @@ var App={
       Object.keys(self.modules).forEach(function(k){if(self.modules[k].init)self.modules[k].init()});
       self.renderHome();
       hideLoading();
-    }).catch(function(e){console.error('Init error:',e);self.renderHome();hideLoading()});
+      /* Auto-start onboarding for first-time users */
+      setTimeout(function(){Onboarding.autoStart()},600);
+    }).catch(function(e){console.error('Init error:',e);self.renderHome();hideLoading();
+      setTimeout(function(){Onboarding.autoStart()},600);
+    });
   },
 
   sync:function(){
@@ -1018,6 +1080,8 @@ var App={
         self.state.rankInfo=d.rank_info||null;
         self.state.exchangesUsed=d.exchanges_used||[];
         if(d.quiz_stats){self.state.qOk=d.quiz_stats.correct||0;self.state.qTot=d.quiz_stats.total||0}
+        // Cache state for offline use
+        try{localStorage.setItem('smilskiy_state',JSON.stringify(self.state))}catch(e){}
         // Daily visit
         api('/api/user/'+self.userId+'/visit','POST').then(function(v){
           if(v&&v.is_new_day){
@@ -1252,13 +1316,16 @@ App.modules.quizzes=(function(){
       var opts=document.querySelectorAll('#quizOpts .quiz-opt');
       opts[si].classList.add(ok?'correct':'wrong');if(!ok)opts[q.c].classList.add('correct');
       var ex=document.getElementById('quizExplain');ex.textContent=q.e;ex.style.display='block';
-      App.state.qTot++;if(ok){App.state.qOk++;App.state.xp+=30;App.xpPopup(30)}
-      if(App.online)api('/api/quiz/answer','POST',{user_id:App.userId,course:App.modules.courses.getCur()==='c1'?'course1':'course2',lesson:qs.lesson,q_index:qs.cur,correct:ok});
+      App.state.qTot++;if(ok){App.state.qOk++;}
+      if(App.online)api('/api/quiz/answer','POST',{user_id:App.userId,course:App.modules.courses.getCur()==='c1'?'course1':'course2',lesson:qs.lesson,q_index:qs.cur,correct:ok}).then(function(r){if(r&&r.xp_gained){App.state.xp+=r.xp_gained;App.xpPopup(r.xp_gained)}});
+      else if(ok){App.state.xp+=30;App.xpPopup(30)}
       App.incChallenge('quiz');
       var self=this;setTimeout(function(){if(qs.cur<qs.questions.length-1){qs.cur++;self.render()}else self.results()},1500)},
     results:function(){var pct=Math.round(qs.ok/qs.questions.length*100);
       var e='😔',m='Спробуй ще!';if(pct>=80){e='🎉';m='ЧУДОВО!'}else if(pct>=50){e='👍';m='Непогано!'}
-      var bonus='';if(pct===100){App.state.xp+=100;bonus='<div style="margin-top:12px;color:var(--green);font-family:var(--font-display);font-weight:700">+100 XP PERFECT!</div>';
+      var bonus='';if(pct===100){bonus='<div style="margin-top:12px;color:var(--green);font-family:var(--font-display);font-weight:700">+100 XP PERFECT!</div>';
+        if(App.online)api('/api/user/'+App.userId+'/add-xp','POST',{amount:100,reason:'quiz_perfect_'+qs.lesson}).then(function(r){if(r){App.state.xp=r.xp||App.state.xp;App.xpPopup(100)}});
+        else{App.state.xp+=100;App.xpPopup(100)}
         if(typeof confetti==='function')confetti({particleCount:100,spread:100,origin:{y:0.5}})}
       document.getElementById('quizResContent').innerHTML=
         '<div style="font-size:60px;margin-bottom:14px">'+e+'</div>'+
@@ -2372,6 +2439,217 @@ App.modules.admin=(function(){
     },
     grantAccess:function(){App.openModal('<div style="text-align:center;padding:10px"><h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px">ВИДАТИ ДОСТУП</h3><div style="margin-bottom:10px"><input type="text" id="grantUserId" placeholder="User ID" style="width:100%;padding:10px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-sm);color:var(--text);font-size:13px;outline:none"></div><div class="g2" style="margin-bottom:14px"><button class="btn btn-ghost btn-sm btn-block" onclick="App.modules.admin.setAccess(parseInt(document.getElementById(\'grantUserId\').value),\'basic\');App.closeModal()">BASIC</button><button class="btn btn-purple btn-sm btn-block" onclick="App.modules.admin.setAccess(parseInt(document.getElementById(\'grantUserId\').value),\'pro\');App.closeModal()">PRO</button></div></div>')}
   };
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   ONBOARDING — GUIDED PRODUCT TOUR
+   ═══════════════════════════════════════════════════════════════ */
+var Onboarding=(function(){
+  var KEY='smilskiy_onboarding_done';
+  var currentStep=0;
+  var overlay=null;
+  var spotlight=null;
+  var tooltip=null;
+  var isActive=false;
+
+  /* ── STEPS DEFINITION ── */
+  var steps=[
+    {type:'welcome',title:'ЛАСКАВО ПРОСИМО!',desc:'Це твій гайд по Smilskiy P2P Academy.\nПокажемо основні функції за 30 секунд 🚀',icon:'👋'},
+    {target:'#homeUser',title:'ТВІЙ ПРОФІЛЬ',desc:'Тут відображається твій рівень, XP та ранг. Заробляй XP, проходячи уроки та квізи — і піднімайся в рейтингу!',position:'bottom'},
+    {target:'#homeCourses',title:'КУРСИ',desc:'Два курси: BASIC (для старту) та PRO (для досвідчених). Тисни на курс, щоб почати навчання та проходити уроки крок за кроком.',position:'bottom'},
+    {target:'#homeChallenge',title:'DAILY MISSION',desc:'Щоденне завдання з бонусним XP. Виконуй місії кожен день — це прокачує рівень та тримає серію!',position:'top'},
+    {target:'#homeTip',title:'СИГНАЛ ДНЯ',desc:'Корисна порада та цікавий факт кожного дня. Читай, щоб стати кращим трейдером 💡',position:'top'},
+    {target:'.nav-btn[data-p="ai"]',title:'AI ASSISTANT',desc:'Твій персональний AI-помічник. Запитуй будь-що про P2P арбітраж — він відповість миттєво 🤖',position:'top'},
+    {target:'.nav-btn[data-p="accountant"]',title:'БУХГАЛТЕР',desc:'Підключи Binance/Bybit API і відстежуй угоди, прибуток та статистику автоматично 📊',position:'top'},
+    {target:'.nav-btn[data-p="profile"]',title:'ПРОФІЛЬ',desc:'Переглядай досягнення, статистику XP, графіки прогресу та свій рівень у деталях.',position:'top'},
+    {target:'.nav-btn[data-p="leaderboard"]',title:'РЕЙТИНГ',desc:'Змагайся з іншими учасниками! Топ-гравці відображаються на подіумі 🏆',position:'top'},
+    {type:'finish',title:'ГОТОВО!',desc:'Тепер ти знаєш основи! Почни з першого уроку BASIC курсу і заробляй XP.\n\nУспіхів у P2P! 🎉',icon:'🚀'}
+  ];
+
+  /* ── CREATE DOM ── */
+  function createOverlay(){
+    if(overlay)return;
+    overlay=document.createElement('div');
+    overlay.className='onb-overlay';
+    overlay.innerHTML='<div class="onb-backdrop"></div><div class="onb-spotlight"></div><div class="onb-tooltip"></div>';
+    document.body.appendChild(overlay);
+    spotlight=overlay.querySelector('.onb-spotlight');
+    tooltip=overlay.querySelector('.onb-tooltip');
+    /* Click backdrop to skip */
+    overlay.querySelector('.onb-backdrop').addEventListener('click',function(e){
+      if(e.target===overlay.querySelector('.onb-backdrop'))skip();
+    });
+  }
+
+  /* ── POSITION CALCULATIONS ── */
+  function positionElements(step){
+    var el=document.querySelector(step.target);
+    if(!el){next();return;}
+    var rect=el.getBoundingClientRect();
+    var pad=8;
+    /* Spotlight */
+    spotlight.style.display='block';
+    spotlight.style.left=(rect.left-pad)+'px';
+    spotlight.style.top=(rect.top-pad)+'px';
+    spotlight.style.width=(rect.width+pad*2)+'px';
+    spotlight.style.height=(rect.height+pad*2)+'px';
+    spotlight.style.borderRadius=getComputedStyle(el).borderRadius||'var(--r)';
+    /* Tooltip position */
+    var pos=step.position||'bottom';
+    var tw=Math.min(320,window.innerWidth-40);
+    var tl=Math.max(20,rect.left+rect.width/2-tw/2);
+    if(tl+tw>window.innerWidth-20)tl=window.innerWidth-20-tw;
+    tooltip.style.width=tw+'px';
+    tooltip.style.left=tl+'px';
+    var arrowHtml='<div class="onb-tooltip-arrow '+(pos==='bottom'?'top':'bottom')+'" style="left:'+Math.max(20,Math.min(tw-20,rect.left+rect.width/2-tl))+'px;margin-left:-6px"></div>';
+    if(pos==='bottom'){
+      tooltip.style.top=(rect.bottom+pad+14)+'px';
+      tooltip.style.bottom='auto';
+    }else{
+      var tooltipH=tooltip.offsetHeight||160;
+      tooltip.style.top=Math.max(10,(rect.top-pad-14-tooltipH))+'px';
+      tooltip.style.bottom='auto';
+    }
+    /* Scroll element into view if needed */
+    var viewH=window.innerHeight;
+    if(rect.top<80||rect.bottom>viewH-80){
+      el.scrollIntoView({behavior:'smooth',block:'center'});
+      setTimeout(function(){positionElements(step)},350);
+      return;
+    }
+    renderTooltip(step,arrowHtml);
+  }
+
+  /* ── RENDER TOOLTIP CONTENT ── */
+  function renderTooltip(step,arrowHtml){
+    arrowHtml=arrowHtml||'';
+    var dotsHtml='';
+    for(var i=0;i<steps.length;i++){
+      var cls='onb-dot';
+      if(i<currentStep)cls+=' done';
+      else if(i===currentStep)cls+=' active';
+      dotsHtml+='<div class="'+cls+'"></div>';
+    }
+    var prevBtn=currentStep>0?'<button class="onb-btn onb-btn-prev" onclick="Onboarding.prev()"><i class="fas fa-chevron-left" style="font-size:11px"></i></button>':'';
+    var isLast=currentStep===steps.length-1;
+    var nextLabel=isLast?'ЗАВЕРШИТИ':'ДАЛІ';
+    var nextIcon=isLast?'<i class="fas fa-check" style="font-size:11px;margin-right:4px"></i>':'<i class="fas fa-chevron-right" style="font-size:11px;margin-left:4px"></i>';
+    tooltip.innerHTML=arrowHtml+
+      '<div class="onb-title">'+step.title+'</div>'+
+      '<div class="onb-desc">'+step.desc.replace(/\n/g,'<br>')+'</div>'+
+      '<div class="onb-progress">'+
+        '<div class="onb-dots">'+dotsHtml+'</div>'+
+        '<div class="onb-step-text">'+(currentStep+1)+'/'+steps.length+'</div>'+
+      '</div>'+
+      '<div class="onb-actions">'+
+        (isLast?'':'<button class="onb-btn onb-btn-skip" onclick="Onboarding.skip()">Пропустити</button>')+
+        prevBtn+
+        '<button class="onb-btn onb-btn-next" onclick="Onboarding.'+(isLast?'finish':'next')+'()">'+(isLast?nextIcon:'')+nextLabel+(isLast?'':nextIcon)+'</button>'+
+      '</div>';
+    requestAnimationFrame(function(){tooltip.classList.add('show')});
+  }
+
+  /* ── RENDER WELCOME / FINISH SCREEN ── */
+  function renderCenterStep(step){
+    spotlight.style.display='none';
+    var tw=Math.min(320,window.innerWidth-40);
+    tooltip.style.left='50%';
+    tooltip.style.top='50%';
+    tooltip.style.transform='translate(-50%,-50%)';
+    tooltip.style.width=tw+'px';
+    var isLast=currentStep===steps.length-1;
+    var dotsHtml='';
+    for(var i=0;i<steps.length;i++){
+      var cls='onb-dot';
+      if(i<currentStep)cls+=' done';
+      else if(i===currentStep)cls+=' active';
+      dotsHtml+='<div class="'+cls+'"></div>';
+    }
+    tooltip.innerHTML=
+      '<div class="onb-welcome">'+
+        '<div class="onb-welcome-icon">'+step.icon+'</div>'+
+        '<div class="onb-welcome-title">'+step.title+'</div>'+
+        '<div class="onb-welcome-sub">'+step.desc.replace(/\n/g,'<br>')+'</div>'+
+      '</div>'+
+      '<div class="onb-progress" style="margin-top:16px">'+
+        '<div class="onb-dots">'+dotsHtml+'</div>'+
+        '<div class="onb-step-text">'+(currentStep+1)+'/'+steps.length+'</div>'+
+      '</div>'+
+      '<div class="onb-actions" style="justify-content:center;margin-top:4px">'+
+        (isLast?'':'<button class="onb-btn onb-btn-skip" onclick="Onboarding.skip()">Пропустити</button>')+
+        (currentStep>0?'<button class="onb-btn onb-btn-prev" onclick="Onboarding.prev()"><i class="fas fa-chevron-left" style="font-size:11px"></i></button>':'')+
+        '<button class="onb-btn onb-btn-next" onclick="Onboarding.'+(isLast?'finish':'next')+'()">'+(isLast?'<i class="fas fa-check" style="font-size:11px;margin-right:4px"></i>ЗАВЕРШИТИ':'ПОЧНЕМО <i class="fas fa-arrow-right" style="font-size:11px;margin-left:4px"></i>')+'</button>'+
+      '</div>';
+    requestAnimationFrame(function(){tooltip.classList.add('show')});
+  }
+
+  /* ── SHOW STEP ── */
+  function showStep(){
+    if(currentStep<0||currentStep>=steps.length){finish();return;}
+    var step=steps[currentStep];
+    tooltip.classList.remove('show');
+    tooltip.style.transform='';
+    setTimeout(function(){
+      if(step.type==='welcome'||step.type==='finish'){
+        renderCenterStep(step);
+      }else{
+        positionElements(step);
+      }
+    },100);
+  }
+
+  /* ── PUBLIC API ── */
+  function start(){
+    currentStep=0;
+    isActive=true;
+    createOverlay();
+    overlay.classList.add('active');
+    overlay.querySelector('.onb-backdrop').classList.add('show');
+    showStep();
+  }
+
+  function next(){
+    if(currentStep<steps.length-1){currentStep++;showStep()}
+    else finish();
+  }
+
+  function prev(){
+    if(currentStep>0){currentStep--;showStep()}
+  }
+
+  function skip(){
+    finish();
+  }
+
+  function finish(){
+    isActive=false;
+    tooltip.classList.remove('show');
+    overlay.querySelector('.onb-backdrop').classList.remove('show');
+    setTimeout(function(){
+      overlay.classList.remove('active');
+      spotlight.style.display='none';
+    },400);
+    try{localStorage.setItem(KEY,'1')}catch(e){}
+  }
+
+  function shouldShow(){
+    try{return!localStorage.getItem(KEY)}catch(e){return true}
+  }
+
+  function autoStart(){
+    if(shouldShow()){
+      setTimeout(function(){start()},800);
+    }
+  }
+
+  /* Handle resize */
+  window.addEventListener('resize',function(){
+    if(isActive&&steps[currentStep]&&!steps[currentStep].type){
+      showStep();
+    }
+  });
+
+  return{start:start,next:next,prev:prev,skip:skip,finish:finish,autoStart:autoStart};
 })();
 
 /* ═══════════════════════════════════════════════════════════════
