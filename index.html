@@ -29,7 +29,7 @@
   --text:#e2e8f0;--text2:#94a3b8;--text3:#475569;
   --font-display:'Orbitron',monospace;--font-body:'Inter',sans-serif;
   --r:16px;--r-sm:10px;--r-xs:6px;
-  --nav-h:68px;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);
+  --nav-h:56px;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);
   --tg-safe-t:0px;--tg-content-t:0px;
   --top-inset:max(var(--safe-t), var(--tg-safe-t));
   --transition:all .25s cubic-bezier(.4,0,.2,1);
@@ -148,6 +148,8 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 .course-card .sub{font-size:12px;color:var(--text2)}
 .course-card .prog{margin-top:10px}
 .course-card .prog-text{font-size:11px;color:var(--text2);margin-bottom:4px;display:flex;justify-content:space-between}
+.course-card.locked{opacity:0.5;filter:grayscale(0.5)}
+.course-card.locked:hover{border-color:var(--glass-border)}
 
 /* ═══ LESSON GRID ═══ */
 .lesson-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
@@ -396,9 +398,9 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 .nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + var(--safe-b));background:rgba(6,6,18,0.95);
   backdrop-filter:blur(20px);border-top:1px solid var(--glass-border);display:flex;
   justify-content:space-around;align-items:flex-start;z-index:100;padding-top:6px;padding-bottom:var(--safe-b)}
-.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;cursor:pointer;
-  color:var(--text3);transition:var(--transition);position:relative;font-size:10px;min-width:52px}
-.nav-btn i{font-size:20px;transition:var(--transition)}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;cursor:pointer;
+  color:var(--text3);transition:var(--transition);position:relative;font-size:9px;min-width:44px;flex:1;max-width:64px}
+.nav-btn i{font-size:18px;transition:var(--transition)}
 .nav-btn.active{color:var(--neon)}
 .nav-btn.active i{filter:drop-shadow(0 0 8px var(--neon-glow))}
 .nav-btn.active::before{content:'';position:absolute;top:0;left:25%;right:25%;height:2px;
@@ -469,7 +471,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
   </div>
   <div id="homeCourses"></div>
   <div class="g-card challenge" id="homeChallenge"></div>
-  <div class="g-card" id="homeTip">
+  <div class="g-card" id="homeTip" onclick="App.incChallenge('tip')" style="cursor:pointer">
     <div class="page-header" style="margin-bottom:10px">
       <div class="icon-box" style="color:var(--gold)">💡</div>
       <div><h2 style="font-size:13px">СИГНАЛ ДНЯ</h2></div>
@@ -940,8 +942,7 @@ const TOTAL=10;const ADMINS=[728309625,584189889];
 /* ───── API ───── */
 const API=(function(){var h=location.hostname;
   if(h.indexOf('ngrok')>=0)return location.origin;
-  if(h==='daviscortes.github.io')return'https://51bd-2a02-ab04-2ec6-3f00-2495-fc8-87a8-8ff6.ngrok-free.app';
-  if(h==='localhost'||h==='127.0.0.1')return'http://'+h+':8000';
+  if(h==='localhost'||h==='127.0.0.1')return'http://'+h+':3200';
   return location.origin})();
 
 function api(ep,method,body){
@@ -952,7 +953,7 @@ function api(ep,method,body){
 /* ───── HELPERS ───── */
 function xpFor(l){return Math.floor(100*Math.pow(l,1.5))}
 function lvlOf(xp){var l=1;while(xpFor(l+1)<=xp)l++;return l}
-function xpProg(xp){var l=lvlOf(xp);return{cur:xp-xpFor(l),need:xpFor(l+1)-xpFor(l)}}
+function xpProg(xp){var l=lvlOf(xp);return{cur:Math.max(0,xp-xpFor(l)),need:xpFor(l+1)-xpFor(l)}}
 function rankOf(l){var r=RANKS[0][1];for(var i=0;i<RANKS.length;i++){if(l>=RANKS[i][0])r=RANKS[i][1]}return r}
 function avatarUrl(n,s,photo){if(photo)return photo;return'https://ui-avatars.com/api/?name='+encodeURIComponent(n||'?')+'&size='+(s||128)+'&background=6C5CE7&color=fff&bold=true&format=svg'}
 
@@ -997,9 +998,9 @@ var App={
   sync:function(){
     var self=this;
     if(!self.userId)return Promise.resolve();
-    // Send photo_url to backend
+    // Send photo_url + name to backend (always sync name/username)
     var photoUrl=self.user&&self.user.photo_url?self.user.photo_url:'';
-    if(photoUrl){api('/api/user/'+self.userId+'/sync','POST',{photo_url:photoUrl,first_name:self.user.first_name||'',username:self.user.username||''})}
+    api('/api/user/'+self.userId+'/sync','POST',{photo_url:photoUrl,first_name:self.user?self.user.first_name||'':'',username:self.user?self.user.username||'':''});
     return api('/api/user/'+self.userId).then(function(d){
       if(d){self.online=true;
         self.state.xp=d.xp||0;self.state.streak=d.visit_streak||d.streak_days||0;
@@ -1023,6 +1024,24 @@ var App={
             self.state.visitStreak=v.streak;self.state.streak=v.streak;
             self.state.xp+=v.xp_earned;
             self.showStreakFire(v.streak,v.xp_earned);
+          }
+        });
+        // Sync trades from exchanges in background (to update profile stats)
+        api('/api/user/'+self.userId+'/sync-trades','POST').then(function(st){
+          if(st&&st.new_trades>0){
+            // Re-fetch user data to get updated stats
+            api('/api/user/'+self.userId).then(function(d2){
+              if(d2){
+                self.state.totalTrades=d2.total_trades||0;
+                self.state.totalEarnings=d2.total_earnings_uah||0;
+                self.state.tradeStreak=d2.trade_streak||0;
+                self.state.xp=d2.xp||0;
+                self.state.level=d2.level||1;
+                self.state.rank=d2.rank||self.state.rank;
+                self.state.achs=d2.achievements||self.state.achs;
+                self.state.pos=d2.position||self.state.pos;
+              }
+            });
           }
         });
       }
@@ -1062,11 +1081,13 @@ var App={
     u.querySelector('.xp-info').textContent=s.xp+' XP • '+p.cur+'/'+p.need;
     u.querySelector('.fill').style.width=pct+'%';
     var c1p=Math.round(s.c1.length/TOTAL*100),c2p=Math.round(s.c2.length/TOTAL*100);
+    var plan=s.plan||'none';
+    var c1lock=plan==='none';var c2lock=plan!=='pro';
     document.getElementById('homeCourses').innerHTML=
-      '<div class="g-card course-card" onclick="App.modules.courses.open(\'c1\')"><div class="tag tag-basic">BASIC</div><div class="emoji">📘</div><div class="title">БАЗОВИЙ КУРС</div><div class="sub">'+s.c1.length+'/'+TOTAL+' уроків</div><div class="prog"><div class="prog-text"><span>Прогрес</span><span>'+c1p+'%</span></div><div class="xp-bar"><div class="fill" style="width:'+c1p+'%"></div></div></div></div>'+
-      '<div class="g-card course-card" onclick="App.modules.courses.open(\'c2\')"><div class="tag tag-pro">PRO</div><div class="emoji">📗</div><div class="title">PRO КУРС</div><div class="sub">'+s.c2.length+'/'+TOTAL+' уроків</div><div class="prog"><div class="prog-text"><span>Прогрес</span><span>'+c2p+'%</span></div><div class="xp-bar"><div class="fill" style="width:'+c2p+'%"></div></div></div></div>';
+      '<div class="g-card course-card'+(c1lock?' locked':'')+'" onclick="App.modules.courses.open(\'c1\')"><div class="tag tag-basic">BASIC</div>'+(c1lock?'<div style="position:absolute;top:10px;right:10px;font-size:18px">🔒</div>':'')+'<div class="emoji">📘</div><div class="title">БАЗОВИЙ КУРС</div><div class="sub">'+(c1lock?'Немає доступу':s.c1.length+'/'+TOTAL+' уроків')+'</div><div class="prog"><div class="prog-text"><span>Прогрес</span><span>'+c1p+'%</span></div><div class="xp-bar"><div class="fill" style="width:'+c1p+'%"></div></div></div></div>'+
+      '<div class="g-card course-card'+(c2lock?' locked':'')+'" onclick="App.modules.courses.open(\'c2\')"><div class="tag tag-pro">PRO</div>'+(c2lock?'<div style="position:absolute;top:10px;right:10px;font-size:18px">🔒</div>':'')+'<div class="emoji">📗</div><div class="title">PRO КУРС</div><div class="sub">'+(c2lock?'Немає доступу':s.c2.length+'/'+TOTAL+' уроків')+'</div><div class="prog"><div class="prog-text"><span>Прогрес</span><span>'+c2p+'%</span></div><div class="xp-bar"><div class="fill" style="width:'+c2p+'%"></div></div></div></div>';
     // challenge
-    var d=Math.floor(Date.now()/(864e5)),ch=CHALLENGES[d%CHALLENGES.length],done=parseInt(sessionStorage.getItem('ch_'+ch.id)||'0');
+    var d=Math.floor(Date.now()/(864e5)),ch=CHALLENGES[d%CHALLENGES.length],done=parseInt(localStorage.getItem('ch_'+ch.id+'_'+d)||'0');
     var cp=Math.min(100,Math.round(done/ch.n*100));
     document.getElementById('homeChallenge').innerHTML=
       '<div class="page-header" style="margin-bottom:8px"><div class="icon-box" style="color:var(--gold)">🎯</div><div><h2 style="font-size:12px">DAILY MISSION</h2><div class="sub">+'+ch.xp+' XP</div></div></div>'+
@@ -1099,9 +1120,10 @@ var App={
 
   incChallenge:function(type){
     var d=Math.floor(Date.now()/(864e5)),ch=CHALLENGES[d%CHALLENGES.length];
-    if(ch.type!==type)return;var k='ch_'+ch.id,cur=parseInt(sessionStorage.getItem(k)||'0');
-    if(cur>=ch.n)return;cur++;sessionStorage.setItem(k,cur);
-    if(cur>=ch.n){this.state.xp+=ch.xp;this.toast('+'+ch.xp+' XP за місію!','info')}},
+    if(ch.type!==type)return;var k='ch_'+ch.id+'_'+d,cur=parseInt(localStorage.getItem(k)||'0');
+    if(cur>=ch.n)return;cur++;localStorage.setItem(k,cur);
+    if(cur>=ch.n){this.state.xp+=ch.xp;this.toast('+'+ch.xp+' XP за місію!','info');
+      if(this.online&&this.userId)api('/api/user/'+this.userId+'/add-xp','POST',{amount:ch.xp,reason:'challenge_'+ch.id})}},
 
   /* ─── STREAK FIRE ANIMATION ─── */
   showStreakFire:function(streak, xpEarned){
@@ -1172,6 +1194,10 @@ App.modules.courses=(function(){
     init:function(){},
     open:function(ck){
       cur=ck;var pref=ck==='c1'?'c1':'c2',viewed=App.state[pref]||[];
+      // Access control check
+      var plan=App.state.plan||'none';
+      if(ck==='c1' && plan==='none'){App.toast('У вас немає доступу до курсу. Зверніться до адміністратора.','error');return}
+      if(ck==='c2' && plan!=='pro'){App.toast('Pro-курс потребує Pro-доступ. Зверніться до адміністратора.','error');return}
       document.getElementById('courseTitle').textContent=ck==='c1'?'БАЗОВИЙ КУРС':'PRO КУРС';
       document.getElementById('courseSub').textContent=viewed.length+'/'+TOTAL+' пройдено';
       document.getElementById('courseFill').style.width=Math.round(viewed.length/TOTAL*100)+'%';
@@ -1194,8 +1220,9 @@ App.modules.courses=(function(){
     markViewed:function(n){
       if(!cur)return;var pref=cur==='c1'?'c1':'c2',lid=pref+'_l'+n,key=pref;
       if(App.state[key].indexOf(lid)>=0)return;
-      App.state[key].push(lid);App.state.xp+=50;App.xpPopup(50);
-      if(App.online)api('/api/lesson/view','POST',{user_id:App.userId,lesson_id:lid,course:cur==='c1'?'course1':'course2'});
+      App.state[key].push(lid);
+      if(App.online){api('/api/lesson/view','POST',{user_id:App.userId,lesson_id:lid,course:cur==='c1'?'course1':'course2'}).then(function(r){if(r&&r.xp_gained){App.state.xp+=r.xp_gained;App.xpPopup(r.xp_gained)}})}
+      else{App.state.xp+=50;App.xpPopup(50);}
       App.incChallenge('lesson');
     },
     backToCourse:function(){if(cur)this.open(cur);else App.go('home')},
@@ -1660,9 +1687,9 @@ App.modules.accountant=(function(){
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'+
         '<div><div class="ts-label">Продаж</div><div class="ts-val">'+(t.sell_count||0)+'</div></div></div>'+
         '<div class="today-stat"><div class="ts-icon" style="background:rgba(0,240,255,0.06)">💵</div>'+
-        '<div><div class="ts-label">Обсяг $</div><div class="ts-val">'+(t.buy_crypto+t.sell_crypto).toFixed(1)+'</div></div></div>'+
+        '<div><div class="ts-label">Обсяг $</div><div class="ts-val">'+(parseFloat(t.buy_crypto||0)+parseFloat(t.sell_crypto||0)).toFixed(1)+'</div></div></div>'+
         '<div class="today-stat"><div class="ts-icon" style="background:rgba(16,185,129,0.06)">₴</div>'+
-        '<div><div class="ts-label">Обсяг ₴</div><div class="ts-val">'+(t.buy_fiat+t.sell_fiat).toFixed(0)+'</div></div></div>'+
+        '<div><div class="ts-label">Обсяг ₴</div><div class="ts-val">'+(parseFloat(t.buy_fiat||0)+parseFloat(t.sell_fiat||0)).toFixed(0)+'</div></div></div>'+
         '<div class="today-stat"><div class="ts-icon" style="background:rgba(0,240,255,0.06)">📊</div>'+
         '<div><div class="ts-label">Сер. купівля</div><div class="ts-val">'+(t.avg_buy||'—')+'</div></div></div>'+
         '<div class="today-stat"><div class="ts-icon" style="background:rgba(168,85,247,0.06)">📈</div>'+
@@ -2091,7 +2118,7 @@ App.modules.profile=(function(){
         if(a){var pCat=a.category||'special',pLvl=a.level||1,pTot=1;
           if(LEVELED_ACHS[pCat])pTot=LEVELED_ACHS[pCat].levels.length;
           var pT=pCat==='special'?specialAchTier(a.xp||0):pLvl;
-          var pTT=pCat==='special'?7:pTot;
+          var pTT=pCat==='special'?15:pTot;
           ah+='<div class="ach earned" onclick="App.modules.achievements.show(\''+k+'\')">'+achBadgeSVG(pCat,pT,pTT,true,36)+'<div class="a-title">'+(a.name||a.title)+'</div></div>';shownCount++}
       }
       if(shownCount<6){
@@ -2291,10 +2318,10 @@ App.modules.settings=(function(){
    ═══════════════════════════════════════════════════════════════ */
 App.modules.admin=(function(){
   function loadUsers(){
-    api('/api/admin/users').then(function(d){
+    api('/api/admin/users?admin_id='+App.userId).then(function(d){
       if(!d||!d.users){document.getElementById('adminUsers').innerHTML='<div style="text-align:center;padding:20px;color:var(--text3)">Помилка завантаження</div>';return}
       var h='';d.users.forEach(function(u){
-        var plan=u.plan||'free';var planBadge=plan==='pro'?'<span style="color:var(--purple);font-weight:700">PRO</span>':plan==='basic'?'<span style="color:var(--cyan);font-weight:700">BASIC</span>':'<span style="color:var(--text3)">FREE</span>';
+        var plan=u.plan||'free';var planBadge=plan==='pro'?'<span style="color:var(--purple);font-weight:700">PRO</span>':plan==='basic'?'<span style="color:var(--neon);font-weight:700">BASIC</span>':'<span style="color:var(--text3)">FREE</span>';
         h+='<div class="admin-user-row" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--glass-border)">'
           +'<div><div style="font-weight:600;font-size:13px">'+(u.first_name||'User')+' <span style="color:var(--text3);font-size:11px">ID:'+u.user_id+'</span></div>'
           +'<div style="font-size:11px;color:var(--text3)">Lv.'+(u.level||1)+' · XP:'+(u.xp||0)+' · '+planBadge+'</div></div>'
@@ -2317,7 +2344,7 @@ App.modules.admin=(function(){
         '<div class="a-box"><div class="a-val">—</div><div class="a-lbl">Basic</div></div>'+
         '<div class="a-box"><div class="a-val">—</div><div class="a-lbl">Уроків</div></div>';
       if(App.online){
-        api('/api/admin/stats').then(function(d){
+        api('/api/admin/stats?admin_id='+App.userId).then(function(d){
           if(d){var boxes=document.querySelectorAll('#adminStats .a-val');
             if(boxes[0])boxes[0].textContent=d.total_users||0;
             if(boxes[1])boxes[1].textContent=d.pro_users||0;
@@ -2327,9 +2354,10 @@ App.modules.admin=(function(){
       }
     },
     setAccess:function(uid,plan){
-      var action=plan==='revoke'?'revoke':'grant';
+      if(!uid||isNaN(uid)){App.toast('Невірний User ID','error');return}
+      var action=plan==='revoke'?'revoke':'give';
       var p=plan==='revoke'?'free':plan;
-      api('/api/admin/grant','POST',{user_id:uid,action:action,plan:p}).then(function(d){
+      api('/api/admin/grant','POST',{user_id:uid,action:action,plan:p,admin_id:App.userId}).then(function(d){
         if(d&&d.ok){App.toast((action==='revoke'?'Доступ забрано':'Доступ '+p.toUpperCase()+' видано'),'success');loadUsers()}
         else{App.toast('Помилка: '+(d&&d.detail||'невідомо'),'error')}
       })
@@ -2337,7 +2365,7 @@ App.modules.admin=(function(){
     broadcast:function(){App.openModal('<div style="text-align:center;padding:10px"><h3 style="font-family:var(--font-display);font-size:14px;margin-bottom:14px">РОЗСИЛКА</h3><textarea id="broadcastText" placeholder="Текст повідомлення..." style="width:100%;height:100px;padding:10px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-sm);color:var(--text);font-family:var(--font-body);font-size:13px;resize:none;outline:none;margin-bottom:12px"></textarea><button class="btn btn-neon btn-block" onclick="App.modules.admin.sendBroadcast()">ВІДПРАВИТИ</button></div>')},
     sendBroadcast:function(){
       var txt=document.getElementById('broadcastText');if(!txt||!txt.value.trim()){App.toast('Введіть текст','error');return}
-      api('/api/admin/broadcast','POST',{text:txt.value.trim()}).then(function(d){
+      api('/api/admin/broadcast','POST',{text:txt.value.trim(),admin_id:App.userId}).then(function(d){
         if(d&&d.ok){App.toast('Розсилка відправлена: '+d.sent+' користувачам','success');App.closeModal()}
         else{App.toast('Помилка: '+(d&&d.detail||'невідомо'),'error')}
       })
