@@ -433,48 +433,51 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
   -webkit-text-fill-color:transparent;margin-bottom:20px;animation:pulse 1.5s ease-in-out infinite}
 
 /* ═══ ONBOARDING / GUIDED TOUR ═══ */
-.onb-overlay{position:fixed;inset:0;z-index:10000;pointer-events:none;transition:opacity .4s ease}
-.onb-overlay.active{pointer-events:auto}
-.onb-backdrop{position:fixed;inset:0;z-index:10001;transition:opacity .4s ease;opacity:0}
+.onb-overlay{position:fixed;inset:0;z-index:10000;pointer-events:none;opacity:0;transition:opacity .35s ease}
+.onb-overlay.active{pointer-events:auto;opacity:1}
+.onb-backdrop{position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.82);opacity:0;transition:opacity .35s ease}
 .onb-backdrop.show{opacity:1}
-.onb-spotlight{position:fixed;z-index:10002;border-radius:var(--r);box-shadow:0 0 0 9999px rgba(0,0,0,0.82),0 0 30px 4px var(--neon-glow);transition:all .45s cubic-bezier(.4,0,.2,1);pointer-events:none}
-.onb-spotlight::before{content:'';position:absolute;inset:-3px;border-radius:inherit;border:2px solid var(--neon);opacity:.7;animation:onbPulse 2s ease-in-out infinite}
+.onb-spotlight{position:fixed;z-index:10002;border-radius:var(--r);
+  box-shadow:0 0 0 9999px rgba(0,0,0,.82),0 0 24px 4px var(--neon-glow);
+  transition:left .4s ease,top .4s ease,width .4s ease,height .4s ease,opacity .3s ease;
+  pointer-events:none;opacity:0}
+.onb-spotlight.show{opacity:1}
+.onb-spotlight::before{content:'';position:absolute;inset:-3px;border-radius:inherit;
+  border:2px solid var(--neon);opacity:.7;animation:onbPulse 2s ease-in-out infinite}
 @keyframes onbPulse{0%,100%{opacity:.7;box-shadow:0 0 8px var(--neon-glow)}50%{opacity:1;box-shadow:0 0 20px var(--neon-glow)}}
 .onb-tooltip{position:fixed;z-index:10003;background:var(--surface);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
-  border:1px solid var(--neon-dim);border-radius:var(--r);padding:20px;max-width:320px;width:calc(100vw - 40px);
-  box-shadow:0 8px 40px rgba(0,0,0,.5),0 0 20px var(--neon-glow);transition:all .4s cubic-bezier(.4,0,.2,1);opacity:0;transform:translateY(12px)}
+  border:1px solid var(--neon-dim);border-radius:var(--r);padding:18px;max-width:310px;width:calc(100vw - 32px);
+  box-shadow:0 8px 40px rgba(0,0,0,.5),0 0 16px var(--neon-glow);
+  opacity:0;transform:translateY(10px);transition:opacity .3s ease,transform .3s ease;pointer-events:auto}
 .onb-tooltip.show{opacity:1;transform:translateY(0)}
-.onb-tooltip.centered{transform:translate(-50%,-50%)}
-.onb-tooltip.centered.show{transform:translate(-50%,-50%)}
+.onb-tooltip.centered{left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important}
+.onb-tooltip.centered.show{transform:translate(-50%,-50%)!important}
 .onb-tooltip::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
   background:linear-gradient(90deg,transparent,var(--neon),transparent)}
 .onb-tooltip-arrow{position:absolute;width:12px;height:12px;background:var(--surface);
   border:1px solid var(--neon-dim);transform:rotate(45deg);z-index:-1}
 .onb-tooltip-arrow.top{top:-7px;border-right:none;border-bottom:none}
 .onb-tooltip-arrow.bottom{bottom:-7px;border-left:none;border-top:none}
-.onb-title{font-family:var(--font-display);font-size:15px;font-weight:700;letter-spacing:1px;
-  background:linear-gradient(135deg,var(--neon),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
-.onb-desc{font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:16px}
-.onb-progress{display:flex;align-items:center;gap:8px;margin-bottom:14px}
-.onb-dots{display:flex;gap:4px;flex:1;flex-wrap:wrap}
-.onb-dot{width:7px;height:7px;border-radius:50%;background:var(--glass);border:1px solid var(--glass-border);transition:all .3s ease}
-.onb-dot.active{background:var(--neon);border-color:var(--neon);box-shadow:0 0 8px var(--neon-glow)}
+.onb-title{font-family:var(--font-display);font-size:14px;font-weight:700;letter-spacing:1px;
+  background:linear-gradient(135deg,var(--neon),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.onb-desc{font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:14px}
+.onb-progress{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.onb-dots{display:flex;gap:3px;flex:1;flex-wrap:wrap}
+.onb-dot{width:6px;height:6px;border-radius:50%;background:var(--glass);border:1px solid var(--glass-border);transition:all .3s ease}
+.onb-dot.active{background:var(--neon);border-color:var(--neon);box-shadow:0 0 6px var(--neon-glow);width:16px;border-radius:3px}
 .onb-dot.done{background:var(--green);border-color:var(--green)}
 .onb-step-text{font-size:10px;color:var(--text3);font-family:var(--font-display);letter-spacing:1px;white-space:nowrap}
 .onb-actions{display:flex;gap:8px;justify-content:flex-end}
-.onb-btn{padding:9px 18px;border-radius:var(--r-xs);font-family:var(--font-body);font-weight:600;font-size:13px;
+.onb-btn{padding:8px 16px;border-radius:var(--r-xs);font-family:var(--font-body);font-weight:600;font-size:12px;
   cursor:pointer;border:none;transition:var(--transition)}
 .onb-btn:active{transform:scale(.96)}
 .onb-btn-skip{background:var(--glass2);border:1px solid var(--glass-border);color:var(--text2)}
 .onb-btn-skip:hover{border-color:var(--text3);color:var(--text)}
 .onb-btn-next{background:linear-gradient(135deg,var(--neon),#0099ff);color:#000;font-weight:700;
-  box-shadow:0 0 15px var(--neon-glow)}
-.onb-btn-next:hover{box-shadow:0 0 25px var(--neon-glow)}
-.onb-btn-prev{background:var(--glass);border:1px solid var(--glass-border);color:var(--text2)}
+  box-shadow:0 0 12px var(--neon-glow)}
+.onb-btn-next:hover{box-shadow:0 0 20px var(--neon-glow)}
+.onb-btn-prev{background:var(--glass);border:1px solid var(--glass-border);color:var(--text2);padding:8px 10px}
 .onb-btn-prev:hover{border-color:var(--neon-dim);color:var(--neon)}
-/* Body scroll lock during onboarding */
-body.onb-locked{overflow:hidden!important;touch-action:none}
-body.onb-locked .app{overflow:hidden!important}
 /* FAQ Button */
 .faq-btn{position:fixed;top:calc(var(--top-inset) + var(--tg-content-t) + 8px);right:14px;z-index:200;
   width:38px;height:38px;border-radius:50%;background:var(--surface);border:1px solid var(--glass-border);
@@ -484,11 +487,11 @@ body.onb-locked .app{overflow:hidden!important}
 .faq-btn:hover{border-color:var(--neon);box-shadow:0 0 15px var(--neon-glow);transform:scale(1.08)}
 .faq-btn:active{transform:scale(.95)}
 /* Onboarding welcome/finish */
-.onb-welcome{text-align:center;padding:10px 0}
-.onb-welcome-icon{font-size:48px;margin-bottom:12px;animation:bounce .6s ease}
-.onb-welcome-title{font-family:var(--font-display);font-size:20px;font-weight:800;letter-spacing:1px;
-  background:linear-gradient(135deg,var(--neon),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
-.onb-welcome-sub{font-size:13px;color:var(--text2);line-height:1.6}
+.onb-welcome{text-align:center;padding:8px 0}
+.onb-welcome-icon{font-size:44px;margin-bottom:10px;animation:bounce .6s ease}
+.onb-welcome-title{font-family:var(--font-display);font-size:18px;font-weight:800;letter-spacing:1px;
+  background:linear-gradient(135deg,var(--neon),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.onb-welcome-sub{font-size:12.5px;color:var(--text2);line-height:1.55}
 </style>
 </head>
 <body>
@@ -2447,316 +2450,307 @@ App.modules.admin=(function(){
 })();
 
 /* ═══════════════════════════════════════════════════════════════
-   ONBOARDING — GUIDED PRODUCT TOUR (v2)
+   ONBOARDING — GUIDED PRODUCT TOUR (v3)
    ═══════════════════════════════════════════════════════════════ */
 var Onboarding=(function(){
-  var KEY='smilskiy_onboarding_v2';
-  var KEY_ACC='smilskiy_onboarding_accountant';
-  var currentStep=0;
-  var overlay=null;
-  var spotlight=null;
-  var tooltip=null;
-  var isActive=false;
-  var activeSteps=[];
-  var _scrollY=0;
-  var _onFinish=null;
-  var _repositionTimer=null;
+  var KEY='smilskiy_onboarding_v3';
+  var KEY_ACC='smilskiy_onboarding_acc2';
+  var cur=0, overlay, spot, tip, active=false, steps=[], _fin=null, _timer=null;
 
-  /* ── MAIN TOUR STEPS ── */
+  /* ── MAIN TOUR ── */
   var mainSteps=[
-    {type:'welcome',title:'ЛАСКАВО ПРОСИМО!',desc:'Це твій повний гайд по Smilskiy P2P Academy.\nПокажемо всі функції додатку 🚀',icon:'👋'},
+    {type:'center',title:'ЛАСКАВО ПРОСИМО!',desc:'Покажемо всі функції Smilskiy P2P Academy за 1 хвилину.',icon:'👋'},
     /* HOME */
-    {page:'home',target:'#homeUser',title:'ТВІЙ ПРОФІЛЬ',desc:'Тут бачиш рівень, XP та ранг. Заробляй XP за уроки, квізи та місії — і піднімайся в рейтингу!',position:'bottom'},
-    {page:'home',target:'#homeCourses',title:'КУРСИ',desc:'Два курси: BASIC (для старту) та PRO (для досвідчених). Тисни на картку курсу, щоб почати навчання.',position:'bottom'},
-    {page:'home',target:'#homeChallenge',title:'DAILY MISSION',desc:'Щоденне завдання з бонусним XP. Виконуй місії кожен день — прокачуєш рівень та тримаєш серію! 🎯',position:'top'},
-    {page:'home',target:'#homeTip',title:'СИГНАЛ ДНЯ',desc:'Корисна порада та цікавий факт кожного дня для кращого трейдингу 💡',position:'top'},
+    {p:'home',t:'#homeUser',title:'ТВІЙ ПРОФІЛЬ',desc:'Рівень, XP і ранг. Заробляй XP за уроки та квізи — зростай в рейтингу!'},
+    {p:'home',t:'#homeCourses',title:'КУРСИ',desc:'BASIC (для новачків) та PRO (для досвідчених). Тисни на картку → починай навчання.'},
+    {p:'home',t:'#homeChallenge',title:'DAILY MISSION',desc:'Щоденне завдання з бонусним XP. Виконуй кожен день, щоб тримати серію! 🎯'},
+    {p:'home',t:'#homeTip',title:'СИГНАЛ ДНЯ',desc:'Корисна порада для трейдера кожного дня 💡'},
     /* AI */
-    {page:'ai',target:'#p-ai .page-header',title:'AI ASSISTANT',desc:'Персональний AI-помічник з P2P-арбітражу. Запитуй будь-що — від базових понять до складних стратегій 🤖',position:'bottom'},
-    {page:'ai',target:'#aiQuickQs',title:'ШВИДКІ ЗАПИТАННЯ',desc:'Натисни на будь-яку підказку, щоб миттєво отримати відповідь від AI.',position:'bottom'},
-    {page:'ai',target:'.ai-bar',title:'ЧАТ З AI',desc:'Пиши свої запитання тут. AI відповідає розгорнуто, з прикладами та порадами.',position:'top'},
+    {p:'ai',t:'#p-ai .page-header',title:'AI ПОМІЧНИК',desc:'Персональний AI з P2P-арбітражу. Запитуй будь-що — від базових понять до складних стратегій 🤖'},
+    {p:'ai',t:'#aiQuickQs',title:'ШВИДКІ ЗАПИТАННЯ',desc:'Готові підказки — натисни, щоб миттєво отримати відповідь від AI.'},
+    {p:'ai',t:'.ai-bar',title:'ЧАТ',desc:'Пиши свої запитання тут. AI відповідає розгорнуто, з прикладами.',pos:'top'},
     /* ACCOUNTANT */
-    {page:'accountant',target:'#p-accountant .page-header',title:'БУХГАЛТЕР',desc:'Автоматична аналітика P2P-торгівлі. Відстежуй угоди, прибуток, спреди та статистику по біржах 📊',position:'bottom'},
-    {page:'accountant',target:'#accountantContent',title:'ПІДКЛЮЧЕННЯ БІРЖ',desc:'Додай API-ключі Binance та/або Bybit, щоб відстежувати статистику та отримувати детальну аналітику своєї торгівлі. 🔑\n\nБез ключів розділ працюватиме в обмеженому режимі.',position:'bottom',noKeys:true},
+    {p:'accountant',t:'#p-accountant .page-header',title:'📊 БУХГАЛТЕР',desc:'Автоматична аналітика P2P-торгівлі. Угоди, прибуток, спреди — все тут.'},
+    {p:'accountant',t:'#accountantContent',title:'ДАНІ БІРЖ',desc:'dynamic_accountant'},
     /* PROFILE */
-    {page:'profile',target:'.profile-top',title:'ПРОФІЛЬ',desc:'Твоя картка: аватар, ім\'я, ранг та план підписки. Прогрес XP показує скільки до наступного рівня.',position:'bottom'},
-    {page:'profile',target:'#profStats',title:'СТАТИСТИКА',desc:'Детальна статистика: кількість уроків, квізів, серія відвідувань, угоди та прибуток.',position:'bottom'},
-    {page:'profile',target:'#profAchs',title:'ДОСЯГНЕННЯ',desc:'Збирай досягнення за активність. Натисни «Усі →» щоб побачити повний каталог медалей 🏅',position:'top'},
+    {p:'profile',t:'.profile-top',title:'ПРОФІЛЬ',desc:'Аватар, ім\'я, ранг та рівень. Прогрес XP показує скільки до наступного left.'},
+    {p:'profile',t:'#profStats',title:'СТАТИСТИКА',desc:'Кількість уроків, квізів, серія відвідувань, зароблений XP.'},
+    {p:'profile',t:'#profAchs',title:'ДОСЯГНЕННЯ',desc:'Медалі за активність. Натисни «Усі →» для повного каталогу 🏅'},
     /* LEADERBOARD */
-    {page:'leaderboard',target:'#lbPodium',title:'РЕЙТИНГ',desc:'Топ-3 гравці на подіумі! Збирай XP, проходь курси та роби угоди — і потрап до трійки лідерів 🏆',position:'bottom'},
+    {p:'leaderboard',t:'#lbPodium',title:'🏆 РЕЙТИНГ',desc:'Топ-3 гравці на подіумі! Збирай XP — потрап до трійки лідерів.'},
     /* NAV */
-    {page:'home',target:'.nav',title:'НАВІГАЦІЯ',desc:'Нижня панель для швидкого переходу між розділами: Головна, AI, Бухгалтер, Профіль та Рейтинг.',position:'top'},
-    {type:'finish',title:'ГОТОВО!',desc:'Тепер ти знаєш усі функції!\nПочни з першого уроку BASIC курсу і зростай як трейдер.\n\nУспіхів у P2P! 🎉',icon:'🚀'}
+    {p:'home',t:'.nav',title:'НАВІГАЦІЯ',desc:'Швидкий перехід: Головна · AI · Бухгалтер · Профіль · Рейтинг.',pos:'top'},
+    {type:'center',title:'ГОТОВО!',desc:'Тепер ти знаєш усі функції!\nПочни з першого уроку і зростай.\nУспіхів! 🎉',icon:'🚀'}
   ];
 
-  /* ── ACCOUNTANT TOUR STEPS (after adding keys) ── */
-  var accountantSteps=[
-    {type:'welcome',title:'БУХГАЛТЕР',desc:'Ключі додано! Тепер покажемо, як використовувати аналітику на повну 📊',icon:'🔑'},
-    {page:'accountant',target:'#accountantContent .g-card:first-child',title:'ОГЛЯД',desc:'Загальний дашборд: курс USDT/UAH, кількість угод купівлі та продажу за 30 днів по всіх біржах.',position:'bottom'},
-    {page:'accountant',target:'.exchange-card, #accountantContent .g-card:nth-child(2)',title:'БІРЖІ',desc:'Картки кожної біржі. Бачиш статус підключення, нікнейм, статистику угод і можеш перейти до детальної аналітики.',position:'bottom'},
-    {type:'finish',title:'ГОТОВО!',desc:'Тепер аналітика працює повністю!\nУсі твої P2P-угоди автоматично відстежуються 📈',icon:'✅'}
+  /* ── ACCOUNTANT TOUR (after adding keys) ── */
+  var accSteps=[
+    {type:'center',title:'🔑 КЛЮЧІ ДОДАНО!',desc:'Тепер покажемо можливості бухгалтера.',icon:'📊'},
+    {p:'accountant',t:'#accountantContent .g-card:first-child',title:'ЗАГАЛЬНИЙ ОГЛЯД',desc:'Курс USDT/UAH, сума купівель та продажів за 30 днів по всіх підключених біржах.'},
+    {p:'accountant',t:'.exchange-card:first-of-type, #accountantContent .g-card:nth-child(2)',title:'КАРТКА БІРЖІ',desc:'Статус, нікнейм, кількість угод. Кнопка «Перейти» → детальна аналітика біржі.'},
+    {type:'center',title:'✅ ГОТОВО!',desc:'Аналітика працює!\nУсі P2P-угоди відстежуються автоматично 📈',icon:'🎉'}
   ];
 
-  /* ── CREATE DOM ── */
-  function createOverlay(){
+  /* ── DOM ── */
+  function init(){
     if(overlay)return;
-    overlay=document.createElement('div');
-    overlay.className='onb-overlay';
-    overlay.innerHTML='<div class="onb-backdrop"></div><div class="onb-spotlight"></div><div class="onb-tooltip"></div>';
-    document.body.appendChild(overlay);
-    spotlight=overlay.querySelector('.onb-spotlight');
-    tooltip=overlay.querySelector('.onb-tooltip');
-    /* Prevent scroll/touch pass-through on overlay */
-    overlay.addEventListener('touchmove',function(e){e.preventDefault()},{passive:false});
-    overlay.addEventListener('wheel',function(e){e.preventDefault()},{passive:false});
+    var d=document.createElement('div');
+    d.className='onb-overlay';
+    d.innerHTML='<div class="onb-backdrop"></div><div class="onb-spotlight"></div><div class="onb-tooltip"></div>';
+    document.body.appendChild(d);
+    overlay=d;
+    spot=d.querySelector('.onb-spotlight');
+    tip=d.querySelector('.onb-tooltip');
+    /* Block touch/wheel on overlay but let tooltip buttons work */
+    d.addEventListener('touchmove',function(e){if(!e.target.closest('.onb-tooltip'))e.preventDefault()},{passive:false});
+    d.addEventListener('wheel',function(e){if(!e.target.closest('.onb-tooltip'))e.preventDefault()},{passive:false});
+    d.querySelector('.onb-backdrop').addEventListener('click',function(){});
   }
 
-  /* ── LOCK / UNLOCK SCROLL ── */
-  function lockScroll(){
-    _scrollY=window.scrollY;
-    document.body.classList.add('onb-locked');
-    document.body.style.top=(-_scrollY)+'px';
-  }
-  function unlockScroll(){
-    document.body.classList.remove('onb-locked');
-    document.body.style.top='';
-    window.scrollTo(0,_scrollY);
+  /* ── PAGE NAV ── */
+  function goPage(p){
+    if(!p)return Promise.resolve();
+    var ap=document.querySelector('.page.active');
+    var id=ap?ap.id.replace('p-',''):'home';
+    if(id===p)return Promise.resolve();
+    App.go(p);
+    return new Promise(function(r){setTimeout(r,400)});
   }
 
-  /* ── NAVIGATE TO PAGE ── */
-  function goToPage(page){
-    if(!page)return Promise.resolve();
-    var activePage=document.querySelector('.page.active');
-    var activeId=activePage?activePage.id.replace('p-',''):'home';
-    if(activeId===page)return Promise.resolve();
-    /* Temporarily unlock scroll for App.go navigation */
-    unlockScroll();
-    App.go(page);
-    return new Promise(function(r){setTimeout(function(){lockScroll();r()},350)});
+  /* ── SCROLL INTO VIEW ── */
+  function scrollTo(el){
+    return new Promise(function(r){
+      var rect=el.getBoundingClientRect();
+      var vh=window.innerHeight;
+      /* Already fully visible with margin? */
+      if(rect.top>=60&&rect.bottom<=vh-60){r();return}
+      el.scrollIntoView({behavior:'smooth',block:'center'});
+      setTimeout(r,450);
+    });
   }
 
-  /* ── POSITION SPOTLIGHT + TOOLTIP ── */
-  function positionElements(step){
-    var el=null;
-    /* Try multiple selectors (comma-separated fallback) */
-    var selectors=(step.target||'').split(',');
-    for(var s=0;s<selectors.length;s++){
-      el=document.querySelector(selectors[s].trim());
-      if(el)break;
-    }
-    if(!el){next();return;}
-    var rect=el.getBoundingClientRect();
-    var pad=8;
-    var viewH=window.innerHeight;
-    var viewW=window.innerWidth;
-
-    /* Spotlight — fixed position */
-    spotlight.style.display='block';
-    spotlight.style.left=(rect.left-pad)+'px';
-    spotlight.style.top=(rect.top-pad)+'px';
-    spotlight.style.width=(rect.width+pad*2)+'px';
-    spotlight.style.height=(rect.height+pad*2)+'px';
-    spotlight.style.borderRadius=getComputedStyle(el).borderRadius||'var(--r)';
-
-    /* Tooltip — fixed position, auto-flip */
-    var tw=Math.min(310,viewW-32);
-    var tooltipEstH=190;
-    var pos=step.position||'bottom';
-    var spaceBelow=viewH-rect.bottom-pad;
-    var spaceAbove=rect.top-pad;
-    if(pos==='bottom'&&spaceBelow<tooltipEstH+20&&spaceAbove>spaceBelow)pos='top';
-    else if(pos==='top'&&spaceAbove<tooltipEstH+20&&spaceBelow>spaceAbove)pos='bottom';
-
-    var tl=Math.max(16,rect.left+rect.width/2-tw/2);
-    if(tl+tw>viewW-16)tl=viewW-16-tw;
-    tooltip.className='onb-tooltip';
-    tooltip.style.left=tl+'px';
-    tooltip.style.width=tw+'px';
-    tooltip.style.bottom='auto';
-    tooltip.style.top='auto';
-
-    var arrowLeft=Math.max(16,Math.min(tw-16,rect.left+rect.width/2-tl));
-    var arrowHtml='<div class="onb-tooltip-arrow '+(pos==='bottom'?'top':'bottom')+'" style="left:'+arrowLeft+'px"></div>';
-
-    if(pos==='bottom'){
-      var tooltipTop=rect.bottom+pad+12;
-      if(tooltipTop+tooltipEstH>viewH-10)tooltipTop=viewH-10-tooltipEstH;
-      if(tooltipTop<10)tooltipTop=10;
-      tooltip.style.top=tooltipTop+'px';
-    }else{
-      var tooltipBottom=viewH-rect.top+pad+12;
-      if(tooltipBottom+tooltipEstH>viewH-10)tooltipBottom=viewH-10-tooltipEstH;
-      if(tooltipBottom<10)tooltipBottom=10;
-      tooltip.style.bottom=tooltipBottom+'px';
-    }
-
-    renderTooltip(step,arrowHtml);
+  /* ── FIND ELEMENT (multi-selector) ── */
+  function findEl(sel){
+    if(!sel)return null;
+    var parts=sel.split(',');
+    for(var i=0;i<parts.length;i++){var e=document.querySelector(parts[i].trim());if(e)return e}
+    return null;
   }
 
-  /* ── RENDER TOOLTIP CONTENT ── */
-  function renderTooltip(step,arrowHtml){
-    arrowHtml=arrowHtml||'';
-    var total=activeSteps.length;
-    var dotsHtml='';
+  /* ── POSITION ── */
+  function position(step){
+    var el=findEl(step.t);
+    if(!el){doNext();return}
+
+    scrollTo(el).then(function(){
+      var rect=el.getBoundingClientRect();
+      var pad=6;
+      var vh=window.innerHeight, vw=window.innerWidth;
+
+      /* Spotlight */
+      spot.style.left=(rect.left-pad)+'px';
+      spot.style.top=(rect.top-pad)+'px';
+      spot.style.width=(rect.width+pad*2)+'px';
+      spot.style.height=(rect.height+pad*2)+'px';
+      spot.style.borderRadius=getComputedStyle(el).borderRadius||'12px';
+      spot.classList.add('show');
+
+      /* Tooltip sizing */
+      var tw=Math.min(300,vw-24);
+
+      /* Decide above or below */
+      var spaceBelow=vh-rect.bottom-pad;
+      var spaceAbove=rect.top-pad;
+      var pos=step.pos||'auto';
+      if(pos==='auto'||pos===undefined)pos=spaceBelow>=200?'bottom':(spaceAbove>=200?'top':(spaceBelow>=spaceAbove?'bottom':'top'));
+      if(pos==='bottom'&&spaceBelow<180&&spaceAbove>spaceBelow)pos='top';
+      if(pos==='top'&&spaceAbove<180&&spaceBelow>spaceAbove)pos='bottom';
+
+      /* Horizontal: center on element, clamp to screen */
+      var tl=rect.left+rect.width/2-tw/2;
+      tl=Math.max(12,Math.min(tl,vw-tw-12));
+
+      tip.className='onb-tooltip';
+      tip.style.width=tw+'px';
+      tip.style.left=tl+'px';
+
+      /* Arrow */
+      var arrowX=Math.max(18,Math.min(tw-18,rect.left+rect.width/2-tl));
+
+      if(pos==='bottom'){
+        var tt=rect.bottom+pad+10;
+        /* Measure actual tooltip height */
+        tip.style.top=tt+'px';tip.style.bottom='auto';
+        buildTooltip(step,'<div class="onb-tooltip-arrow top" style="left:'+arrowX+'px"></div>');
+        /* Clamp: if tooltip goes below viewport, push up but never above element */
+        var tipH=tip.offsetHeight;
+        if(tt+tipH>vh-10){tt=Math.max(10,vh-10-tipH);tip.style.top=tt+'px'}
+      }else{
+        /* Position from bottom of viewport */
+        var tb=vh-rect.top+pad+10;
+        tip.style.bottom=tb+'px';tip.style.top='auto';
+        buildTooltip(step,'<div class="onb-tooltip-arrow bottom" style="left:'+arrowX+'px"></div>');
+        var tipH2=tip.offsetHeight;
+        if(tb+tipH2>vh-10){tb=Math.max(10,vh-10-tipH2);tip.style.bottom=tb+'px'}
+      }
+
+      requestAnimationFrame(function(){tip.classList.add('show')});
+    });
+  }
+
+  /* ── BUILD TOOLTIP ── */
+  function buildTooltip(step,arrow){
+    arrow=arrow||'';
+    var total=steps.length;
+    var dots='';
     for(var i=0;i<total;i++){
-      var cls='onb-dot';
-      if(i<currentStep)cls+=' done';
-      else if(i===currentStep)cls+=' active';
-      dotsHtml+='<div class="'+cls+'"></div>';
+      var c='onb-dot';
+      if(i<cur)c+=' done';else if(i===cur)c+=' active';
+      dots+='<div class="'+c+'"></div>';
     }
-    var prevBtn=currentStep>0?'<button class="onb-btn onb-btn-prev" onclick="Onboarding.prev()"><i class="fas fa-chevron-left" style="font-size:11px"></i></button>':'';
-    var isLast=currentStep===total-1;
-    var nextLabel=isLast?'ЗАВЕРШИТИ':'ДАЛІ';
-    var nextIcon=isLast?'<i class="fas fa-check" style="font-size:11px;margin-right:4px"></i>':'<i class="fas fa-chevron-right" style="font-size:11px;margin-left:4px"></i>';
-    tooltip.innerHTML=arrowHtml+
+    var last=cur===total-1;
+    var prev=cur>0?'<button class="onb-btn onb-btn-prev" onclick="Onboarding.prev()"><i class="fas fa-chevron-left"></i></button>':'';
+    var nxt=last?'<i class="fas fa-check" style="margin-right:4px"></i>ЗАВЕРШИТИ':'ДАЛІ <i class="fas fa-chevron-right" style="margin-left:2px"></i>';
+    var skipBtn=last?'':'<button class="onb-btn onb-btn-skip" onclick="Onboarding.skip()">Пропустити</button>';
+
+    /* Dynamic description for accountant step */
+    var desc=step.desc;
+    if(desc==='dynamic_accountant')desc=getAccountantDesc();
+
+    tip.innerHTML=arrow+
       '<div class="onb-title">'+step.title+'</div>'+
-      '<div class="onb-desc">'+step.desc.replace(/\n/g,'<br>')+'</div>'+
-      '<div class="onb-progress">'+
-        '<div class="onb-dots">'+dotsHtml+'</div>'+
-        '<div class="onb-step-text">'+(currentStep+1)+'/'+total+'</div>'+
-      '</div>'+
-      '<div class="onb-actions">'+
-        (isLast?'':'<button class="onb-btn onb-btn-skip" onclick="Onboarding.skip()">Пропустити</button>')+
-        prevBtn+
-        '<button class="onb-btn onb-btn-next" onclick="Onboarding.'+(isLast?'finish':'next')+'()">'+(isLast?nextIcon:'')+nextLabel+(isLast?'':nextIcon)+'</button>'+
-      '</div>';
-    requestAnimationFrame(function(){tooltip.classList.add('show')});
+      '<div class="onb-desc">'+desc.replace(/\n/g,'<br>')+'</div>'+
+      '<div class="onb-progress"><div class="onb-dots">'+dots+'</div><div class="onb-step-text">'+(cur+1)+'/'+total+'</div></div>'+
+      '<div class="onb-actions">'+skipBtn+prev+
+      '<button class="onb-btn onb-btn-next" onclick="Onboarding.'+(last?'finish':'next')+'()">'+nxt+'</button></div>';
   }
 
-  /* ── RENDER WELCOME / FINISH SCREEN ── */
-  function renderCenterStep(step){
-    spotlight.style.display='none';
-    var tw=Math.min(310,window.innerWidth-32);
-    tooltip.className='onb-tooltip centered';
-    tooltip.style.left='50%';
-    tooltip.style.top='50%';
-    tooltip.style.bottom='auto';
-    tooltip.style.width=tw+'px';
-    var isLast=currentStep===activeSteps.length-1;
-    var total=activeSteps.length;
-    var dotsHtml='';
-    for(var i=0;i<total;i++){
-      var cls='onb-dot';
-      if(i<currentStep)cls+=' done';
-      else if(i===currentStep)cls+=' active';
-      dotsHtml+='<div class="'+cls+'"></div>';
+  /* ── DYNAMIC ACCOUNTANT DESCRIPTION ── */
+  function getAccountantDesc(){
+    /* Check if connected exchanges exist */
+    var cards=document.querySelectorAll('#accountantContent .exchange-card, #accountantContent .g-card');
+    var hasKeys=false;
+    if(cards.length>0){
+      for(var i=0;i<cards.length;i++){
+        if(cards[i].textContent.indexOf('Підключено')>-1||cards[i].textContent.indexOf('Перейти')>-1)hasKeys=true;
+      }
     }
-    tooltip.innerHTML=
-      '<div class="onb-welcome">'+
-        '<div class="onb-welcome-icon">'+step.icon+'</div>'+
-        '<div class="onb-welcome-title">'+step.title+'</div>'+
-        '<div class="onb-welcome-sub">'+step.desc.replace(/\n/g,'<br>')+'</div>'+
-      '</div>'+
-      '<div class="onb-progress" style="margin-top:16px">'+
-        '<div class="onb-dots">'+dotsHtml+'</div>'+
-        '<div class="onb-step-text">'+(currentStep+1)+'/'+total+'</div>'+
-      '</div>'+
-      '<div class="onb-actions" style="justify-content:center;margin-top:4px">'+
-        (isLast?'':'<button class="onb-btn onb-btn-skip" onclick="Onboarding.skip()">Пропустити</button>')+
-        (currentStep>0?'<button class="onb-btn onb-btn-prev" onclick="Onboarding.prev()"><i class="fas fa-chevron-left" style="font-size:11px"></i></button>':'')+
-        '<button class="onb-btn onb-btn-next" onclick="Onboarding.'+(isLast?'finish':'next')+'()">'+(isLast?'<i class="fas fa-check" style="font-size:11px;margin-right:4px"></i>ЗАВЕРШИТИ':'ПОЧНЕМО <i class="fas fa-arrow-right" style="font-size:11px;margin-left:4px"></i>')+'</button>'+
-      '</div>';
-    requestAnimationFrame(function(){tooltip.classList.add('show')});
+    if(hasKeys){
+      return 'Твої біржі підключено! Що доступно:\n'+
+        '• <b>Угоди</b> — список всіх P2P-операцій\n'+
+        '• <b>FIFO</b> — розрахунок чистого прибутку\n'+
+        '• <b>Спреди</b> — аналіз різниці цін\n'+
+        '• <b>Статистика</b> — графіки та деталі\n'+
+        '• <b>Перейти</b> — детальна аналітика біржі\n\n'+
+        'Натисни на картку біржі для перегляду.';
+    }
+    return 'Додай API-ключі Binance або Bybit, щоб:\n'+
+      '• Відстежувати усі P2P-угоди\n'+
+      '• Бачити прибуток (FIFO-розрахунок)\n'+
+      '• Аналізувати спреди між біржами\n'+
+      '• Отримувати статистику за 30 днів\n\n'+
+      '🔑 Натисни «Додати ключ» на картці біржі.';
+  }
+
+  /* ── CENTER STEP (welcome/finish) ── */
+  function centerStep(step){
+    spot.classList.remove('show');
+    var tw=Math.min(300,window.innerWidth-24);
+    tip.className='onb-tooltip centered';
+    tip.style.width=tw+'px';
+    tip.style.left='50%';tip.style.top='50%';tip.style.bottom='auto';
+    var total=steps.length;
+    var last=cur===total-1;
+    var dots='';
+    for(var i=0;i<total;i++){var c='onb-dot';if(i<cur)c+=' done';else if(i===cur)c+=' active';dots+='<div class="'+c+'"></div>'}
+    var prev=cur>0?'<button class="onb-btn onb-btn-prev" onclick="Onboarding.prev()"><i class="fas fa-chevron-left"></i></button>':'';
+    var skipBtn=last?'':'<button class="onb-btn onb-btn-skip" onclick="Onboarding.skip()">Пропустити</button>';
+    var nxt=last?'<i class="fas fa-check" style="margin-right:4px"></i>ЗАВЕРШИТИ':'ПОЧНЕМО <i class="fas fa-arrow-right" style="margin-left:4px"></i>';
+    tip.innerHTML=
+      '<div class="onb-welcome"><div class="onb-welcome-icon">'+step.icon+'</div><div class="onb-welcome-title">'+step.title+'</div>'+
+      '<div class="onb-welcome-sub">'+step.desc.replace(/\n/g,'<br>')+'</div></div>'+
+      '<div class="onb-progress" style="margin-top:14px"><div class="onb-dots">'+dots+'</div><div class="onb-step-text">'+(cur+1)+'/'+total+'</div></div>'+
+      '<div class="onb-actions" style="justify-content:center;margin-top:2px">'+skipBtn+prev+
+      '<button class="onb-btn onb-btn-next" onclick="Onboarding.'+(last?'finish':'next')+'()">'+nxt+'</button></div>';
+    requestAnimationFrame(function(){tip.classList.add('show')});
   }
 
   /* ── SHOW STEP ── */
-  function showStep(){
-    if(currentStep<0||currentStep>=activeSteps.length){finish();return;}
-    clearTimeout(_repositionTimer);
-    var step=activeSteps[currentStep];
-    tooltip.classList.remove('show');
-    tooltip.className='onb-tooltip';
-    tooltip.style.top='auto';
-    tooltip.style.bottom='auto';
-    tooltip.style.left='auto';
+  function show(){
+    if(cur<0||cur>=steps.length){finish();return}
+    clearTimeout(_timer);
+    var s=steps[cur];
+    /* Hide tooltip & spotlight immediately */
+    tip.classList.remove('show');
+    spot.classList.remove('show');
 
-    var doShow=function(){
-      if(step.type==='welcome'||step.type==='finish'){
-        renderCenterStep(step);
-      }else{
-        positionElements(step);
-      }
-    };
+    function render(){
+      if(s.type==='center')centerStep(s);
+      else position(s);
+    }
 
-    if(step.page){
-      goToPage(step.page).then(function(){setTimeout(doShow,150)});
+    if(s.p){
+      goPage(s.p).then(function(){
+        /* Wait for page render + data load */
+        _timer=setTimeout(render,300);
+      });
     }else{
-      setTimeout(doShow,100);
+      _timer=setTimeout(render,200);
     }
   }
 
-  /* ── PUBLIC API ── */
+  /* ── START ── */
   function start(customSteps,onFinish){
-    activeSteps=customSteps||mainSteps;
-    _onFinish=onFinish||null;
-    currentStep=0;
-    isActive=true;
-    createOverlay();
-    lockScroll();
+    steps=customSteps||mainSteps;
+    _fin=onFinish||null;
+    cur=0;active=true;
+    init();
     overlay.classList.add('active');
     overlay.querySelector('.onb-backdrop').classList.add('show');
-    showStep();
+    show();
   }
 
-  function next(){
-    if(currentStep<activeSteps.length-1){currentStep++;showStep()}
-    else finish();
-  }
-
-  function prev(){
-    if(currentStep>0){currentStep--;showStep()}
-  }
-
+  function doNext(){if(cur<steps.length-1){cur++;show()}else finish()}
+  function doPrev(){if(cur>0){cur--;show()}}
   function skip(){finish()}
 
   function finish(){
-    isActive=false;
-    tooltip.classList.remove('show');
+    active=false;
+    tip.classList.remove('show');
+    spot.classList.remove('show');
     overlay.querySelector('.onb-backdrop').classList.remove('show');
-    unlockScroll();
-    setTimeout(function(){
-      overlay.classList.remove('active');
-      spotlight.style.display='none';
-    },400);
-    /* Save completion based on which tour was running */
-    if(activeSteps===mainSteps){try{localStorage.setItem(KEY,'1')}catch(e){}}
-    if(activeSteps===accountantSteps){try{localStorage.setItem(KEY_ACC,'1')}catch(e){}}
-    /* Return to home after main tour */
-    if(activeSteps===mainSteps){setTimeout(function(){App.go('home')},500)}
-    if(_onFinish){var f=_onFinish;_onFinish=null;setTimeout(f,500)}
-  }
-
-  function shouldShow(){
-    try{return!localStorage.getItem(KEY)}catch(e){return true}
+    setTimeout(function(){overlay.classList.remove('active')},350);
+    if(steps===mainSteps){try{localStorage.setItem(KEY,'1')}catch(e){} setTimeout(function(){App.go('home')},400)}
+    if(steps===accSteps){try{localStorage.setItem(KEY_ACC,'1')}catch(e){}}
+    if(_fin){var f=_fin;_fin=null;setTimeout(f,400)}
   }
 
   function autoStart(){
-    if(shouldShow()){setTimeout(function(){start(mainSteps)},800)}
+    try{if(localStorage.getItem(KEY))return}catch(e){}
+    setTimeout(function(){start(mainSteps)},1000);
   }
 
-  /* ── ACCOUNTANT TOUR ── */
   function startAccountant(){
     try{if(localStorage.getItem(KEY_ACC))return}catch(e){}
-    setTimeout(function(){start(accountantSteps)},1000);
+    setTimeout(function(){start(accSteps)},1200);
   }
 
-  /* Handle resize — reposition if active */
+  /* Reposition on resize */
   window.addEventListener('resize',function(){
-    if(!isActive)return;
-    clearTimeout(_repositionTimer);
-    _repositionTimer=setTimeout(function(){
-      var step=activeSteps[currentStep];
-      if(step&&!step.type)positionElements(step);
-    },200);
+    if(!active||!steps[cur]||steps[cur].type)return;
+    clearTimeout(_timer);
+    _timer=setTimeout(function(){
+      tip.classList.remove('show');spot.classList.remove('show');
+      position(steps[cur]);
+    },250);
   });
 
   return{
     start:function(s,f){start(s,f)},
     startMain:function(){start(mainSteps)},
     startAccountant:startAccountant,
-    next:next,prev:prev,skip:skip,finish:finish,
-    autoStart:autoStart,
-    mainSteps:mainSteps,
-    accountantSteps:accountantSteps
+    next:doNext,prev:doPrev,skip:skip,finish:finish,
+    autoStart:autoStart
   };
 })();
 
