@@ -435,10 +435,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 /* ═══ ONBOARDING / GUIDED TOUR ═══ */
 .onb-overlay{position:fixed;inset:0;z-index:10000;pointer-events:none;opacity:0;transition:opacity .35s ease}
 .onb-overlay.active{pointer-events:auto;opacity:1}
-.onb-backdrop{position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.82);opacity:0;transition:opacity .35s ease}
+.onb-backdrop{position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.5);opacity:0;transition:opacity .35s ease}
 .onb-backdrop.show{opacity:1}
 .onb-spotlight{position:fixed;z-index:10002;border-radius:var(--r);
-  box-shadow:0 0 0 9999px rgba(0,0,0,.82),0 0 24px 4px var(--neon-glow);
+  box-shadow:0 0 0 9999px rgba(0,0,0,.5),0 0 24px 4px var(--neon-glow);
   transition:left .4s ease,top .4s ease,width .4s ease,height .4s ease,opacity .3s ease;
   pointer-events:none;opacity:0}
 .onb-spotlight.show{opacity:1}
@@ -1475,7 +1475,7 @@ App.modules.accountant=(function(){
       var bd=_exchangeData.binance,byd=_exchangeData.bybit,avg=_exchangeData.avgPrice||{};
       var midPrice=avg.avg_mid||'—';
       // Header
-      var h='<div class="g-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
+      var h='<div class="g-card" id="accHeader"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
         '<div><div style="font-family:var(--font-display);font-size:13px;letter-spacing:1px;color:var(--neon)">P2P БУХГАЛТЕР</div>'+
         '<div style="font-size:11px;color:var(--text3);margin-top:2px">Мультибіржова аналітика</div></div>'+
         '<div style="text-align:right"><div style="font-size:10px;color:var(--text3)">USDT/UAH</div>'+
@@ -1517,7 +1517,7 @@ App.modules.accountant=(function(){
       // ─── Combined stats section ───
       var hasAny=(bd.status&&bd.status.has_keys&&bd.status.connected)||(byd.status&&byd.status.has_keys&&byd.status.connected);
       if(hasAny){
-        h+='<div class="g-card" style="border:1px solid rgba(0,240,255,0.15);background:linear-gradient(135deg,rgba(0,240,255,0.03),rgba(168,85,247,0.03))">'+
+        h+='<div class="g-card" id="accCombinedStats" style="border:1px solid rgba(0,240,255,0.15);background:linear-gradient(135deg,rgba(0,240,255,0.03),rgba(168,85,247,0.03))">'+
           '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'+
           '<div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--neon),var(--purple));display:flex;align-items:center;justify-content:center">'+
           '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'+
@@ -1572,7 +1572,7 @@ App.modules.accountant=(function(){
       var name=exchange==='binance'?'BINANCE P2P':'BYBIT P2P';
       var logo=exchange==='binance'?binanceLogo(22):bybitLogo(22);
       var accentColor=exchange==='binance'?'#F0B90B':'#f7a600';
-      var h='<div class="g-card">';
+      var h='<div class="g-card" id="accCard_'+exchange+'">';
       h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'+
         '<div style="width:36px;height:36px;border-radius:10px;background:var(--glass);display:flex;align-items:center;justify-content:center">'+logo+'</div>'+
         '<div style="flex:1"><div style="font-family:var(--font-display);font-size:12px;letter-spacing:1px">'+name+'</div>';
@@ -2470,8 +2470,11 @@ var Onboarding=(function(){
     {p:'ai',t:'#aiQuickQs',title:'ШВИДКІ ЗАПИТАННЯ',desc:'Готові підказки — натисни, щоб миттєво отримати відповідь від AI.'},
     {p:'ai',t:'.ai-bar',title:'ЧАТ',desc:'Пиши свої запитання тут. AI відповідає розгорнуто, з прикладами.',pos:'top'},
     /* ACCOUNTANT */
-    {p:'accountant',t:'#p-accountant .page-header',title:'📊 БУХГАЛТЕР',desc:'Автоматична аналітика P2P-торгівлі. Угоди, прибуток, спреди — все тут.'},
-    {p:'accountant',t:'#accountantContent',title:'ДАНІ БІРЖ',desc:'dynamic_accountant'},
+    {p:'accountant',t:'#p-accountant .page-header',title:'📊 БУХГАЛТЕР',desc:'Розділ аналітики P2P-торгівлі. Тут усі дані по біржах.'},
+    {p:'accountant',t:'#accHeader',title:'ЗАГАЛЬНИЙ ОГЛЯД',desc:'Курс USDT/UAH та сума купівель і продажів за 30 днів по всіх біржах разом.'},
+    {p:'accountant',t:'#accCard_binance',title:'BINANCE P2P',desc:'dynamic_binance'},
+    {p:'accountant',t:'#accCard_bybit',title:'BYBIT P2P',desc:'dynamic_bybit'},
+    {p:'accountant',t:'#accCombinedStats',title:'АНАЛІТИКА',desc:'dynamic_combined'},
     /* PROFILE */
     {p:'profile',t:'.profile-top',title:'ПРОФІЛЬ',desc:'Аватар, ім\'я, ранг та рівень. Прогрес XP показує скільки до наступного left.'},
     {p:'profile',t:'#profStats',title:'СТАТИСТИКА',desc:'Кількість уроків, квізів, серія відвідувань, зароблений XP.'},
@@ -2540,7 +2543,11 @@ var Onboarding=(function(){
   /* ── POSITION ── */
   function position(step){
     var el=findEl(step.t);
-    if(!el){doNext();return}
+    if(!el){
+      /* Skip this step (element not found — e.g. no keys, no combined stats) */
+      if(cur<steps.length-1){cur++;show()}else finish();
+      return;
+    }
 
     scrollTo(el).then(function(){
       var rect=el.getBoundingClientRect();
@@ -2613,9 +2620,9 @@ var Onboarding=(function(){
     var nxt=last?'<i class="fas fa-check" style="margin-right:4px"></i>ЗАВЕРШИТИ':'ДАЛІ <i class="fas fa-chevron-right" style="margin-left:2px"></i>';
     var skipBtn=last?'':'<button class="onb-btn onb-btn-skip" onclick="Onboarding.skip()">Пропустити</button>';
 
-    /* Dynamic description for accountant step */
+    /* Dynamic description */
     var desc=step.desc;
-    if(desc==='dynamic_accountant')desc=getAccountantDesc();
+    if(desc&&desc.indexOf('dynamic_')===0)desc=dynDesc(desc);
 
     tip.innerHTML=arrow+
       '<div class="onb-title">'+step.title+'</div>'+
@@ -2625,31 +2632,26 @@ var Onboarding=(function(){
       '<button class="onb-btn onb-btn-next" onclick="Onboarding.'+(last?'finish':'next')+'()">'+nxt+'</button></div>';
   }
 
-  /* ── DYNAMIC ACCOUNTANT DESCRIPTION ── */
-  function getAccountantDesc(){
-    /* Check if connected exchanges exist */
-    var cards=document.querySelectorAll('#accountantContent .exchange-card, #accountantContent .g-card');
-    var hasKeys=false;
-    if(cards.length>0){
-      for(var i=0;i<cards.length;i++){
-        if(cards[i].textContent.indexOf('Підключено')>-1||cards[i].textContent.indexOf('Перейти')>-1)hasKeys=true;
-      }
+  /* ── DYNAMIC DESCRIPTIONS ── */
+  function dynDesc(key){
+    if(key==='dynamic_binance')return exchDesc('binance');
+    if(key==='dynamic_bybit')return exchDesc('bybit');
+    if(key==='dynamic_combined')return combinedDesc();
+    return key;
+  }
+  function exchDesc(ex){
+    var card=document.getElementById('accCard_'+ex);
+    if(!card)return 'Картка біржі '+(ex==='binance'?'Binance':'Bybit')+'.';
+    var txt=card.textContent||'';
+    if(txt.indexOf('Підключено')>-1||txt.indexOf('Перейти')>-1){
+      return 'Біржу підключено! Бачиш:\n• Нікнейм та статус\n• Кількість угод купівлі/продажу\n• Кнопка «Перейти» → детальна аналітика\n• ⚙ → змінити API-ключі';
     }
-    if(hasKeys){
-      return 'Твої біржі підключено! Що доступно:\n'+
-        '• <b>Угоди</b> — список всіх P2P-операцій\n'+
-        '• <b>FIFO</b> — розрахунок чистого прибутку\n'+
-        '• <b>Спреди</b> — аналіз різниці цін\n'+
-        '• <b>Статистика</b> — графіки та деталі\n'+
-        '• <b>Перейти</b> — детальна аналітика біржі\n\n'+
-        'Натисни на картку біржі для перегляду.';
-    }
-    return 'Додай API-ключі Binance або Bybit, щоб:\n'+
-      '• Відстежувати усі P2P-угоди\n'+
-      '• Бачити прибуток (FIFO-розрахунок)\n'+
-      '• Аналізувати спреди між біржами\n'+
-      '• Отримувати статистику за 30 днів\n\n'+
-      '🔑 Натисни «Додати ключ» на картці біржі.';
+    return 'Ключі не додано. Натисни «Додати ключ», щоб підключити '+(ex==='binance'?'Binance':'Bybit')+' і бачити угоди та аналітику. 🔑';
+  }
+  function combinedDesc(){
+    var el=document.getElementById('accCombinedStats');
+    if(!el)return 'Підключи хоча б одну біржу, щоб бачити загальну статистику.';
+    return 'Зведена статистика по всіх біржах:\n• <b>Угоди</b> — список операцій\n• <b>FIFO</b> — розрахунок прибутку\n• <b>Спреди</b> — різниця цін між біржами\n• <b>Статистика</b> — деталі за 30 днів\n• <b>Графік прибутку</b> — візуалізація';
   }
 
   /* ── CENTER STEP (welcome/finish) ── */
