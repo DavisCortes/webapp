@@ -49,7 +49,8 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 .bg-glow{position:fixed;border-radius:50%;filter:blur(150px);pointer-events:none;z-index:0}
 .bg-glow-1{width:500px;height:500px;background:var(--purple-dim);top:-150px;left:-150px;animation:floatOrb 15s ease-in-out infinite}
 .bg-glow-2{width:400px;height:400px;background:var(--neon-dim);bottom:-100px;right:-100px;animation:floatOrb 20s ease-in-out infinite reverse}
-.bg-glow-3{width:300px;height:300px;background:var(--pink-glow);top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.1;animation:floatOrb 25s ease-in-out infinite}
+.bg-glow-3{width:300px;height:300px;background:var(--pink-glow);top:50%;left:50%;opacity:0.1;animation:floatGlow3 25s ease-in-out infinite}
+@keyframes floatGlow3{0%,100%{transform:translate(-50%,-50%)}25%{transform:translate(calc(-50% + 30px),calc(-50% - 20px))}50%{transform:translate(calc(-50% - 20px),calc(-50% + 30px))}75%{transform:translate(calc(-50% + 20px),calc(-50% + 10px))}}
 @keyframes floatOrb{0%,100%{transform:translate(0,0)}25%{transform:translate(30px,-20px)}50%{transform:translate(-20px,30px)}75%{transform:translate(20px,10px)}}
 
 /* ═══ SCAN LINE ═══ */
@@ -211,14 +212,14 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);
 .ai-bubble em{color:var(--text2);font-style:italic}
 .ai-bubble code{background:rgba(110,86,207,.25);padding:1px 5px;border-radius:4px;font-size:12px;color:var(--neon)}
 .ai-bubble pre{background:rgba(0,0,0,.35);border:1px solid var(--glass-border);border-radius:var(--r-xs);padding:10px;margin:8px 0;overflow-x:auto}
-.ai-bubble pre code{background:none;padding:0;font-size:12px;color:var(--text1)}
+.ai-bubble pre code{background:none;padding:0;font-size:12px;color:var(--text)}
 .ai-bubble hr{border:none;border-top:1px solid var(--glass-border);margin:10px 0}
 .ai-bubble blockquote{border-left:3px solid var(--neon);margin:8px 0;padding:4px 12px;color:var(--text2);font-style:italic}
 .ai-typing{align-self:flex-start;padding:12px 16px;background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--r-sm);display:none}
 .typing-dots{display:flex;gap:5px}
-.typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--neon);animation:bounce .6s infinite alternate}
+.typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--neon);animation:typingBounce .6s infinite alternate}
 .typing-dots span:nth-child(2){animation-delay:.15s}.typing-dots span:nth-child(3){animation-delay:.3s}
-@keyframes bounce{to{opacity:.2;transform:translateY(-5px)}}
+@keyframes typingBounce{to{opacity:.2;transform:translateY(-5px)}}
 .ai-bar{display:flex;gap:8px;padding:12px 0;border-top:1px solid var(--glass-border)}
 .ai-textarea{flex:1;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-sm);
   padding:12px 16px;color:var(--text);font-family:var(--font-body);font-size:14px;resize:none;outline:none;transition:var(--transition)}
@@ -1002,7 +1003,7 @@ function specialAchTier(xp) {
 
 const MAT1="Матеріали Курс 1:\n\n1. Підтримка (30 хв – 6 год, 7 днів)\n2. Методичка: Описание объявлений\n3. Методичка: Як подати апеляцію";
 const MAT2="Матеріали Курс 2:\n\n1. Чат підтримки (5–30 хв, 14 днів)\n2. Pro-бот аналітики (14 днів)\n3. Созвон в неділю\n4. Методичка по банкам\n5. Призначення платежів\n6. Емулятор\n7. Пошук клієнтів";
-const TOTAL=10;const ADMINS=[728309625,584189889];
+const TOTAL=10;var ADMINS=[];
 
 /* ───── API ───── */
 const API=(function(){var h=location.hostname;
@@ -1012,6 +1013,7 @@ const API=(function(){var h=location.hostname;
 
 function api(ep,method,body){
   method=method||'GET';var o={method:method,headers:{'Content-Type':'application/json','ngrok-skip-browser-warning':'true'}};
+  if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData){o.headers['X-Init-Data']=Telegram.WebApp.initData}
   if(body)o.body=JSON.stringify(body);
   return fetch(API+ep,o).then(function(r){if(!r.ok)return r.json().catch(function(){return{detail:r.statusText}}).then(function(e){throw new Error(e.detail||r.statusText)});return r.json()}).catch(function(e){console.warn('API:',ep,e.message);return null})}
 
@@ -1026,7 +1028,7 @@ function avatarUrl(n,s,photo){if(photo)return photo;return'https://ui-avatars.co
    APP — CORE
    ═══════════════════════════════════════════════════════════════ */
 var App={
-  tg:null,user:null,userId:null,online:false,chart:null,profitChart:null,
+  tg:null,user:null,userId:null,online:false,isAdmin:false,chart:null,profitChart:null,
   state:{c1:[],c2:[],xp:0,streak:0,qOk:0,qTot:0,achs:[],plan:'none',refCount:0,level:1,rank:'🌱 Новачок',pos:0,
     visitStreak:0,tradeStreak:0,taskStreak:0,totalTrades:0,totalEarnings:0,refActive:0,rankInfo:null,exchangesUsed:[]},
 
@@ -1088,6 +1090,7 @@ var App={
         self.state.refActive=d.referral_count_active||d.referral_count||0;
         self.state.rankInfo=d.rank_info||null;
         self.state.exchangesUsed=d.exchanges_used||[];
+        self.isAdmin=!!d.is_admin;
         if(d.quiz_stats){self.state.qOk=d.quiz_stats.correct||0;self.state.qTot=d.quiz_stats.total||0}
         // Cache state for offline use
         try{localStorage.setItem('smilskiy_state',JSON.stringify(self.state))}catch(e){}
@@ -1170,7 +1173,7 @@ var App={
     document.getElementById('tipText').innerHTML='💡 '+TIPS[d%TIPS.length];
     document.getElementById('factText').innerHTML='📊 '+FACTS[d%FACTS.length];
     // admin btn
-    if(this.userId && ADMINS.indexOf(this.userId)>=0){
+    if(this.userId && this.isAdmin){
       var existing=document.getElementById('adminNavBtn');
       if(!existing){var nav=document.querySelector('.nav');
         var ab=document.createElement('div');ab.className='nav-btn';ab.id='adminNavBtn';ab.dataset.p='admin';
@@ -1251,7 +1254,7 @@ var App={
         var dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,dist=Math.sqrt(dx*dx+dy*dy);
         if(dist<100){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);
           ctx.strokeStyle='rgba(0,240,255,'+(0.06*(1-dist/100))+')';ctx.lineWidth=.5;ctx.stroke()}}}
-      requestAnimationFrame(draw)}draw();
+      if(!document.hidden)requestAnimationFrame(draw);else document.addEventListener('visibilitychange',function vc(){if(!document.hidden){document.removeEventListener('visibilitychange',vc);requestAnimationFrame(draw)}},{once:false})}draw();
   },
 
   /* ─── MODULES ─── */
@@ -1383,8 +1386,10 @@ App.modules.ai=(function(){
         if(r&&r.answer)addMsg('bot',r.answer);var mc=document.getElementById('aiMsgs');mc.scrollTop=mc.scrollHeight})}
   };
   function md(t){
-    t=t.replace(/```([\s\S]*?)```/g,function(m,c){return'<pre><code>'+c.replace(/</g,'&lt;')+'</code></pre>'});
-    t=t.replace(/`([^`]+)`/g,'<code>$1</code>');
+    var codeBlocks=[];
+    t=t.replace(/```([\s\S]*?)```/g,function(m,c){codeBlocks.push('<pre><code>'+c.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</code></pre>');return'\x00CB'+( codeBlocks.length-1)+'\x00'});
+    t=t.replace(/`([^`]+)`/g,function(m,c){codeBlocks.push('<code>'+c.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</code>');return'\x00CB'+(codeBlocks.length-1)+'\x00'});
+    t=t.replace(/</g,'&lt;').replace(/>/g,'&gt;');
     t=t.replace(/^### (.+)$/gm,'<h3>$1</h3>');
     t=t.replace(/^## (.+)$/gm,'<h2>$1</h2>');
     t=t.replace(/^# (.+)$/gm,'<h2>$1</h2>');
@@ -1402,6 +1407,7 @@ App.modules.ai=(function(){
     t=t.replace(/<p><(h[23]|pre|ul|ol|hr|blockquote)/g,'<$1');
     t=t.replace(/<\/(h[23]|pre|ul|ol|hr|blockquote)><\/p>/g,'</$1>');
     t=t.replace(/<p><\/p>/g,'');
+    t=t.replace(/\x00CB(\d+)\x00/g,function(m,i){return codeBlocks[parseInt(i)]});
     return t}
   function addMsg(role,text,cid,src){var mc=document.getElementById('aiMsgs'),d=document.createElement('div');
     d.className='ai-bubble '+role;
@@ -1418,7 +1424,7 @@ App.modules.ai=(function(){
    MODULE: ACCOUNTANT
    ═══════════════════════════════════════════════════════════════ */
 App.modules.accountant=(function(){
-  var chart=null,binStatus=null,_dashCache=null;
+  var chart=null;
   function uid(){return App.userId||0}
   /* ── Merchant badge SVG (animated verified shield) ── */
   function merchantSvg(size){
@@ -1649,8 +1655,6 @@ App.modules.accountant=(function(){
         else{App.toast('Помилка збереження ключів','error');App.modules.accountant.setupExchange(exchange)}
       }).catch(function(e){App.toast(e.message||'Помилка','error');App.modules.accountant.setupExchange(exchange)});
     },
-    renderSetup:function(){this.setupExchange('binance')},
-    saveKeys:function(){this.saveExchangeKeys('binance')},
     renderDisconnected:function(st){
       var el=document.getElementById('accountantContent');
       el.innerHTML=
@@ -2413,7 +2417,7 @@ App.modules.admin=(function(){
   return{
     init:function(){},
     render:function(){
-      if(ADMINS.indexOf(App.userId)<0){App.go('home');return}
+      if(!App.isAdmin){App.go('home');return}
       document.getElementById('adminStats').innerHTML=
         '<div class="a-box"><div class="a-val">—</div><div class="a-lbl">Users</div></div>'+
         '<div class="a-box"><div class="a-val">—</div><div class="a-lbl">Pro</div></div>'+
